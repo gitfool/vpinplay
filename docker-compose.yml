@@ -4,27 +4,23 @@ services:
       context: .
       network: host
     container_name: vpinplay_api
+    network_mode: host
     restart: unless-stopped
-    ports:
-      - "8888:8888"
     environment:
-      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_URL=mongodb://127.0.0.1:27017
       - MONGO_DB_NAME=vpinplay_db
     depends_on:
       mongo:
         condition: service_healthy
     volumes:
       - .:/app
-    networks:
-      - vpinplay_network
 
   mongo:
     image: mongo:7.0
     container_name: vpinplay_mongo
-    command: ["mongod", "--bind_ip_all", "--port", "27017"]
+    command: ["mongod", "--bind_ip", "127.0.0.1", "--port", "27017"]
+    network_mode: host
     restart: unless-stopped
-    ports:
-      - "27017:27017"
     environment:
       - MONGO_INITDB_DATABASE=vpinplay_db
     volumes:
@@ -35,12 +31,5 @@ services:
       timeout: 10s
       retries: 12
       start_period: 40s
-    networks:
-      - vpinplay_network
-
 volumes:
   mongo_data:
-
-networks:
-  vpinplay_network:
-    driver: bridge
