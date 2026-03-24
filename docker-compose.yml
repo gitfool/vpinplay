@@ -21,6 +21,7 @@ services:
   mongo:
     image: mongo:7.0
     container_name: vpinplay_mongo
+    command: ["mongod", "--bind_ip_all", "--port", "27017"]
     restart: unless-stopped
     ports:
       - "27017:27017"
