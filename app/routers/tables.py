@@ -334,14 +334,28 @@ async def get_table(vpsId: str, db: Database = Depends(get_db)):
     if not tables:
         return []
 
-    latest_alttitle_row = db["user_table_state"].find_one(
-        {"vpsId": vpsId, "alttitle": {"$nin": [None, ""]}},
+    # Global alt fields are sourced from latest submitted user rows for this VPS ID.
+    # Prefer user_table_ratings because it is updated on every sync for each variation.
+    latest_alttitle_row = db["user_table_ratings"].find_one(
+        {"vpsId": vpsId, "alttitle": {"$regex": r"\S"}},
         sort=[("updatedAt", -1)],
     )
-    latest_altvpsid_row = db["user_table_state"].find_one(
-        {"vpsId": vpsId, "altvpsid": {"$nin": [None, ""]}},
+    if not latest_alttitle_row:
+        latest_alttitle_row = db["user_table_state"].find_one(
+            {"vpsId": vpsId, "alttitle": {"$regex": r"\S"}},
+            sort=[("updatedAt", -1)],
+        )
+
+    latest_altvpsid_row = db["user_table_ratings"].find_one(
+        {"vpsId": vpsId, "altvpsid": {"$regex": r"\S"}},
         sort=[("updatedAt", -1)],
     )
+    if not latest_altvpsid_row:
+        latest_altvpsid_row = db["user_table_state"].find_one(
+            {"vpsId": vpsId, "altvpsid": {"$regex": r"\S"}},
+            sort=[("updatedAt", -1)],
+        )
+
     global_alttitle = latest_alttitle_row.get("alttitle") if latest_alttitle_row else None
     global_altvpsid = latest_altvpsid_row.get("altvpsid") if latest_altvpsid_row else None
 
