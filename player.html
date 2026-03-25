@@ -9,16 +9,43 @@
             --bg: #f4f6fb;
             --surface: #ffffff;
             --surface-soft: #f8faff;
+            --surface-2: #eef4ff;
             --ink: #152238;
             --ink-muted: #5d6a81;
             --accent: #0e7b6c;
             --accent-2: #1d4ed8;
             --line: #d9e2ef;
+            --link: #1d4ed8;
+            --table-row: #ffffff;
+            --table-row-alt: #f8fbff;
+            --table-hover: #e9f2ff;
+            --bg-glow-a: rgba(14, 123, 108, 0.18);
+            --bg-glow-b: rgba(29, 78, 216, 0.16);
             --ok: #0f766e;
             --warn: #b45309;
             --bad: #b91c1c;
             --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
             --radius: 16px;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0a1220;
+            --surface: #111d31;
+            --surface-soft: #14243e;
+            --surface-2: #172742;
+            --ink: #e8f0ff;
+            --ink-muted: #9fb1cc;
+            --line: #273b5b;
+            --link: #8ab4ff;
+            --table-row: #10203a;
+            --table-row-alt: #142844;
+            --table-hover: #1e365b;
+            --bg-glow-a: rgba(12, 109, 96, 0.24);
+            --bg-glow-b: rgba(29, 78, 216, 0.2);
+            --ok: #47d8c8;
+            --warn: #ffc078;
+            --bad: #ff8c8c;
+            --shadow: 0 16px 40px rgba(2, 8, 20, 0.5);
         }
 
         * {
@@ -29,11 +56,14 @@
             margin: 0;
             color: var(--ink);
             background:
-                radial-gradient(900px 420px at -10% -10%, rgba(14, 123, 108, 0.18), transparent 60%),
-                radial-gradient(900px 420px at 110% -15%, rgba(29, 78, 216, 0.16), transparent 65%),
+                radial-gradient(900px 420px at -10% -10%, var(--bg-glow-a), transparent 60%),
+                radial-gradient(900px 420px at 110% -15%, var(--bg-glow-b), transparent 65%),
                 var(--bg);
             font-family: "Avenir Next", "Montserrat", "Segoe UI", sans-serif;
+            transition: background 180ms ease, color 180ms ease;
         }
+
+        a { color: var(--link); }
 
         .wrap {
             width: 100%;
@@ -93,10 +123,19 @@
             font-weight: 700;
             padding: 9px 14px;
             cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 120ms ease, filter 120ms ease;
         }
 
         .btn:hover {
+            transform: translateY(-1px);
             filter: brightness(0.97);
+        }
+
+        .btn-theme {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.4);
         }
 
         .setup {
@@ -177,6 +216,7 @@
             padding: 12px;
             box-shadow: var(--shadow);
             min-height: 220px;
+            overflow: hidden;
         }
 
         .panel h3 {
@@ -220,8 +260,8 @@
 
         th, td {
             text-align: left;
-            padding: 8px 6px;
-            border-bottom: 1px solid #edf2f8;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--line);
         }
 
         th {
@@ -229,7 +269,12 @@
             font-size: 0.77rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            background: var(--surface-2);
         }
+
+        tr td { background: var(--table-row); }
+        tbody tr:nth-child(even) td { background: var(--table-row-alt); }
+        tbody tr:hover td { background: var(--table-hover); }
 
         .muted {
             color: var(--ink-muted);
@@ -272,6 +317,7 @@
             </div>
             <div class="hero-actions">
                 <span id="userBadge" class="pill mono">userid=?</span>
+                <button id="themeToggleBtn" class="btn btn-theme" onclick="toggleTheme()">Dark</button>
                 <button class="btn" onclick="refreshDashboard()">Refresh</button>
             </div>
         </section>
@@ -360,6 +406,33 @@
 
         function q(id) {
             return document.getElementById(id);
+        }
+
+        function getPreferredTheme() {
+            const saved = localStorage.getItem("vpin-theme");
+            if (saved === "light" || saved === "dark") return saved;
+            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        function updateThemeToggleLabel(theme) {
+            const btn = q("themeToggleBtn");
+            if (!btn) return;
+            btn.textContent = theme === "dark" ? "Light" : "Dark";
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            updateThemeToggleLabel(theme);
+        }
+
+        function initTheme() {
+            applyTheme(getPreferredTheme());
+        }
+
+        function toggleTheme() {
+            const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            localStorage.setItem("vpin-theme", next);
+            applyTheme(next);
         }
 
         function escapeHtml(value) {
@@ -664,7 +737,10 @@
             refreshDashboard();
         }
 
-        document.addEventListener("DOMContentLoaded", init);
+        document.addEventListener("DOMContentLoaded", () => {
+            initTheme();
+            init();
+        });
     </script>
 </body>
 </html>

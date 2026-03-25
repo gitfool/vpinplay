@@ -8,13 +8,38 @@
         :root {
             --bg: #f5f7fb;
             --surface: #ffffff;
+            --surface-2: #f1f6ff;
             --line: #dbe3f0;
             --ink: #1b2a41;
             --muted: #63738d;
             --ok: #0f766e;
             --bad: #b91c1c;
+            --link: #1d4ed8;
+            --table-row: #ffffff;
+            --table-row-alt: #f8fbff;
+            --table-hover: #e9f2ff;
+            --bg-glow-a: rgba(14, 123, 108, 0.15);
+            --bg-glow-b: rgba(29, 78, 216, 0.14);
             --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
             --radius: 14px;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0a1220;
+            --surface: #111d31;
+            --surface-2: #172742;
+            --line: #273b5b;
+            --ink: #e8f0ff;
+            --muted: #9fb1cc;
+            --ok: #47d8c8;
+            --bad: #ff8c8c;
+            --link: #8ab4ff;
+            --table-row: #10203a;
+            --table-row-alt: #142844;
+            --table-hover: #1e365b;
+            --bg-glow-a: rgba(12, 109, 96, 0.22);
+            --bg-glow-b: rgba(29, 78, 216, 0.2);
+            --shadow: 0 12px 32px rgba(2, 8, 20, 0.5);
         }
 
         * { box-sizing: border-box; }
@@ -24,10 +49,13 @@
             font-family: "Avenir Next", "Montserrat", "Segoe UI", sans-serif;
             color: var(--ink);
             background:
-                radial-gradient(900px 420px at -10% -10%, rgba(14, 123, 108, 0.15), transparent 60%),
-                radial-gradient(900px 420px at 110% -15%, rgba(29, 78, 216, 0.14), transparent 65%),
+                radial-gradient(900px 420px at -10% -10%, var(--bg-glow-a), transparent 60%),
+                radial-gradient(900px 420px at 110% -15%, var(--bg-glow-b), transparent 65%),
                 var(--bg);
+            transition: background 180ms ease, color 180ms ease;
         }
+
+        a { color: var(--link); }
 
         .wrap {
             width: 100%;
@@ -75,6 +103,19 @@
             color: #173264;
             background: #fff;
             cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 120ms ease, filter 120ms ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(0.98);
+        }
+
+        .btn-theme {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.4);
         }
 
         .controls, .kpi, .panel {
@@ -159,6 +200,7 @@
         .panel {
             padding: 12px;
             min-height: 260px;
+            overflow: hidden;
         }
 
         .panel.bottom {
@@ -197,8 +239,8 @@
 
         th, td {
             text-align: left;
-            padding: 8px 6px;
-            border-bottom: 1px solid #ecf1f8;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--line);
             vertical-align: top;
         }
 
@@ -207,7 +249,12 @@
             font-size: 0.76rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            background: var(--surface-2);
         }
+
+        tr td { background: var(--table-row); }
+        tbody tr:nth-child(even) td { background: var(--table-row-alt); }
+        tbody tr:hover td { background: var(--table-hover); }
 
         .muted { color: var(--muted); }
 
@@ -230,6 +277,7 @@
                 <div id="lastRefresh" class="muted">Last refresh: -</div>
             </div>
             <div class="hero-actions">
+                <button id="themeToggleBtn" class="btn btn-theme" onclick="toggleTheme()">Dark</button>
                 <button class="btn" onclick="refreshDashboard()">Refresh</button>
                 <a class="pill" href="table.html">Open Table</a>
                 <a class="pill" href="player.html">Open Player</a>
@@ -330,6 +378,33 @@
         let allTablesTotal = null;
 
         function q(id) { return document.getElementById(id); }
+
+        function getPreferredTheme() {
+            const saved = localStorage.getItem("vpin-theme");
+            if (saved === "light" || saved === "dark") return saved;
+            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        function updateThemeToggleLabel(theme) {
+            const btn = q("themeToggleBtn");
+            if (!btn) return;
+            btn.textContent = theme === "dark" ? "Light" : "Dark";
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            updateThemeToggleLabel(theme);
+        }
+
+        function initTheme() {
+            applyTheme(getPreferredTheme());
+        }
+
+        function toggleTheme() {
+            const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            localStorage.setItem("vpin-theme", next);
+            applyTheme(next);
+        }
 
         function escapeHtml(value) {
             return String(value ?? "")
@@ -589,7 +664,10 @@
             q("kpiTotalTables").textContent = allTablesTotal === null ? "-" : String(allTablesTotal);
         }
 
-        document.addEventListener("DOMContentLoaded", refreshDashboard);
+        document.addEventListener("DOMContentLoaded", () => {
+            initTheme();
+            refreshDashboard();
+        });
     </script>
 </body>
 </html>
