@@ -333,17 +333,17 @@
             applyTheme(next);
         }
 
-        function getVpisidFromUrl() {
+        function getVpsidFromUrl() {
             const params = new URLSearchParams(window.location.search);
-            return (params.get("vpisid") || "").trim();
+            return (params.get("vpsid") || "").trim();
         }
 
         function setVpisidInUrl(vpsId) {
             const url = new URL(window.location.href);
             if (vpsId) {
-                url.searchParams.set("vpisid", vpsId);
+                url.searchParams.set("vpsid", vpsId);
             } else {
-                url.searchParams.delete("vpisid");
+                url.searchParams.delete("vpsid");
             }
             window.history.replaceState({}, "", url);
         }
@@ -588,9 +588,9 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             initTheme();
-            const vpisid = getVpisidFromUrl();
-            if (vpisid) {
-                q("vpsIdInput").value = vpisid;
+            const vpsid = getVpsidFromUrl();
+            if (vpsid) {
+                q("vpsIdInput").value = vpsid;
             }
             refreshDashboard();
         });
