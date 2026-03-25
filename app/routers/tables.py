@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, Query
 from typing import List
 from datetime import datetime, timedelta
@@ -334,38 +336,45 @@ async def get_table(vpsId: str, db: Database = Depends(get_db)):
     if not tables:
         return []
 
-    # Global alt fields are sourced from latest submitted user rows for this VPS ID.
-    # Prefer user_table_ratings because it is updated on every sync for each variation.
-    latest_alttitle_row = db["user_table_ratings"].find_one(
-        {"vpsId": vpsId, "alttitle": {"$regex": r"\S"}},
-        sort=[("updatedAt", -1)],
-    )
-    if not latest_alttitle_row:
-        latest_alttitle_row = db["user_table_state"].find_one(
-            {"vpsId": vpsId, "alttitle": {"$regex": r"\S"}},
-            sort=[("updatedAt", -1)],
-        )
+    def has_text(value):
+        return isinstance(value, str) and value.strip() != ""
 
-    latest_altvpsid_row = db["user_table_ratings"].find_one(
-        {"vpsId": vpsId, "altvpsid": {"$regex": r"\S"}},
-        sort=[("updatedAt", -1)],
-    )
-    if not latest_altvpsid_row:
-        latest_altvpsid_row = db["user_table_state"].find_one(
-            {"vpsId": vpsId, "altvpsid": {"$regex": r"\S"}},
-            sort=[("updatedAt", -1)],
-        )
+    # Build per-variation alt metadata map from latest submitted per-variation rows.
+    variation_alt_map: dict[str, dict[str, str | None]] = {}
+    rating_rows = db["user_table_ratings"].find(
+        {"vpsId": vpsId},
+        {
+            "_id": 0,
+            "vpxFileSignature": 1,
+            "alttitle": 1,
+            "altvpsid": 1,
+            "updatedAt": 1,
+        },
+    ).sort("updatedAt", -1)
 
-    global_alttitle = latest_alttitle_row.get("alttitle") if latest_alttitle_row else None
-    global_altvpsid = latest_altvpsid_row.get("altvpsid") if latest_altvpsid_row else None
+    for row in rating_rows:
+        signature = row.get("vpxFileSignature")
+        if not signature:
+            continue
+        current = variation_alt_map.setdefault(signature, {"alttitle": None, "altvpsid": None})
+        if current["alttitle"] is None and has_text(row.get("alttitle")):
+            current["alttitle"] = row.get("alttitle")
+        if current["altvpsid"] is None and has_text(row.get("altvpsid")):
+            current["altvpsid"] = row.get("altvpsid")
 
     response = [
         {
             "vpsId": table["vpsId"],
             "rom": table.get("rom"),
             "vpxFile": table["vpxFile"],
-            "alttitle": global_alttitle,
-            "altvpsid": global_altvpsid,
+            "alttitle": variation_alt_map.get(
+                json.dumps(table["vpxFile"], sort_keys=True, separators=(",", ":")),
+                {},
+            ).get("alttitle"),
+            "altvpsid": variation_alt_map.get(
+                json.dumps(table["vpxFile"], sort_keys=True, separators=(",", ":")),
+                {},
+            ).get("altvpsid"),
             "createdAt": table.get("createdAt", table.get("updatedAt")),
             "updatedAt": table["updatedAt"],
             "lastSeenAt": table["lastSeenAt"],
