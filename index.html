@@ -330,9 +330,12 @@
 
         function fmtDate(value) {
             if (!value) return "-";
-            const d = new Date(value);
+            const raw = String(value).trim();
+            const hasTimeZone = /([zZ]|[+-]\d{2}:\d{2})$/.test(raw);
+            const normalized = !hasTimeZone && raw.includes("T") ? `${raw}Z` : raw;
+            const d = new Date(normalized);
             if (Number.isNaN(d.getTime())) return "-";
-            return d.toLocaleString();
+            return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "medium" });
         }
 
         function truncateHash(value, max = 32) {
@@ -350,6 +353,19 @@
             const year = row?.vpsdb?.year;
             const parts = [manufacturer, year].filter(v => v !== null && v !== undefined && String(v).trim() !== "");
             return parts.length ? `${name} (${parts.join(", ")})` : name;
+        }
+
+        function linkTableName(name, vpsId) {
+            const text = name === null || name === undefined || name === "" ? "-" : String(name);
+            const id = String(vpsId || "").trim();
+            if (!id || text === "-") return escapeHtml(text);
+            return `<a href="table.html?vpsid=${encodeURIComponent(id)}">${escapeHtml(text)}</a>`;
+        }
+
+        function linkVpsId(vpsId) {
+            const id = String(vpsId || "").trim();
+            if (!id) return "-";
+            return `<a href="https://virtualpinballspreadsheet.github.io/games?game=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer">${escapeHtml(id)}</a>`;
         }
 
         async function api(path) {
@@ -378,7 +394,7 @@
                 columns.forEach(col => {
                     const raw = col.getter(row);
                     const text = raw === null || raw === undefined || raw === "" ? "-" : raw;
-                    html += `<td>${escapeHtml(text)}</td>`;
+                    html += `<td>${col.html ? text : escapeHtml(text)}</td>`;
                 });
                 html += "</tr>";
             });
@@ -401,10 +417,10 @@
 
             renderTable("allTablesTable",
                 [
-                    { label: "Name", getter: r => r.vpsdb?.name || "Unknown Table" },
+                    { label: "Name", getter: r => linkTableName(r.vpsdb?.name || "Unknown Table", r.vpsId), html: true },
                     { label: "Manufacturer", getter: r => r.vpsdb?.manufacturer || "-" },
                     { label: "Year", getter: r => r.vpsdb?.year || "-" },
-                    { label: "VPS ID", getter: r => r.vpsId || "-" },
+                    { label: "VPS ID", getter: r => linkVpsId(r.vpsId), html: true },
                     { label: "Filename", getter: r => r.filename || "-" },
                     { label: "Filehash", getter: r => truncateHash(r.filehash, 32) },
                 ],
@@ -484,10 +500,10 @@
 
             renderTable("topRatedTable",
                 [
-                    { label: "Table", getter: r => fmtTableName(r) },
+                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
                     { label: "Avg Rating", getter: r => r.avgRating },
                     { label: "Rating Count", getter: r => r.ratingCount },
-                    { label: "VPS ID", getter: r => r.vpsId },
+                    { label: "VPS ID", getter: r => linkVpsId(r.vpsId), html: true },
                 ],
                 topRatedRows
             );
@@ -495,30 +511,30 @@
             const topPlayTimeRows = topPlayTimeRes.ok && Array.isArray(topPlayTimeRes.data) ? topPlayTimeRes.data : [];
             renderTable("topPlayTimeGlobalTable",
                 [
-                    { label: "Table", getter: r => fmtTableName(r) },
+                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
                     { label: "Run Time (Total)", getter: r => `${Number(r.runTimeTotal || 0)} min` },
                     { label: "Starts (Total)", getter: r => r.startCountTotal },
                     { label: "Players", getter: r => r.playerCount },
-                    { label: "VPS ID", getter: r => r.vpsId },
+                    { label: "VPS ID", getter: r => linkVpsId(r.vpsId), html: true },
                 ],
                 topPlayTimeRows
             );
 
             renderTable("newlyAddedTable",
                 [
-                    { label: "Table", getter: r => fmtTableName(r) },
+                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
                     { label: "First Seen", getter: r => fmtDate(r.firstSeenAt) },
                     { label: "Variations", getter: r => r.variationCount },
-                    { label: "VPS ID", getter: r => r.vpsId },
+                    { label: "VPS ID", getter: r => linkVpsId(r.vpsId), html: true },
                 ],
                 newlyAddedRows
             );
 
             renderTable("topVariantsTable",
                 [
-                    { label: "Table", getter: r => fmtTableName(r) },
+                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
                     { label: "Variants", getter: r => r.variationCount },
-                    { label: "VPS ID", getter: r => r.vpsId },
+                    { label: "VPS ID", getter: r => linkVpsId(r.vpsId), html: true },
                 ],
                 topVariantsRows
             );

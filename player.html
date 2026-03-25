@@ -373,9 +373,12 @@
 
         function fmtDate(value) {
             if (!value) return "Never";
-            const d = new Date(value);
+            const raw = String(value).trim();
+            const hasTimeZone = /([zZ]|[+-]\d{2}:\d{2})$/.test(raw);
+            const normalized = !hasTimeZone && raw.includes("T") ? `${raw}Z` : raw;
+            const d = new Date(normalized);
             if (Number.isNaN(d.getTime())) return "Invalid date";
-            return d.toLocaleString();
+            return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "medium" });
         }
 
         function fmtRuntime(minutes) {
@@ -394,6 +397,13 @@
             const suffixParts = [manufacturer, year].filter(v => v !== null && v !== undefined && String(v).trim() !== "");
             const baseName = name || "Unknown Table";
             return suffixParts.length ? `${baseName} (${suffixParts.join(", ")})` : baseName;
+        }
+
+        function linkTableName(name, vpsId) {
+            const text = name === null || name === undefined || name === "" ? "-" : String(name);
+            const id = String(vpsId || "").trim();
+            if (!id || text === "-") return escapeHtml(text);
+            return `<a href="table.html?vpsid=${encodeURIComponent(id)}">${escapeHtml(text)}</a>`;
         }
 
         async function api(path) {
@@ -453,7 +463,7 @@
                 columns.forEach(col => {
                     const raw = col.getter(row);
                     const text = raw === null || raw === undefined || raw === "" ? "-" : raw;
-                    html += `<td>${escapeHtml(text)}</td>`;
+                    html += `<td>${col.html ? text : escapeHtml(text)}</td>`;
                 });
                 html += "</tr>";
             });
@@ -487,24 +497,24 @@
         function buildSpotlightRows(userLastSync, runtimeSum, runtimeWeek, startCountSum, startsWeek, mostPlayed) {
             const rows = [];
             if (userLastSync?.ok) {
-                rows.push({ metric: "Last Sync", value: fmtDate(userLastSync.data.lastSyncAt) });
+                rows.push({ metric: "Last Sync", value: escapeHtml(fmtDate(userLastSync.data.lastSyncAt)) });
             }
             if (runtimeSum?.ok) {
-                rows.push({ metric: "Runtime Sum", value: fmtRuntime(runtimeSum.data.runTimeTotal) });
+                rows.push({ metric: "Runtime Sum", value: escapeHtml(fmtRuntime(runtimeSum.data.runTimeTotal)) });
             }
             if (runtimeWeek?.ok) {
-                rows.push({ metric: "This Week Runtime", value: fmtRuntime(runtimeWeek.data.runTimePlayed) });
+                rows.push({ metric: "This Week Runtime", value: escapeHtml(fmtRuntime(runtimeWeek.data.runTimePlayed)) });
             }
             if (startCountSum?.ok) {
-                rows.push({ metric: "Start Count Sum", value: fmtNumber(startCountSum.data.startCountTotal) });
+                rows.push({ metric: "Start Count Sum", value: escapeHtml(fmtNumber(startCountSum.data.startCountTotal)) });
             }
             if (startsWeek?.ok) {
-                rows.push({ metric: "This Week Plays", value: fmtNumber(startsWeek.data.startCountPlayed) });
+                rows.push({ metric: "This Week Plays", value: escapeHtml(fmtNumber(startsWeek.data.startCountPlayed)) });
             }
             if (mostPlayed?.ok && Array.isArray(mostPlayed.data) && mostPlayed.data[0]) {
                 rows.push({
                     metric: "Most Played Table",
-                    value: `${fmtTableName(mostPlayed.data[0])} (${fmtNumber(mostPlayed.data[0].startCount)} starts)`
+                    value: `${linkTableName(fmtTableName(mostPlayed.data[0]), mostPlayed.data[0].vpsId)} (${escapeHtml(fmtNumber(mostPlayed.data[0].startCount))} starts)`
                 });
             }
             return rows;
@@ -575,14 +585,14 @@
             renderTable("spotlightTable",
                 [
                     { label: "Metric", getter: r => r.metric },
-                    { label: "Value", getter: r => r.value }
+                    { label: "Value", getter: r => r.value, html: true }
                 ],
                 buildSpotlightRows(lastSyncRes, runtimeSumRes, runtimeWeekRes, startCountSumRes, startCountWeekRes, mostPlayedRes)
             );
 
             renderTable("topRatedTable",
                 [
-                    { label: "Table", getter: r => fmtTableName(r) },
+                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
                     { label: "Mine / Avg Rating", getter: r => fmtUserOverGlobalRating(r, globalAvgRatingMap) },
                     { label: "Starts", getter: r => r.startCount }
                 ],
@@ -591,7 +601,7 @@
 
             renderTable("recentlyPlayedTable",
                 [
-                    { label: "Table", getter: r => fmtTableName(r) },
+                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
                     { label: "Last Run", getter: r => fmtDate(r.lastRun) },
                     { label: "Mine / Avg Rating", getter: r => fmtUserOverGlobalRating(r, globalAvgRatingMap) }
                 ],
@@ -600,7 +610,7 @@
 
             renderTable("topPlaytimeTable",
                 [
-                    { label: "Table", getter: r => fmtTableName(r) },
+                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
                     { label: "Run Time", getter: r => fmtRuntime(r.runTime) },
                     { label: "Starts", getter: r => fmtNumber(r.startCount) }
                 ],
@@ -609,7 +619,7 @@
 
             renderTable("mostPlayedTable",
                 [
-                    { label: "Table", getter: r => fmtTableName(r) },
+                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
                     { label: "Starts", getter: r => fmtNumber(r.startCount) },
                     { label: "Last Run", getter: r => fmtDate(r.lastRun) }
                 ],
@@ -618,7 +628,7 @@
 
             renderTable("userNewlyAddedTable",
                 [
-                    { label: "Table", getter: r => fmtTableName(r) },
+                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
                     { label: "Added", getter: r => fmtDate(r.createdAt) },
                     { label: "My / Avg Rating", getter: r => fmtUserOverGlobalRating(r, globalAvgRatingMap) }
                 ],

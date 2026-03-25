@@ -279,9 +279,12 @@
 
         function fmtDate(value) {
             if (!value) return "-";
-            const d = new Date(value);
+            const raw = String(value).trim();
+            const hasTimeZone = /([zZ]|[+-]\d{2}:\d{2})$/.test(raw);
+            const normalized = !hasTimeZone && raw.includes("T") ? `${raw}Z` : raw;
+            const d = new Date(normalized);
             if (Number.isNaN(d.getTime())) return "-";
-            return d.toLocaleString();
+            return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "medium" });
         }
 
         function fmtTableName(row) {
@@ -290,6 +293,12 @@
             const year = row?.vpsdb?.year;
             const parts = [manufacturer, year].filter(v => v !== null && v !== undefined && String(v).trim() !== "");
             return parts.length ? `${name} (${parts.join(", ")})` : name;
+        }
+
+        function linkVpsId(vpsId) {
+            const id = String(vpsId || "").trim();
+            if (!id) return "-";
+            return `<a href="https://virtualpinballspreadsheet.github.io/games?game=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer">${escapeHtml(id)}</a>`;
         }
 
         async function api(path) {
@@ -318,7 +327,7 @@
                 columns.forEach(col => {
                     const raw = col.getter(row);
                     const text = raw === null || raw === undefined || raw === "" ? "-" : raw;
-                    html += `<td>${escapeHtml(text)}</td>`;
+                    html += `<td>${col.html ? text : escapeHtml(text)}</td>`;
                 });
                 html += "</tr>";
             });
@@ -343,10 +352,10 @@
             let html = "";
             rows.forEach((row) => {
                 const filename = row?.vpxFile?.filename || "Unknown file";
-                const field = (label, value) => `
+                const field = (label, value, isHtml = false) => `
                     <div class="variation-field">
                         <div class="variation-label">${escapeHtml(label)}</div>
-                        <div class="variation-value">${escapeHtml(value ?? "-")}</div>
+                        <div class="variation-value">${isHtml ? (value ?? "-") : escapeHtml(value ?? "-")}</div>
                     </div>
                 `;
 
@@ -370,8 +379,9 @@
                     .map(item => {
                         const raw = item.value;
                         const isDateField = /(At|Run)$/i.test(item.key);
+                        const isVpsIdField = /(^|\.)(vpsId)$/i.test(item.key);
                         const rendered = isDateField ? fmtDate(raw) : (raw ?? "-");
-                        return { key: item.key, value: rendered };
+                        return { key: item.key, value: rendered, html: isVpsIdField ? linkVpsId(raw) : null };
                     });
 
                 const priorityMap = new Map(priorityOrder.map((k, i) => [k, i]));
@@ -382,7 +392,7 @@
                     return a.key.localeCompare(b.key);
                 });
 
-                const fieldsHtml = flatFields.map(item => field(item.key, item.value)).join("");
+                const fieldsHtml = flatFields.map(item => field(item.key, item.html ?? item.value, !!item.html)).join("");
                 html += `
                     <article class="variation-card">
                         <div class="variation-title">${escapeHtml(filename)}</div>
@@ -431,20 +441,25 @@
                 return;
             }
 
-            const field = (label, value) => `
+            const field = (label, value, isHtml = false) => `
                 <div class="variation-field">
                     <div class="variation-label">${escapeHtml(label)}</div>
-                    <div class="variation-value">${escapeHtml(value ?? "-")}</div>
+                    <div class="variation-value">${isHtml ? (value ?? "-") : escapeHtml(value ?? "-")}</div>
                 </div>
             `;
 
             const flatFields = flattenObject(record).map(item => {
                 const raw = item.value;
                 const isDateField = /(At|Run)$/i.test(item.key);
-                return { key: item.key, value: isDateField ? fmtDate(raw) : (raw ?? "-") };
+                const isVpsIdField = /(^|\.)(vpsId)$/i.test(item.key);
+                return {
+                    key: item.key,
+                    value: isDateField ? fmtDate(raw) : (raw ?? "-"),
+                    html: isVpsIdField ? linkVpsId(raw) : null
+                };
             });
 
-            const fieldsHtml = flatFields.map(item => field(item.key, item.value)).join("");
+            const fieldsHtml = flatFields.map(item => field(item.key, item.html ?? item.value, !!item.html)).join("");
             container.innerHTML = `
                 <article class="variation-card">
                     <div class="variation-title">${escapeHtml(record?.vpsdb?.name || record?.vpsId || "VPSDB Record")}</div>
@@ -479,7 +494,7 @@
                     { label: "Table", getter: r => fmtTableName(r) },
                     { label: "Avg Rating", getter: r => r.avgRating ?? "-" },
                     { label: "Rating Count", getter: r => r.ratingCount ?? "-" },
-                    { label: "VPS ID", getter: r => r.vpsId ?? "-" },
+                    { label: "VPS ID", getter: r => linkVpsId(r.vpsId), html: true },
                 ],
                 ratingSummaryRows
             );
