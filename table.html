@@ -365,11 +365,6 @@
             </section>
 
             <section class="panel">
-                <h3 id="tableVariationsTitle">Table Variations (0)</h3>
-                <div id="tableByIdDetails" class="variation-details"></div>
-            </section>
-            
-            <section class="panel">
                 <h3 id="derivativeDifferencesTitle">Derivative Differences</h3>
                 <div id="derivativeDifferencesDetails" class="variation-details"></div>
             </section>
@@ -529,85 +524,6 @@
             el.innerHTML = html;
         }
 
-        function renderVariationDetails(rows) {
-            const container = q("tableByIdDetails");
-            const title = q("tableVariationsTitle");
-            const count = Array.isArray(rows) ? rows.length : 0;
-            if (title) {
-                title.textContent = `Table Variations (${count})`;
-            }
-
-            if (!rows || rows.length === 0) {
-                container.innerHTML = `<div class="muted">No table variations found for this VPS ID.</div>`;
-                return;
-            }
-
-            let html = "";
-            rows.forEach((row) => {
-                const filename = row?.vpxFile?.filename || "Unknown file";
-                const field = (label, value, isHtml = false) => `
-                    <div class="variation-field">
-                        <div class="variation-label">${escapeHtml(label)}</div>
-                        <div class="variation-value">${isHtml ? (value ?? "-") : escapeHtml(value ?? "-")}</div>
-                    </div>
-                `;
-
-                const priorityOrder = [
-                    "submittedByUserIdsNormalized",
-                    "firstSeenByUserIdNormalized",
-                    "vpsdb.name",
-                    "vpsdb.manufacturer",
-                    "vpsdb.year",
-                    "vpsdb.authors",
-                    "vpsId",
-                    "rom",
-                    "vpxFile.filename",
-                    "vpxFile.filehash",
-                    "vpxFile.version",
-                    "vpxFile.rom",
-                    "createdAt",
-                    "updatedAt",
-                    "lastSeenAt"
-                ];
-
-                const flatFields = flattenObject(row)
-                    .filter(item => item.key !== "submittedByUserIdsNormalized")
-                    .map(item => {
-                        const raw = item.value;
-                        const isDateField = /(At|Run)$/i.test(item.key);
-                        const isVpsIdField = /(^|\.)(vpsId)$/i.test(item.key);
-                        const isUserField = /(firstSeenByUserIdNormalized)$/i.test(item.key);
-                        const rendered = isDateField ? fmtDate(raw) : (raw ?? "-");
-                        return {
-                            key: item.key,
-                            value: rendered,
-                            html: isVpsIdField ? linkVpsId(raw) : (isUserField ? linkUserId(raw) : null)
-                        };
-                    });
-
-                const priorityMap = new Map(priorityOrder.map((k, i) => [k, i]));
-                flatFields.sort((a, b) => {
-                    const ai = priorityMap.has(a.key) ? priorityMap.get(a.key) : 9999;
-                    const bi = priorityMap.has(b.key) ? priorityMap.get(b.key) : 9999;
-                    if (ai !== bi) return ai - bi;
-                    return a.key.localeCompare(b.key);
-                });
-
-                const fieldsHtml = flatFields.map(item => field(item.key, item.html ?? item.value, !!item.html)).join("");
-                html += `
-                    <article class="variation-card">
-                        <div class="variation-title">${escapeHtml(filename)}</div>
-                        <div class="variation-grid">
-                            ${field("tableLabel", fmtTableName(row))}
-                            ${field("submittedBy", fmtSubmitters(row?.submittedByUserIdsNormalized), true)}
-                            ${fieldsHtml}
-                        </div>
-                    </article>
-                `;
-            });
-            container.innerHTML = html;
-        }
-        
         function toComparableValue(value) {
             if (value === null || value === undefined) return "";
             return String(value);
@@ -784,7 +700,6 @@
                 renderTable("ratingSummaryTable", [{ label: "Info", getter: () => "Enter a VPS ID" }], []);
                 renderTable("playerRatingsTable", [{ label: "Info", getter: () => "Enter a VPS ID" }], []);
                 q("playerRatingsTitle").textContent = "Player Ratings (0)";
-                renderVariationDetails([]);
                 renderDerivativeDifferences([]);
                 renderVpsdbDetails(null);
                 return;
@@ -821,7 +736,6 @@
             );
 
             const byIdRows = tableByIdRes.ok && Array.isArray(tableByIdRes.data) ? tableByIdRes.data : [];
-            renderVariationDetails(byIdRows);
             renderDerivativeDifferences(byIdRows);
 
             const vpsdbRecord = vpsdbByIdRes.ok && vpsdbByIdRes.data ? vpsdbByIdRes.data : null;
