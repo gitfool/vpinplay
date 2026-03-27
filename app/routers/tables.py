@@ -380,6 +380,28 @@ async def get_all_tables(
     }
 
 
+@router.get("/tables/by-filehash/{filehash}")
+async def get_vpsid_by_filehash(filehash: str, db: Database = Depends(get_db)):
+    """
+    Resolve a VPS ID by VPX file hash (`vpxFile.filehash`).
+    """
+    clean_hash = filehash.strip()
+    if clean_hash == "":
+        return {"filehash": filehash, "vpsId": None}
+
+    row = (
+        db["tables"]
+        .find({"vpxFile.filehash": clean_hash}, {"_id": 0, "vpsId": 1, "updatedAt": 1})
+        .sort("updatedAt", -1)
+        .limit(1)
+    )
+    items = list(row)
+    if not items:
+        return {"filehash": clean_hash, "vpsId": None}
+
+    return {"filehash": clean_hash, "vpsId": items[0].get("vpsId")}
+
+
 @router.get("/tables/{vpsId}", response_model=List[GlobalTableResponse])
 async def get_table(vpsId: str, db: Database = Depends(get_db)):
     """

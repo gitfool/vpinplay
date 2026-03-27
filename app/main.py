@@ -70,6 +70,7 @@ async def create_indexes():
 
     # Indexes for tables
     db["tables"].create_index("vpsId")
+    db["tables"].create_index("vpxFile.filehash")
     db["tables"].create_index("submittedByUserIdsNormalized")
     db["user_table_state"].create_index([("userIdNormalized", 1), ("vpsId", 1)])
     db["user_table_state"].create_index([("userId", 1), ("vpsId", 1)])
