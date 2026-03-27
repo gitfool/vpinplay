@@ -142,6 +142,16 @@
             flex-direction: column;
             gap: 6px;
         }
+        
+        .lookup-status {
+            width: 100%;
+            font-size: 0.86rem;
+            color: var(--muted);
+        }
+        
+        .lookup-status.error {
+            color: #b42318;
+        }
 
         .field label {
             font-size: 0.82rem;
@@ -348,9 +358,15 @@
         <section class="controls">
             <div class="field">
                 <label for="vpsIdInput">VPS ID Focus</label>
-                <input id="vpsIdInput" type="text" value="lkSumsrF" placeholder="Enter VPS ID">
+                <input id="vpsIdInput" type="text" value="lkSumsrF" placeholder="Enter VPS ID" onkeydown="if(event.key==='Enter'){refreshDashboard();}">
             </div>
             <button class="btn" onclick="refreshDashboard()">Apply</button>
+            <div class="field">
+                <label for="filehashInput">Lookup by VPX File Hash</label>
+                <input id="filehashInput" type="text" placeholder="Enter vpxFile.filehash" onkeydown="if(event.key==='Enter'){lookupByFilehash();}">
+            </div>
+            <button class="btn" onclick="lookupByFilehash()">Find by Hash</button>
+            <div id="lookupStatus" class="lookup-status muted"></div>
         </section>
 
         <section class="grid-panels">
@@ -421,6 +437,13 @@
                 url.searchParams.delete("vpsid");
             }
             window.history.replaceState({}, "", url);
+        }
+        
+        function setLookupStatus(message, isError = false) {
+            const el = q("lookupStatus");
+            if (!el) return;
+            el.textContent = message || "";
+            el.classList.toggle("error", !!isError);
         }
 
         function escapeHtml(value) {
@@ -497,6 +520,29 @@
             } catch (error) {
                 return { ok: false, status: 0, data: { error: error.message } };
             }
+        }
+        
+        async function lookupByFilehash() {
+            const filehash = q("filehashInput").value.trim();
+            if (!filehash) {
+                setLookupStatus("Enter a file hash to search.", true);
+                return;
+            }
+            setLookupStatus("Looking up hash...");
+            const result = await api(`/api/v1/tables/by-filehash/${encodeURIComponent(filehash)}`);
+            if (!result.ok) {
+                setLookupStatus(`Lookup failed (${result.status}).`, true);
+                return;
+            }
+            const matchedVpsId = result.data?.vpsId ? String(result.data.vpsId).trim() : "";
+            if (!matchedVpsId) {
+                setLookupStatus("No table match found for that hash.", true);
+                return;
+            }
+            q("vpsIdInput").value = matchedVpsId;
+            const alt = result.data?.altvpsid ? ` (altvpsid: ${result.data.altvpsid})` : "";
+            setLookupStatus(`Matched VPS ID: ${matchedVpsId}${alt}`);
+            await refreshDashboard();
         }
 
         function renderTable(elId, columns, rows) {
