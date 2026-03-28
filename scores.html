@@ -424,7 +424,7 @@
                 <input id="vpsIdInput" type="text" placeholder="Filter to one vpsId" onkeydown="if(event.key==='Enter'){refreshDashboard();}">
             </div>
             <button class="btn" onclick="refreshDashboard()">Apply</button>
-            <div class="controls-note">This page reads user table state, keeps only entries with a user.score payload, and matches key casing case-insensitively.</div>
+            <div class="controls-note">This page reads user table state from the API response, prefers the returned `score` field, and falls back to `user.score` when present. Key casing is matched case-insensitively.</div>
             <div id="status" class="status">Ready.</div>
         </section>
 
@@ -562,11 +562,17 @@
         }
 
         function getScorePayload(row) {
-            const user = getCaseInsensitiveValue(row, "user");
-            const score = getCaseInsensitiveValue(user, "score");
-            if (score && typeof score === "object" && !Array.isArray(score)) {
-                return score;
+            const directScore = getCaseInsensitiveValue(row, "score");
+            if (directScore && typeof directScore === "object" && !Array.isArray(directScore)) {
+                return directScore;
             }
+
+            const user = getCaseInsensitiveValue(row, "user");
+            const nestedScore = getCaseInsensitiveValue(user, "score");
+            if (nestedScore && typeof nestedScore === "object" && !Array.isArray(nestedScore)) {
+                return nestedScore;
+            }
+
             return null;
         }
 
