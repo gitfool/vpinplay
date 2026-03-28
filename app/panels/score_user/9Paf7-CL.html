@@ -1,10 +1,16 @@
 <div id="afm-score-panel" class="afm-score-panel">
   <div class="afm-shell">
     <div class="afm-header">
-      <div>
-        <div class="afm-kicker">Attack from Mars</div>
-        <h2>Score Panel</h2>
-        <div class="afm-meta" id="afm-meta">Waiting for user score data.</div>
+      <div class="afm-header-main">
+        <img
+          class="afm-art"
+          src="https://github.com/superhac/vpinmediadb/raw/refs/heads/main/9Paf7-CL/1k/bg.png"
+          alt="Attack from Mars backglass art">
+        <div class="afm-header-copy">
+          <div class="afm-kicker">Attack from Mars</div>
+          <h2>Score Panel</h2>
+          <div class="afm-meta" id="afm-meta">Waiting for user score data.</div>
+        </div>
       </div>
       <div class="afm-badge" id="afm-user-badge">No User</div>
     </div>
@@ -73,6 +79,28 @@
     align-items: flex-start;
     gap: 14px;
     margin-bottom: 14px;
+  }
+
+  .afm-header-main {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .afm-art {
+    width: 250px;
+    height: 141px;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 1px solid rgba(107, 191, 255, 0.22);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+    background: rgba(8, 17, 29, 0.6);
+  }
+
+  .afm-header-copy {
+    min-width: 0;
   }
 
   .afm-kicker {
@@ -234,6 +262,16 @@
   }
 
   @media (max-width: 760px) {
+    .afm-header-main {
+      grid-template-columns: 1fr;
+    }
+
+    .afm-art {
+      width: 100%;
+      max-width: 250px;
+      height: 141px;
+    }
+
     .afm-grid {
       grid-template-columns: 1fr;
     }
@@ -388,8 +426,8 @@
     host.innerHTML = `
       <div class="afm-extra">
         <div class="afm-pill">${entry.initials || "-"}</div>
-        <div class="afm-detail">${detail}</div>
-        ${extraLines.length && entry.score == null
+        ${detail ? `<div class="afm-detail">${detail}</div>` : ""}
+        ${extraLines.length && entry.score != null
           ? extraLines.map(line => `<div class="afm-subtle">${line}</div>`).join("")
           : ""}
       </div>
@@ -457,8 +495,8 @@
     if (grid) grid.hidden = false;
 
     const updatedAt = row.updatedAt ? new Date(row.updatedAt).toLocaleString() : "Unknown";
-    q("afm-meta").textContent = `${entries.length} score entries loaded. Last update: ${updatedAt}`;
-    setStatus(`Loaded Attack from Mars scores for ${userId}.`);
+    q("afm-meta").textContent = `Last update: ${updatedAt}`;
+    setStatus("Score data loaded.");
   }
 
   loadPanel();
