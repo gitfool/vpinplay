@@ -384,13 +384,12 @@
     }
 
     const extraLines = Array.isArray(entry.extra_lines) ? entry.extra_lines : [];
-    const hasExtraOnlyDetail = (entry.score === null || entry.score === undefined) && extraLines.length > 0;
-    const detail = hasExtraOnlyDetail ? "" : scoreText(entry);
+    const detail = scoreText(entry);
     host.innerHTML = `
       <div class="afm-extra">
         <div class="afm-pill">${entry.initials || "-"}</div>
         ${detail ? `<div class="afm-detail">${detail}</div>` : ""}
-        ${extraLines.length
+        ${extraLines.length && entry.score != null
           ? extraLines.map(line => `<div class="afm-subtle">${line}</div>`).join("")
           : ""}
       </div>
