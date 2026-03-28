@@ -47,7 +47,7 @@ services:
         condition: service_started
     volumes:
       - ./Caddyfile.local-mac:/etc/caddy/Caddyfile:ro
-      - .:/app:ro
+      - ./www:/www:ro
       - caddy_data:/data
       - caddy_config:/config
 

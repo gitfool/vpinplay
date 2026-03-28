@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPinPlay Scores Dashboard</title>
+    <link rel="stylesheet" href="css/scores.css">
+</head>
+<body>
+    <div class="wrap">
+        <section class="hero">
+            <div>
+                <h1>Scores Dashboard (Testing)</h1>
+                <div id="lastRefresh" class="hero-meta">Last refresh: -</div>
+            </div>
+            <div class="hero-actions">
+                <button id="themeToggleBtn" class="btn btn-theme" onclick="toggleTheme()">Dark</button>
+                <button class="btn" onclick="refreshDashboard()">Refresh</button>
+                <a class="pill" href="player.html">Open Player</a>
+                <a class="pill" href="table.html">Open Table</a>
+            </div>
+        </section>
+
+        <section class="controls">
+            <div class="field">
+                <label for="userIdInput">User ID</label>
+                <input id="userIdInput" type="text" value="cabinet_1" placeholder="Enter userId" onkeydown="if(event.key==='Enter'){refreshDashboard();}">
+            </div>
+            <div class="field">
+                <label for="vpsIdInput">Optional VPS ID Filter</label>
+                <input id="vpsIdInput" type="text" placeholder="Filter to one vpsId" onkeydown="if(event.key==='Enter'){refreshDashboard();}">
+            </div>
+            <button class="btn" onclick="refreshDashboard()">Apply</button>
+            <div class="controls-note">With a user ID, this page uses the per-user scored-table query and optionally filters by VPS ID. If you leave user ID blank but provide a VPS ID, it uses the cross-user scored-table query for that table.</div>
+            <div id="status" class="status">Ready.</div>
+        </section>
+
+        <section class="grid-kpi">
+            <article class="kpi">
+                <div class="kpi-label">Score Entries</div>
+                <div id="kpiScoreCount" class="kpi-value">0</div>
+                <div class="kpi-sub">Rows with a score payload</div>
+            </article>
+            <article class="kpi">
+                <div class="kpi-label">Unique Tables</div>
+                <div id="kpiTableCount" class="kpi-value">0</div>
+                <div class="kpi-sub">Distinct `vpsId` count</div>
+            </article>
+            <article class="kpi">
+                <div class="kpi-label">Score Types</div>
+                <div id="kpiScoreTypes" class="kpi-value">0</div>
+                <div class="kpi-sub">Distinct `score_type` values</div>
+            </article>
+            <article class="kpi">
+                <div class="kpi-label">Highest Value</div>
+                <div id="kpiMaxValue" class="kpi-value">-</div>
+                <div class="kpi-sub">Largest numeric `value` seen</div>
+            </article>
+        </section>
+
+        <section class="grid-panels">
+            <section class="panel">
+                <h3 id="scoreOverviewTitle">Score Overview</h3>
+                <table id="scoreOverviewTable"></table>
+            </section>
+
+            <section class="panel">
+                <h3 id="scoreKeysTitle">Observed Score Keys</h3>
+                <div id="scoreKeysDetails" class="chips"></div>
+            </section>
+
+            <section class="panel panel-full">
+                <h3 id="scoreCardsTitle">Scored Tables</h3>
+                <div id="scoreCards" class="score-list"></div>
+            </section>
+        </section>
+    </div>
+
+    <script src="js/scores.js"></script>
+</body>
+</html>

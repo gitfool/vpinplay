@@ -136,3 +136,7 @@ Thumbs.db
 # Environment variable files
 .env.local
 .env.*.local
+
+# local formatting
+.prettierignore
+.vscode

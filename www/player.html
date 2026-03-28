@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VPinPlay Player Dashboard</title>
+    <link rel="stylesheet" href="css/player.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="hero">
+        <div>
+          <h1 id="title">Player Dashboard (Testing)</h1>
+        </div>
+        <div class="hero-actions">
+          <span id="userBadge" class="pill mono">userid=?</span>
+          <button
+            id="viewToggleBtn"
+            class="btn btn-theme"
+            onclick="toggleViewMode()"
+          >
+            Carousel
+          </button>
+          <button
+            id="themeToggleBtn"
+            class="btn btn-theme"
+            onclick="toggleTheme()"
+          >
+            Dark
+          </button>
+          <button class="btn" onclick="refreshDashboard()">Refresh</button>
+          <a class="pill" href="scores.html">Open Scores</a>
+        </div>
+      </section>
+
+      <section id="setup" class="setup hidden">
+        <h2>Set User ID</h2>
+        <div class="setup-row">
+          <input id="setupUserId" type="text" placeholder="Enter userid" />
+          <button class="btn" onclick="applyUserId()">Load Dashboard</button>
+        </div>
+        <p class="muted">
+          Use URL format: <span class="mono">player.html?userid=cabinet_1</span>
+        </p>
+      </section>
+
+      <section id="dashboard" class="hidden">
+        <div class="grid-kpi">
+          <article class="kpi">
+            <div class="kpi-label">Table Count</div>
+            <div id="kpiTableCount" class="kpi-value">-</div>
+            <div class="kpi-sub">Total submitted tables</div>
+          </article>
+          <article class="kpi">
+            <div class="kpi-label">Last Sync</div>
+            <div id="kpiLastSync" class="kpi-value">-</div>
+            <div class="kpi-sub">Latest successful sync</div>
+          </article>
+          <article class="kpi">
+            <div class="kpi-label">Total Table Plays</div>
+            <div id="kpiStarts" class="kpi-value">-</div>
+            <div class="kpi-sub">Sum of startCount</div>
+          </article>
+          <article class="kpi">
+            <div class="kpi-label">Total Play Time</div>
+            <div id="kpiRuntime" class="kpi-value">-</div>
+            <div class="kpi-sub">Sum of runTime</div>
+          </article>
+          <article class="kpi">
+            <div class="kpi-label">This Week Play Time</div>
+            <div id="kpiRuntimeWeek" class="kpi-value">-</div>
+            <div class="kpi-sub">Last 7 days (delta)</div>
+          </article>
+          <article class="kpi">
+            <div class="kpi-label">This Week Plays</div>
+            <div id="kpiStartsWeek" class="kpi-value">-</div>
+            <div class="kpi-sub">Last 7 days (delta)</div>
+          </article>
+        </div>
+
+        <div id="panels" class="grid-panels">
+          <section class="panel">
+            <h3>User Status</h3>
+            <div id="userStatus" class="status warn">Checking...</div>
+            <table id="spotlightTable"></table>
+          </section>
+
+          <section id="topRatedPanel" class="panel">
+            <h3>Top Rated (User)</h3>
+            <div id="topRatedContainer">
+              <table id="topRatedTable"></table>
+            </div>
+          </section>
+
+          <section id="recentlyPlayedPanel" class="panel">
+            <h3>Recently Played</h3>
+            <div id="recentlyPlayedContainer">
+              <table id="recentlyPlayedTable"></table>
+            </div>
+          </section>
+
+          <section id="topPlaytimePanel" class="panel">
+            <h3>Top Play Time</h3>
+            <div id="topPlaytimeContainer">
+              <table id="topPlaytimeTable"></table>
+            </div>
+          </section>
+
+          <section id="mostPlayedPanel" class="panel">
+            <h3>Most Played</h3>
+            <div id="mostPlayedContainer">
+              <table id="mostPlayedTable"></table>
+            </div>
+          </section>
+
+          <section id="userNewlyAddedPanel" class="panel">
+            <h3>Newest Added</h3>
+            <div id="userNewlyAddedContainer">
+              <table id="userNewlyAddedTable"></table>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel-embed">
+          <h3>Attack From Mars Score Panel Test</h3>
+          <p class="panel-embed-note">
+            Temporary test embed using hardcoded
+            <span class="mono">userid=superhac</span>.
+          </p>
+          <iframe
+            class="panel-embed-frame"
+            src="app/panels/score_user/9Paf7-CL.html?userid=superhac"
+            title="Attack From Mars score panel test"
+          >
+          </iframe>
+        </section>
+      </section>
+    </div>
+
+    <script src="js/player.js"></script>
+  </body>
+</html>
