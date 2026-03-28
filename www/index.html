@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPinPlay Dashboard</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <div class="wrap">
+        <section class="hero">
+            <div>
+                <h1>Dashboard (Testing)</h1>
+                <div id="lastRefresh" class="muted">Last refresh: -</div>
+            </div>
+            <div class="hero-actions">
+                <button id="themeToggleBtn" class="btn btn-theme" onclick="toggleTheme()">Dark</button>
+                <button class="btn" onclick="refreshDashboard()">Refresh</button>
+                <a class="pill" href="table.html">Open Table</a>
+                <a class="pill" href="player.html">Open Player</a>
+            </div>
+        </section>
+
+        <section class="controls">
+            <div class="field">
+                <label for="limitInput">Top/New Limit</label>
+                <input id="limitInput" type="number" value="5" min="1" max="100">
+            </div>
+            <button class="btn" onclick="refreshDashboard()">Apply</button>
+        </section>
+
+        <section class="grid-kpi">
+            <article class="kpi">
+                <div class="label">Last Global Sync</div>
+                <div id="kpiLastSync" class="value">-</div>
+                <div id="kpiLastSyncUser" class="sub">Last sync by user: -</div>
+            </article>
+            <article class="kpi">
+                <div class="label">Total Tables In System</div>
+                <div id="kpiTotalTables" class="value">-</div>
+                <div class="sub">All table variation rows</div>
+            </article>
+            <article class="kpi">
+                <div class="label">Total Users</div>
+                <div id="kpiUserCount" class="value">-</div>
+                <div class="sub">Registered users</div>
+            </article>
+            <article class="kpi">
+                <div class="label">VPSDB Sync</div>
+                <div id="kpiVpsdbStatus" class="value">-</div>
+                <div id="kpiVpsdbMeta" class="sub">-</div>
+            </article>
+            <article class="kpi">
+                <div class="label">This Week Play Time</div>
+                <div id="kpiRuntimeWeek" class="value">-</div>
+                <div class="sub">Global runtime delta (7d)</div>
+            </article>
+            <article class="kpi">
+                <div class="label">This Week Plays</div>
+                <div id="kpiStartsWeek" class="value">-</div>
+                <div class="sub">Global startCount delta (7d)</div>
+            </article>
+        </section>
+
+        <section class="grid-panels">
+            <section class="panel">
+                <h3>Top Rated Tables</h3>
+                <table id="topRatedTable"></table>
+            </section>
+
+            <section class="panel">
+                <h3>Top Table Play Time</h3>
+                <table id="topPlayTimeGlobalTable"></table>
+            </section>
+
+            <section class="panel">
+                <h3>Newly Added Tables</h3>
+                <table id="newlyAddedTable"></table>
+            </section>
+
+            <section class="panel">
+                <h3>Top Tables by Variants</h3>
+                <table id="topVariantsTable"></table>
+            </section>
+
+            <section class="panel">
+                <h3 id="topPlayerPlaysTitle">Top Player Plays (7d)</h3>
+                <table id="topPlayerPlaysTable"></table>
+            </section>
+
+            <section class="panel">
+                <h3 id="topPlayerPlaytimeTitle">Top Player Playtime (7d)</h3>
+                <table id="topPlayerPlaytimeTable"></table>
+            </section>
+        </section>
+
+        <section id="allTablesPanel" class="panel bottom">
+            <h3>All Tables (Paginated)</h3>
+            <div class="pager">
+                <button id="allTablesPrevBtn" class="btn" onclick="prevAllTablesPage()">Prev</button>
+                <button id="allTablesNextBtn" class="btn" onclick="nextAllTablesPage()">Next</button>
+                <span id="allTablesPageInfo" class="muted">Page 1</span>
+                <span class="muted">50 per page</span>
+            </div>
+            <table id="allTablesTable"></table>
+        </section>
+    </div>
+
+    <script src="js/index.js"></script>
+</body>
+</html>

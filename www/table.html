@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPinPlay Table Dashboard</title>
+    <link rel="stylesheet" href="css/table.css">
+</head>
+<body>
+    <div class="wrap">
+        <section class="hero">
+            <div>
+                <h1>Table Dashboard (Testing)</h1>
+                <div id="lastRefresh" class="muted">Last refresh: -</div>
+            </div>
+            <div class="hero-actions">
+                <button id="themeToggleBtn" class="btn btn-theme" onclick="toggleTheme()">Dark</button>
+                <button class="btn" onclick="refreshDashboard()">Refresh</button>
+                <a class="pill" href="main.html">Open Global</a>
+                <a class="pill" href="player.html">Open Player</a>
+                <a class="pill" href="scores.html">Open Scores</a>
+            </div>
+        </section>
+
+        <section class="controls">
+            <div class="field">
+                <label for="vpsIdInput">VPS ID Focus</label>
+                <input id="vpsIdInput" type="text" value="lkSumsrF" placeholder="Enter VPS ID" onkeydown="if(event.key==='Enter'){refreshDashboard();}">
+            </div>
+            <button class="btn" onclick="refreshDashboard()">Apply</button>
+            <div class="field">
+                <label for="filehashInput">Lookup by VPX File Hash</label>
+                <input id="filehashInput" type="text" placeholder="Enter vpxFile.filehash" onkeydown="if(event.key==='Enter'){lookupByFilehash();}">
+            </div>
+            <button class="btn" onclick="lookupByFilehash()">Find by Hash</button>
+            <div id="lookupStatus" class="lookup-status muted"></div>
+        </section>
+
+        <section class="grid-panels">
+            <section class="panel">
+                <h3>VPSDB Record</h3>
+                <div id="vpsdbByIdDetails" class="variation-details"></div>
+            </section>
+
+            <section class="panel">
+                <h3>Rating Summary</h3>
+                <table id="ratingSummaryTable"></table>
+            </section>
+
+            <section class="panel">
+                <h3 id="playerRatingsTitle">Player Ratings (0)</h3>
+                <table id="playerRatingsTable"></table>
+            </section>
+
+            <section class="panel">
+                <h3 id="associatedRomsTitle">Associated ROMs</h3>
+                <div id="associatedRomsDetails" class="variation-details"></div>
+            </section>
+
+            <section class="panel panel-full">
+                <h3 id="derivativeDifferencesTitle">Derivative Differences</h3>
+                <div id="derivativeDifferencesDetails" class="variation-details"></div>
+            </section>
+        </section>
+    </div>
+
+    <script src="js/table.js"></script>
+</body>
+</html>

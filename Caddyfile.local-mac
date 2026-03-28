@@ -3,7 +3,8 @@
     reverse_proxy /api/* api:9000
     
     # Serve frontend files
-    root * /app
+    root * /www
     encode gzip
     file_server
+    try_files {path} /index.html
 }
