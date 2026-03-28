@@ -1,0 +1,9 @@
+:8888 {
+    # API requests go to backend
+    reverse_proxy /api/* api:9000
+    
+    # Serve frontend files
+    root * /app
+    encode gzip
+    file_server
+}
