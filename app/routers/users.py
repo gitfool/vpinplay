@@ -419,6 +419,53 @@ def _score_entry_label(score_payload: dict, entry: dict) -> str:
     return "Score"
 
 
+def _clean_table_filename(filename: str | None) -> str | None:
+    if not isinstance(filename, str):
+        return None
+    cleaned = filename.strip()
+    if not cleaned:
+        return None
+    if cleaned.lower().endswith(".vpx"):
+        cleaned = cleaned[:-4]
+    return cleaned or None
+
+
+def _enrich_extracted_scores_with_table_titles(rows: list[dict], db: Database) -> list[dict]:
+    if not rows:
+        return rows
+
+    vps_ids = [row.get("vpsId") for row in rows if row.get("vpsId")]
+    title_by_vps_id: dict[str, str] = {}
+
+    if vps_ids:
+        table_rows = db["tables"].find(
+            {"vpsId": {"$in": list(dict.fromkeys(vps_ids))}},
+            {"_id": 0, "vpsId": 1, "vpxFile.filename": 1, "updatedAt": 1},
+        ).sort([("updatedAt", -1), ("vpsId", 1)])
+
+        for table in table_rows:
+            vps_id = table.get("vpsId")
+            if not vps_id or vps_id in title_by_vps_id:
+                continue
+            filename = ((table.get("vpxFile") or {}).get("filename"))
+            cleaned_title = _clean_table_filename(filename)
+            if cleaned_title:
+                title_by_vps_id[vps_id] = cleaned_title
+
+    for row in rows:
+        vpsdb_name = ((row.get("vpsdb") or {}).get("name"))
+        state_alttitle = row.get("tableTitle")
+        table_title = (
+            (vpsdb_name.strip() if isinstance(vpsdb_name, str) and vpsdb_name.strip() else None)
+            or (state_alttitle.strip() if isinstance(state_alttitle, str) and state_alttitle.strip() else None)
+            or title_by_vps_id.get(row.get("vpsId"))
+            or row.get("vpsId")
+        )
+        row["tableTitle"] = table_title
+
+    return rows
+
+
 def _build_extracted_score_items(state: dict, normalized_user_id: str, initials: str) -> list[dict]:
     score_payload = _get_score_payload(state)
     if not score_payload:
@@ -430,6 +477,7 @@ def _build_extracted_score_items(state: dict, normalized_user_id: str, initials:
             "userId": normalized_user_id,
             "initials": initials,
             "vpsId": state.get("vpsId"),
+            "tableTitle": state.get("alttitle"),
             "label": _score_entry_label(score_payload, entry),
             "updatedAt": state.get("updatedAt"),
             "score": entry,
@@ -515,6 +563,7 @@ async def get_all_users_latest_matching_scores(
         extracted_items.extend(_build_extracted_score_items(state, normalized_user_id, initials))
 
     paged_items = enrich_with_vpsdb(extracted_items[offset:offset + limit], db)
+    paged_items = _enrich_extracted_scores_with_table_titles(paged_items, db)
     return {
         "limit": limit,
         "offset": offset,
@@ -740,6 +789,7 @@ async def get_user_latest_matching_scores(
         extracted_items.extend(_build_extracted_score_items(state, normalized_user_id, initials))
 
     paged_items = enrich_with_vpsdb(extracted_items[offset:offset + limit], db)
+    paged_items = _enrich_extracted_scores_with_table_titles(paged_items, db)
     return {
         "userId": normalized_user_id,
         "initials": initials,

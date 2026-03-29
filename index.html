@@ -788,7 +788,7 @@
             renderTable("latestScoresTable",
                 [
                     { label: "User", getter: r => linkUserId(r.userId), html: true },
-                    { label: "Table", getter: r => linkTableName(fmtTableName(r), r.vpsId), html: true },
+                    { label: "Table", getter: r => linkTableName(r.tableTitle || fmtTableName(r), r.vpsId), html: true },
                     { label: "Label", getter: r => r.label || "-" },
                     { label: "Score", getter: r => fmtScoreValue(r.score) },
                     { label: "Updated", getter: r => fmtDate(r.updatedAt) },
