@@ -471,7 +471,22 @@ Returns whether a userId is available for registration.
 }
 ```
 
-### 10.5 Get user table count
+### 10.5 Get user initials
+
+**GET** `/api/v1/users/{userId}/initials`
+
+Returns the registered initials for a userId.
+
+#### Response example
+
+```json
+{
+  "userId": "cabinet_1",
+  "initials": "CH"
+}
+```
+
+### 10.6 Get user table count
 
 **GET** `/api/v1/users/{userId}/tables/count`
 
@@ -486,7 +501,7 @@ Returns the total number of tables submitted by a user.
 }
 ```
 
-### 10.6 Get top rated user tables
+### 10.7 Get top rated user tables
 
 **GET** `/api/v1/users/{userId}/tables/top-rated`
 
@@ -518,7 +533,7 @@ Returns the user's highest-rated table states (sorted by rating desc).
 ]
 ```
 
-### 10.7 Get all current user table states
+### 10.8 Get all current user table states
 
 **GET** `/api/v1/users/{userId}/tables`
 
@@ -530,7 +545,7 @@ Optional query parameters:
 - `offset`
 - `updatedSince`
 
-### 10.7 Optional get recent changes
+### 10.9 Optional get recent changes
 
 **GET** `/api/v1/changes`
 

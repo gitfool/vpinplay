@@ -56,6 +56,7 @@ This will start:
 - `GET /api/v1/users/count` - Get total number of registered users
 - `GET /api/v1/users/top-activity` - Get top users by trailing N-day activity from sync deltas (`metric=startCountPlayed|runTimePlayed`, `days`, `limit`, `offset`; max 100 per request)
 - `GET /api/v1/users/{userId}/available` - Check if userId is available for registration
+- `GET /api/v1/users/{userId}/initials` - Get the user's registered initials
 - `GET /api/v1/users/{userId}/last-sync` - Get the user's last successful sync timestamp
 - `GET /api/v1/users/{userId}/tables/{vpsId}` - Get user state for a table
 - `GET /api/v1/users/{userId}/tables` - Get all tables for a user (paginated via `limit` + `offset`, max 100 per request)
@@ -191,6 +192,13 @@ Check if userId is available:
 ```bash
 curl http://localhost:8888/api/v1/users/cabinet_1/available
 # Returns: {"available": false}
+```
+
+Get a user's initials:
+
+```bash
+curl http://localhost:8888/api/v1/users/cabinet_1/initials
+# Returns: {"userId": "cabinet_1", "initials": "CH"}
 ```
 
 Delete a user and their submitted records (maintenance script):

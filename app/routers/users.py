@@ -82,6 +82,26 @@ async def get_user_last_sync(userId: str, db: Database = Depends(get_db)):
     }
 
 
+@router.get("/users/{userId}/initials")
+async def get_user_initials(userId: str, db: Database = Depends(get_db)):
+    """
+    Get the user's registered initials.
+    """
+    normalized_user_id = normalize_user_id(userId)
+    client = db["client_registry"].find_one(
+        user_id_filter(normalized_user_id),
+        {"_id": 0, "initials": 1}
+    )
+
+    if not client:
+        raise HTTPException(status_code=404, detail=f"User not found: {normalized_user_id}")
+
+    return {
+        "userId": normalized_user_id,
+        "initials": client.get("initials")
+    }
+
+
 @router.get("/users/{userId}/tables/count")
 async def get_user_table_count(userId: str, db: Database = Depends(get_db)):
     """
