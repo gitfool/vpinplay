@@ -49,18 +49,13 @@
     <section class="afm-scoreboard-shell" id="afm-grid" hidden>
       <div class="afm-scoreboard-title">Scoreboard</div>
       <div class="afm-grid">
-        <section class="afm-card afm-card-hero" id="afm-grand-card">
-          <div class="afm-card-title" id="afm-grand-title">Featured Score</div>
-          <div id="afm-grand-body" class="afm-hero-empty">No featured score entry found.</div>
-        </section>
-
         <section class="afm-card">
-          <div class="afm-card-title" id="afm-highest-title">Scores</div>
+          <div class="afm-card-title" id="afm-highest-title">HighScore</div>
           <div id="afm-highest-body"></div>
         </section>
 
         <section class="afm-card">
-          <div class="afm-card-title" id="afm-buyin-title">More Scores</div>
+          <div class="afm-card-title" id="afm-buyin-title">Stat</div>
           <div id="afm-buyin-body"></div>
         </section>
       </div>
@@ -295,13 +290,6 @@
     min-width: 0;
   }
 
-  .afm-card-hero {
-    grid-column: 1 / -1;
-    background:
-      linear-gradient(135deg, rgba(114, 231, 255, 0.08), rgba(255, 204, 102, 0.1)),
-      var(--afm-surface);
-  }
-
   .afm-card-title {
     margin-bottom: 12px;
     color: var(--afm-muted);
@@ -311,29 +299,9 @@
     font-weight: 800;
   }
 
-  .afm-hero-empty,
   .afm-empty {
     color: var(--afm-muted);
     font-size: 0.92rem;
-  }
-
-  .afm-grand-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    align-items: baseline;
-  }
-
-  .afm-grand-initials {
-    font-size: 2.4rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    color: var(--afm-accent);
-  }
-
-  .afm-grand-score {
-    font-size: 1.6rem;
-    font-weight: 800;
   }
 
   .afm-list {
@@ -396,13 +364,6 @@
       gap: 10px;
     }
 
-    .afm-grand-initials {
-      font-size: 2rem;
-    }
-
-    .afm-grand-score {
-      font-size: 1.3rem;
-    }
   }
 
   @media (max-width: 520px) {
@@ -599,27 +560,6 @@
     return typeof entry?.matchedUserId === "string" ? entry.matchedUserId : "";
   }
 
-  function renderGrandChampion(entry) {
-    const title = q("afm-grand-title");
-    const host = q("afm-grand-body");
-    if (!host) return;
-    if (!entry) {
-      host.className = "afm-hero-empty";
-      host.textContent = "No featured score entry found.";
-      if (title) title.textContent = "Featured Score";
-      return;
-    }
-
-    if (title) title.textContent = String(entry.section || "Featured Score");
-    host.className = "";
-    host.innerHTML = `
-      <div class="afm-grand-wrap">
-        <div class="afm-grand-initials">${scoreOwnerLabel(entry)}</div>
-        <div class="afm-grand-score">${scoreText(entry)}</div>
-      </div>
-    `;
-  }
-
   function renderRankedList(hostId, entries) {
     const host = q(hostId);
     if (!host) return;
@@ -753,23 +693,17 @@
 
     const groups = groupEntries(entries);
     const orderedSections = getPreferredSectionOrder(groups);
-    const heroSection = orderedSections[0] || null;
-    const heroEntries = heroSection ? (groups.get(heroSection) || []) : [];
-    const heroEntry = heroEntries[0] || null;
-    const remainingHeroEntries = heroEntries.slice(1);
-    const listSectionOne = orderedSections[1] || null;
-    const listSectionTwo = orderedSections[2] || null;
+    const listSectionOne = orderedSections[0] || null;
+    const listSectionTwo = orderedSections[1] || null;
 
+    setSectionTitle("afm-highest-title", listSectionOne || "Scores");
+    setSectionTitle("afm-buyin-title", listSectionTwo || "More Scores");
     const listOneEntries = listSectionOne
       ? (groups.get(listSectionOne) || []).slice(0, RANKED_SECTION_LIMIT)
-      : remainingHeroEntries.slice(0, RANKED_SECTION_LIMIT);
+      : [];
     const listTwoEntries = listSectionTwo
       ? (groups.get(listSectionTwo) || []).slice(0, RANKED_SECTION_LIMIT)
-      : (listSectionOne ? [] : remainingHeroEntries.slice(RANKED_SECTION_LIMIT, RANKED_SECTION_LIMIT * 2));
-
-    renderGrandChampion(heroEntry);
-    setSectionTitle("afm-highest-title", listSectionOne || (heroSection || "Scores"));
-    setSectionTitle("afm-buyin-title", listSectionTwo || (listTwoEntries.length ? `${heroSection || "Scores"} More` : "More Scores"));
+      : [];
     renderRankedList("afm-highest-body", listOneEntries);
     renderRankedList("afm-buyin-body", listTwoEntries);
 
