@@ -396,15 +396,31 @@ def _extract_matching_score_entries(score_payload: dict, target_initials: str) -
     if not normalized_target:
         return []
 
+    def looks_like_direct_score_entry(payload: dict) -> bool:
+        if not isinstance(payload, dict):
+            return False
+        score_value = _get_case_insensitive_value(payload, "value")
+        score_type = _get_case_insensitive_value(payload, "score_type") or _get_case_insensitive_value(payload, "scoreType")
+        rom = _get_case_insensitive_value(payload, "rom") or _get_case_insensitive_value(payload, "resolved_rom")
+        return score_value is not None or bool(str(score_type or "").strip()) or bool(str(rom or "").strip())
+
     def entry_matches(entry: dict) -> bool:
         entry_initials = _get_case_insensitive_value(entry, "initials")
         return isinstance(entry_initials, str) and entry_initials.strip().upper() == normalized_target
 
     entries = _get_case_insensitive_value(score_payload, "entries")
     if isinstance(entries, list):
-        return [entry for entry in entries if isinstance(entry, dict) and entry_matches(entry)]
+        matched_entries = [entry for entry in entries if isinstance(entry, dict) and entry_matches(entry)]
+        if matched_entries:
+            return matched_entries
 
     if entry_matches(score_payload):
+        return [score_payload]
+
+    # Some clients submit a single direct score object without per-entry initials.
+    # Treat that as the submitting user's latest score so it still appears in
+    # latest-score views.
+    if _get_case_insensitive_value(score_payload, "initials") is None and looks_like_direct_score_entry(score_payload):
         return [score_payload]
 
     return []

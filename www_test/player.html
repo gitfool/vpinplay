@@ -484,10 +484,11 @@
 
             <section class="panel-embed">
                 <h3>Attack From Mars Score Panel Test</h3>
-                <p class="panel-embed-note">Temporary test embed using hardcoded <span class="mono">userid=superhac</span>.</p>
+                <p class="panel-embed-note">Temporary test embed bound to the current dashboard <span class="mono">userid</span>.</p>
                 <iframe
+                    id="scorePanelFrame"
                     class="panel-embed-frame"
-                    src="panels/score_user/9Paf7-CL.html?userid=superhac"
+                    src="panels/score_user/9Paf7-CL.html"
                     title="Attack From Mars score panel test">
                 </iframe>
             </section>
@@ -500,6 +501,16 @@
 
         function q(id) {
             return document.getElementById(id);
+        }
+
+        function updateScorePanelEmbed() {
+            const frame = q("scorePanelFrame");
+            if (!frame) return;
+
+            const base = "panels/score_user/9Paf7-CL.html";
+            frame.src = currentUserId
+                ? `${base}?userid=${encodeURIComponent(currentUserId)}`
+                : base;
         }
 
         function getPreferredTheme() {
@@ -843,6 +854,7 @@
             q("dashboard").classList.remove("hidden");
             q("title").textContent = `${userId}`;
             q("userBadge").textContent = `userid=${userId}`;
+            updateScorePanelEmbed();
             refreshDashboard();
         }
 
