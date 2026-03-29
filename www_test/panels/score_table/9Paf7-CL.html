@@ -568,6 +568,16 @@
     return api(path);
   }
 
+  async function fetchActivitySummary() {
+    const path = `/api/v1/tables/${encodeURIComponent(PANEL_VPS_ID)}/activity-summary`;
+    return api(path);
+  }
+
+  async function fetchWeeklyActivity() {
+    const path = `/api/v1/tables/${encodeURIComponent(PANEL_VPS_ID)}/activity-weekly?days=7`;
+    return api(path);
+  }
+
   function normalizeBestEverItems(items) {
     return items
       .filter(item => item && item.score && typeof item.score === "object")
@@ -582,9 +592,11 @@
 
   async function loadPanel() {
     setStatus(`Loading global score data for ${PANEL_VPS_ID}...`);
-    const [bestEverResult, ratingResult] = await Promise.all([
+    const [bestEverResult, ratingResult, activityResult, weeklyActivityResult] = await Promise.all([
       fetchBestEverScoreItems(),
       fetchCumulativeRating(),
+      fetchActivitySummary(),
+      fetchWeeklyActivity(),
     ]);
 
     if (!bestEverResult.ok) {
@@ -641,7 +653,11 @@
       .sort((a, b) => String(b).localeCompare(String(a)))[0];
 
     q("afm-meta").textContent = `Latest update: ${fmtUpdatedAt(latestUpdatedAt)}`;
-    setStatus(`Loaded ${entries.length} historical best-ever matched entr${entries.length === 1 ? "y" : "ies"}.`);
+    const runTimeTotal = activityResult.ok ? Number(activityResult.data?.runTimeTotal || 0) : 0;
+    const startCountTotal = activityResult.ok ? Number(activityResult.data?.startCountTotal || 0) : 0;
+    const runTimeWeek = weeklyActivityResult.ok ? Number(weeklyActivityResult.data?.runTimePlayed || 0) : 0;
+    const startCountWeek = weeklyActivityResult.ok ? Number(weeklyActivityResult.data?.startCountPlayed || 0) : 0;
+    setStatus(`Runtime: ${fmtNumber(runTimeTotal)} min (7d ${fmtNumber(runTimeWeek)} min) | Start Count: ${fmtNumber(startCountTotal)} (7d ${fmtNumber(startCountWeek)})`);
   }
 
   loadPanel();

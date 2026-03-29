@@ -153,6 +153,117 @@ async def get_table_user_ratings(vpsId: str, db: Database = Depends(get_db)):
     ]
 
 
+@router.get("/tables/{vpsId}/activity-summary")
+async def get_table_activity_summary(vpsId: str, db: Database = Depends(get_db)):
+    """
+    Get cumulative runTime and startCount totals for one table across all users.
+    """
+    pipeline = [
+        {"$match": {"vpsId": vpsId}},
+        {
+            "$group": {
+                "_id": "$vpsId",
+                "runTimeTotal": {"$sum": {"$ifNull": ["$runTime", 0]}},
+                "startCountTotal": {"$sum": {"$ifNull": ["$startCount", 0]}},
+                "playerCount": {"$sum": 1},
+            }
+        }
+    ]
+
+    results = list(db["user_table_state"].aggregate(pipeline))
+    if not results:
+        response = [{
+            "vpsId": vpsId,
+            "runTimeTotal": 0,
+            "startCountTotal": 0,
+            "playerCount": 0,
+        }]
+        return enrich_with_vpsdb(response, db)[0]
+
+    row = results[0]
+    response = [{
+        "vpsId": row["_id"],
+        "runTimeTotal": int(row.get("runTimeTotal", 0)),
+        "startCountTotal": int(row.get("startCountTotal", 0)),
+        "playerCount": int(row.get("playerCount", 0)),
+    }]
+    return enrich_with_vpsdb(response, db)[0]
+
+
+@router.get("/tables/{vpsId}/activity-weekly")
+async def get_table_activity_weekly(
+    vpsId: str,
+    days: int = Query(7, ge=1, le=365),
+    db: Database = Depends(get_db)
+):
+    """
+    Get cumulative runTime and startCount deltas for one table over the trailing N days.
+    Only positive deltas are counted.
+    """
+    now = datetime.utcnow()
+    since = now - timedelta(days=days)
+
+    pipeline = [
+        {
+            "$match": {
+                "$and": [
+                    {"vpsId": vpsId},
+                    {"changedAt": {"$gte": since}},
+                ]
+            }
+        },
+        {
+            "$group": {
+                "_id": "$vpsId",
+                "runTimePlayed": {
+                    "$sum": {
+                        "$cond": [
+                            {"$gt": ["$deltaRunTime", 0]},
+                            "$deltaRunTime",
+                            0,
+                        ]
+                    }
+                },
+                "startCountPlayed": {
+                    "$sum": {
+                        "$cond": [
+                            {"$gt": ["$deltaStartCount", 0]},
+                            "$deltaStartCount",
+                            0,
+                        ]
+                    }
+                },
+                "changeEvents": {"$sum": 1},
+            }
+        }
+    ]
+
+    results = list(db["user_table_state_deltas"].aggregate(pipeline))
+    if not results:
+        response = [{
+            "vpsId": vpsId,
+            "days": days,
+            "from": since,
+            "to": now,
+            "runTimePlayed": 0,
+            "startCountPlayed": 0,
+            "changeEvents": 0,
+        }]
+        return enrich_with_vpsdb(response, db)[0]
+
+    row = results[0]
+    response = [{
+        "vpsId": row["_id"],
+        "days": days,
+        "from": since,
+        "to": now,
+        "runTimePlayed": int(row.get("runTimePlayed", 0)),
+        "startCountPlayed": int(row.get("startCountPlayed", 0)),
+        "changeEvents": int(row.get("changeEvents", 0)),
+    }]
+    return enrich_with_vpsdb(response, db)[0]
+
+
 @router.get("/tables/newly-added")
 async def get_global_new_tables(
     limit: int = Query(100, ge=1, le=100),
