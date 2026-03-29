@@ -368,6 +368,57 @@ def _map_user_states(states: list[dict], db: Database) -> list[UserTableStateRes
     return [UserTableStateResponse(**row) for row in enriched]
 
 
+def _get_case_insensitive_value(obj: dict | None, key: str):
+    if not isinstance(obj, dict):
+        return None
+    wanted = str(key).lower()
+    for existing_key, value in obj.items():
+        if str(existing_key).lower() == wanted:
+            return value
+    return None
+
+
+def _get_score_payload(row: dict) -> dict | None:
+    direct = _get_case_insensitive_value(row, "score")
+    if isinstance(direct, dict):
+        return direct
+
+    user = _get_case_insensitive_value(row, "user")
+    nested = _get_case_insensitive_value(user, "score")
+    if isinstance(nested, dict):
+        return nested
+
+    return None
+
+
+def _extract_matching_score_entries(score_payload: dict, target_initials: str) -> list[dict]:
+    normalized_target = str(target_initials or "").strip().upper()
+    if not normalized_target:
+        return []
+
+    def entry_matches(entry: dict) -> bool:
+        entry_initials = _get_case_insensitive_value(entry, "initials")
+        return isinstance(entry_initials, str) and entry_initials.strip().upper() == normalized_target
+
+    entries = _get_case_insensitive_value(score_payload, "entries")
+    if isinstance(entries, list):
+        return [entry for entry in entries if isinstance(entry, dict) and entry_matches(entry)]
+
+    if entry_matches(score_payload):
+        return [score_payload]
+
+    return []
+
+
+def _score_entry_label(score_payload: dict, entry: dict) -> str:
+    for source in (entry, score_payload):
+        for key in ("label", "section", "score_type", "scoreType"):
+            value = _get_case_insensitive_value(source, key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return "Score"
+
+
 @router.get("/users/tables/with-score", response_model=List[UserTableStateResponse])
 async def get_all_users_tables_with_score(
     vpsId: str = Query(..., min_length=1, description="Filter to a specific VPS ID"),
@@ -559,6 +610,85 @@ async def get_user_tables_with_score(
     )
 
     return _map_user_states(user_states, db)
+
+
+@router.get("/users/{userId}/scores/latest")
+async def get_user_latest_matching_scores(
+    userId: str,
+    vpsId: str | None = Query(None, min_length=1, description="Optional VPS ID filter"),
+    limit: int = Query(100, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Database = Depends(get_db)
+):
+    """
+    Get the latest extracted score entries for a user where entry initials match
+    the user's registered initials.
+
+    Optional query parameters:
+    - vpsId: Restrict results to one canonical VPS table ID
+    - limit: Maximum number of extracted score entries (default 100, max 100)
+    - offset: Number of extracted score entries to skip (default 0)
+    """
+    normalized_user_id = normalize_user_id(userId)
+    client = db["client_registry"].find_one(
+        user_id_filter(normalized_user_id),
+        {"_id": 0, "initials": 1}
+    )
+
+    if not client:
+        raise HTTPException(status_code=404, detail=f"User not found: {normalized_user_id}")
+
+    initials = str(client.get("initials") or "").strip()
+    if not initials:
+        return {
+            "userId": normalized_user_id,
+            "initials": "",
+            "limit": limit,
+            "offset": offset,
+            "returned": 0,
+            "items": [],
+        }
+
+    query = {
+        "$and": [
+            user_id_filter(normalized_user_id),
+            {"score": {"$type": "object"}},
+        ]
+    }
+    if vpsId:
+        query["$and"].append({"vpsId": vpsId})
+
+    user_states = list(
+        db["user_table_state"]
+        .find(query)
+        .sort([("updatedAt", -1), ("vpsId", 1)])
+    )
+
+    extracted_items = []
+    for state in user_states:
+        score_payload = _get_score_payload(state)
+        if not score_payload:
+            continue
+
+        for entry in _extract_matching_score_entries(score_payload, initials):
+            extracted_items.append({
+                "userId": normalized_user_id,
+                "initials": initials,
+                "vpsId": state.get("vpsId"),
+                "label": _score_entry_label(score_payload, entry),
+                "updatedAt": state.get("updatedAt"),
+                "score": entry,
+            })
+
+    paged_items = extracted_items[offset:offset + limit]
+    return {
+        "userId": normalized_user_id,
+        "initials": initials,
+        "limit": limit,
+        "offset": offset,
+        "returned": len(paged_items),
+        "items": paged_items,
+    }
 
 
 @router.get("/users/{userId}/tables/{vpsId}", response_model=UserTableStateResponse)
