@@ -18,8 +18,10 @@ function resizeEmbedFrame() {
     const contentHeight = Math.max(
       panel?.scrollHeight || 0,
       panel?.offsetHeight || 0,
+      panel?.getBoundingClientRect?.().height || 0,
       shell?.scrollHeight || 0,
       shell?.offsetHeight || 0,
+      shell?.getBoundingClientRect?.().height || 0,
     );
 
     const fallbackHeight = Math.max(
@@ -30,21 +32,25 @@ function resizeEmbedFrame() {
     );
 
     const nextHeight = contentHeight || fallbackHeight;
-    frame.style.height = `${Math.ceil(nextHeight + 8)}px`;
+    frame.style.height = `${Math.ceil(nextHeight + 24)}px`;
   } catch {
     // Ignore cross-document sizing issues if the frame origin changes.
   }
+}
+
+function scheduleEmbedFrameResizes() {
+  const delays = [0, 50, 150, 300, 600, 1000, 1500, 2200];
+  delays.forEach((delay) => {
+    window.setTimeout(resizeEmbedFrame, delay);
+  });
 }
 
 function initEmbedFrameSizing() {
   const frame = q("scoreUserPanelFrame");
   if (!frame) return;
 
-  frame.addEventListener("load", () => {
-    resizeEmbedFrame();
-    window.setTimeout(resizeEmbedFrame, 50);
-    window.setTimeout(resizeEmbedFrame, 250);
-    window.setTimeout(resizeEmbedFrame, 750);
+  const handleFrameReady = () => {
+    scheduleEmbedFrameResizes();
 
     try {
       const win = frame.contentWindow;
@@ -64,7 +70,17 @@ function initEmbedFrameSizing() {
     } catch {
       // Ignore cross-document sizing issues if the frame origin changes.
     }
-  });
+  };
+
+  frame.addEventListener("load", handleFrameReady);
+
+  try {
+    if (frame.contentDocument?.readyState === "complete") {
+      handleFrameReady();
+    }
+  } catch {
+    // Ignore cross-document sizing issues if the frame origin changes.
+  }
 }
 
 function handleSetupSubmit(event) {
