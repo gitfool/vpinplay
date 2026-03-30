@@ -5,11 +5,23 @@ async function loadEmbeddedPanel() {
   const host = q("scoreUserPanelEmbed");
   if (!host) return;
 
-  const src = host.dataset.panelSrc;
-  if (!src) return;
+  const baseSrc = host.dataset.panelSrc;
+  if (!baseSrc) return;
+
+  const userId =
+    currentUserId ||
+    new URLSearchParams(window.location.search).get("userid") ||
+    "";
+  if (!userId) {
+    host.innerHTML = `<div class="muted">Set a userid to load the score panel.</div>`;
+    return;
+  }
+
+  const src = new URL(baseSrc, window.location.href);
+  src.searchParams.set("userid", userId);
 
   try {
-    const response = await fetch(src);
+    const response = await fetch(src.toString());
     if (!response.ok) {
       host.innerHTML = `<div class="muted">Failed to load embedded panel (${response.status}).</div>`;
       return;
@@ -496,18 +508,19 @@ function applyUserId() {
 function init() {
   initTheme();
   initViewMode();
-  loadEmbeddedPanel();
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("userid");
 
   if (!userId) {
     q("dashboard").classList.add("hidden");
+    loadEmbeddedPanel();
     return;
   }
 
   currentUserId = userId;
   q("dashboard").classList.remove("hidden");
   q("userBadge").textContent = `userid=${userId}`;
+  loadEmbeddedPanel();
   refreshDashboard();
 }
 
