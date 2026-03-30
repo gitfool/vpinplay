@@ -1,41 +1,3 @@
-const API_BASE = "https://api.vpinplay.com:8888";
-
-function q(id) {
-  return document.getElementById(id);
-}
-
-function getPreferredTheme() {
-  const saved = localStorage.getItem("vpin-theme");
-  if (saved === "light" || saved === "dark") return saved;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
-
-function updateThemeToggleLabel(theme) {
-  const btn = q("themeToggleBtn");
-  if (!btn) return;
-  btn.textContent = theme === "dark" ? "Light" : "Dark";
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  updateThemeToggleLabel(theme);
-}
-
-function initTheme() {
-  applyTheme(getPreferredTheme());
-}
-
-function toggleTheme() {
-  const next =
-    document.documentElement.getAttribute("data-theme") === "dark"
-      ? "light"
-      : "dark";
-  localStorage.setItem("vpin-theme", next);
-  applyTheme(next);
-}
-
 function getVpsidFromUrl() {
   const params = new URLSearchParams(window.location.search);
   return (params.get("vpsid") || "").trim();
@@ -58,70 +20,6 @@ function setLookupStatus(message, isError = false) {
   el.classList.toggle("error", !!isError);
 }
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function fmtDate(value) {
-  if (!value) return "-";
-  const raw = String(value).trim();
-  const hasTimeZone = /([zZ]|[+-]\d{2}:\d{2})$/.test(raw);
-  const normalized = !hasTimeZone && raw.includes("T") ? `${raw}Z` : raw;
-  const d = new Date(normalized);
-  if (Number.isNaN(d.getTime())) return "-";
-  return d.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "medium",
-  });
-}
-
-function fmtTableName(row) {
-  const name = row?.vpsdb?.name || "Unknown Table";
-  const manufacturer = row?.vpsdb?.manufacturer;
-  const year = row?.vpsdb?.year;
-  const parts = [manufacturer, year].filter(
-    (v) => v !== null && v !== undefined && String(v).trim() !== "",
-  );
-  return parts.length ? `${name} (${parts.join(", ")})` : name;
-}
-
-function fmtRatingStars(value, options = {}) {
-  if (value === null || value === undefined || value === "") return "-";
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return "-";
-  const clamped = Math.max(0, Math.min(5, numeric));
-  const roundedToHalf = Math.round(clamped * 2) / 2;
-  const fullStars = Math.floor(roundedToHalf);
-  const hasHalf = roundedToHalf - fullStars >= 0.5;
-  let stars = "";
-  for (let i = 0; i < 5; i += 1) {
-    const fillPercent =
-      i < fullStars ? 100 : i === fullStars && hasHalf ? 50 : 0;
-    stars += `<span class="rating-star-cell" aria-hidden="true"><span class="rating-star empty">★</span><span class="rating-star fill" style="width:${fillPercent}%">★</span></span>`;
-  }
-  const numericText = options.showNumeric
-    ? ` <span class="rating-value">(${escapeHtml(clamped.toFixed(2))})</span>`
-    : "";
-  return `<span class="rating-stars" title="${escapeHtml(clamped.toFixed(2))} / 5" aria-label="${escapeHtml(clamped.toFixed(2))} out of 5 stars">${stars}</span>${numericText}`;
-}
-
-function linkVpsId(vpsId) {
-  const id = String(vpsId || "").trim();
-  if (!id) return "-";
-  return `<a href="https://virtualpinballspreadsheet.github.io/games?game=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer">${escapeHtml(id)}</a>`;
-}
-
-function linkUserId(userId) {
-  const id = String(userId || "").trim();
-  if (!id) return "-";
-  return `<a href="player.html?userid=${encodeURIComponent(id)}">${escapeHtml(id)}</a>`;
-}
-
 function fmtSubmitters(submitters) {
   if (!Array.isArray(submitters) || submitters.length === 0) {
     return '<span class="muted">Unknown</span>';
@@ -130,16 +28,6 @@ function fmtSubmitters(submitters) {
     .filter((v) => String(v || "").trim() !== "")
     .map((v) => linkUserId(v))
     .join(", ");
-}
-
-async function api(path) {
-  try {
-    const response = await fetch(`${API_BASE}${path}`);
-    const data = await response.json().catch(() => ({}));
-    return { ok: response.ok, status: response.status, data };
-  } catch (error) {
-    return { ok: false, status: 0, data: { error: error.message } };
-  }
 }
 
 async function lookupByFilehash() {
@@ -169,33 +57,6 @@ async function lookupByFilehash() {
     : "";
   setLookupStatus(`Matched VPS ID: ${matchedVpsId}${alt}`);
   await refreshDashboard();
-}
-
-function renderTable(elId, columns, rows) {
-  const el = q(elId);
-  if (!rows || rows.length === 0) {
-    el.innerHTML = `<tr><td class="muted">No data</td></tr>`;
-    return;
-  }
-
-  let html = "<thead><tr>";
-  columns.forEach((col) => {
-    html += `<th>${escapeHtml(col.label)}</th>`;
-  });
-  html += "</tr></thead><tbody>";
-
-  rows.forEach((row) => {
-    html += "<tr>";
-    columns.forEach((col) => {
-      const raw = col.getter(row);
-      const text = raw === null || raw === undefined || raw === "" ? "-" : raw;
-      html += `<td>${col.html ? text : escapeHtml(text)}</td>`;
-    });
-    html += "</tr>";
-  });
-
-  html += "</tbody>";
-  el.innerHTML = html;
 }
 
 function toComparableValue(value) {
@@ -258,11 +119,11 @@ function renderDerivativeDifferences(rows) {
     : `<div class="muted">No field-level metadata differences detected.</div>`;
 
   let html = `
-                <article class="variation-card">
+                <div class="variation-card">
                     <div class="variation-title">Pairwise Comparison Across All Variations</div>
                     <div class="variation-subtitle">Compared by: vpxFile fields, ROM, alt title, alt VPS ID</div>
                     ${chips}
-                </article>
+                </div>
             `;
 
   for (let i = 0; i < rowMaps.length; i += 1) {
@@ -289,7 +150,7 @@ function renderDerivativeDifferences(rows) {
         : `<div class="muted">No differences between these two variations in compared fields.</div>`;
 
       html += `
-                        <article class="variation-card">
+                        <div class="variation-card">
                             <div class="variation-title">${escapeHtml(leftName)} vs ${escapeHtml(rightName)}</div>
                             <div class="variation-subtitle">${changedKeys.length} differing field${changedKeys.length === 1 ? "" : "s"}</div>
                             <div class="variation-grid">
@@ -299,7 +160,7 @@ function renderDerivativeDifferences(rows) {
                                 ${field("rightCreatedAt", fmtDate(right.row?.createdAt))}
                                 ${changedFields}
                             </div>
-                        </article>
+                        </div>
                     `;
     }
   }
@@ -373,61 +234,17 @@ function renderAssociatedRoms(rows) {
   container.innerHTML = romEntries
     .map(
       (entry) => `
-                <article class="variation-card">
+                <div class="variation-card">
                     <div class="variation-title">${escapeHtml(entry.rom)}</div>
                     <div class="variation-grid">
                         ${field("variationCount", String(entry.variants))}
                         ${field("submitters", fmtSubmitters([...entry.submitters]), true)}
                         ${field("files", [...entry.filenames].map(escapeHtml).join("<br>") || "-", true)}
                     </div>
-                </article>
+                </div>
             `,
     )
     .join("");
-}
-
-function flattenObject(obj, prefix = "") {
-  const out = [];
-  if (obj === null || obj === undefined) {
-    out.push({ key: prefix || "value", value: "-" });
-    return out;
-  }
-  if (Array.isArray(obj)) {
-    out.push({
-      key: prefix,
-      value:
-        obj
-          .map((item) =>
-            typeof item === "object" ? JSON.stringify(item) : String(item),
-          )
-          .join(", ") || "-",
-    });
-    return out;
-  }
-  if (typeof obj !== "object") {
-    out.push({ key: prefix || "value", value: obj });
-    return out;
-  }
-
-  Object.entries(obj).forEach(([key, value]) => {
-    const path = prefix ? `${prefix}.${key}` : key;
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      out.push(...flattenObject(value, path));
-    } else if (Array.isArray(value)) {
-      out.push({
-        key: path,
-        value:
-          value
-            .map((item) =>
-              typeof item === "object" ? JSON.stringify(item) : String(item),
-            )
-            .join(", ") || "-",
-      });
-    } else {
-      out.push({ key: path, value });
-    }
-  });
-  return out;
 }
 
 function renderVpsdbDetails(record) {
@@ -459,19 +276,20 @@ function renderVpsdbDetails(record) {
     .map((item) => field(item.key, item.html ?? item.value, !!item.html))
     .join("");
   container.innerHTML = `
-                <article class="variation-card">
+                <div class="variation-card">
                     <div class="variation-title">${escapeHtml(record?.vpsdb?.name || record?.vpsId || "VPSDB Record")}</div>
                     <div class="variation-grid">
                         ${fieldsHtml}
                     </div>
-                </article>
+                </div>
             `;
 }
 
 async function refreshDashboard() {
+  const btn = document.querySelector("#refreshDashboardBtn");
+  if (btn) btn.classList.add("refreshing");
   const vpsId = q("vpsIdInput").value.trim();
   setVpisidInUrl(vpsId);
-  q("lastRefresh").textContent = `Last refresh: ${new Date().toLocaleString()}`;
 
   if (!vpsId) {
     renderTable(
@@ -547,6 +365,15 @@ async function refreshDashboard() {
   const vpsdbRecord =
     vpsdbByIdRes.ok && vpsdbByIdRes.data ? vpsdbByIdRes.data : null;
   renderVpsdbDetails(vpsdbRecord);
+
+  const header = document.querySelector("vpinplay-header");
+  if (header) {
+    header.markRefresh();
+  }
+
+  if (btn) {
+    setTimeout(() => btn.classList.remove("refreshing"), 600);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {

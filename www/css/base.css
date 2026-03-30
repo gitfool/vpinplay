@@ -1,0 +1,812 @@
+/* ============================================
+   VPinPlay Synthwave Design System
+   Base styles shared across all pages
+   ============================================ */
+
+/* CSS Variables - Synthwave Dark Mode */
+:root {
+  /* Dark Mode - Synthwave/Retro */
+  --bg: #0a0518;
+  --bg-secondary: #150a2e;
+  --surface: #1a0f35;
+  --surface-2: #251447;
+  --surface-soft: #2a1a4a;
+  --ink: #e8d5ff;
+  --ink-muted: #b89dd9;
+  --line: #3d2461;
+
+  /* Neon accents */
+  --neon-pink: #ff0a78;
+  --neon-cyan: #00d9ff;
+  --neon-purple: #b429f9;
+  --neon-orange: #ff6b35;
+  --neon-yellow: #ffd93d;
+
+  /* Gradients */
+  --header-gradient: linear-gradient(
+    135deg,
+    #b429f9 0%,
+    #4a1e7c 50%,
+    #0a0518 100%
+  );
+  --sunset-gradient: linear-gradient(
+    180deg,
+    #ff6b35 0%,
+    #ff0a78 25%,
+    #b429f9 50%,
+    #4a1e7c 100%
+  );
+
+  /* Functional colors */
+  --link: #00d9ff;
+  --ok: #00ff9f;
+  --warn: #ffd93d;
+  --bad: #ff0a78;
+
+  /* Tables */
+  --table-row: #1a0f35;
+  --table-row-alt: #251447;
+  --table-hover: #3d2461;
+
+  /* Effects */
+  --glow-pink: 0 0 4px rgba(255, 10, 120, 0.5), 0 0 8px rgba(255, 10, 120, 0.3);
+  --glow-cyan: 0 0 4px rgba(0, 217, 255, 0.5), 0 0 8px rgba(0, 217, 255, 0.3);
+  --glow-purple:
+    0 0 4px rgba(180, 41, 249, 0.5), 0 0 8px rgba(180, 41, 249, 0.3);
+  --glow-yellow: 0 0 2px rgba(255, 217, 61, 0.4);
+  --shadow: 0 2px 8px rgba(180, 41, 249, 0.2);
+  --shadow-intense: 0 2px 8px rgba(180, 41, 249, 0.35);
+  --radius: 12px;
+
+  /* Grid pattern (subtle) */
+  --grid-color: rgba(0, 217, 255, 0.2);
+}
+
+/* Light Mode - Retro Pastels */
+[data-theme="light"] {
+  --bg: #fef3ff;
+  --bg-secondary: #f5e6ff;
+  --surface: #ffffff;
+  --surface-2: #f0e0ff;
+  --surface-soft: #faf5ff;
+  --ink: #2d1b3d;
+  --ink-muted: #6b4c7d;
+  --line: #e0c9f0;
+
+  /* Softened neon for light mode */
+  --neon-pink: #d4006d;
+  --neon-cyan: #0099cc;
+  --neon-purple: #8e24c7;
+  --neon-orange: #e65528;
+  --neon-yellow: #d4a500;
+
+  /* Gradients */
+  --header-gradient: linear-gradient(
+    135deg,
+    #fef3ff 0%,
+    #f0e0ff 50%,
+    #0099cc 100%
+  );
+  --sunset-gradient: linear-gradient(
+    180deg,
+    #e65528 0%,
+    #d4006d 25%,
+    #8e24c7 50%,
+    #6b4c7d 100%
+  );
+
+  /* Functional colors */
+  --link: #0099cc;
+  --ok: #00a876;
+  --warn: #d4a500;
+  --bad: #c7004f;
+
+  /* Tables */
+  --table-row: #ffffff;
+  --table-row-alt: #faf5ff;
+  --table-hover: #f0e0ff;
+
+  /* Effects */
+  --glow-pink: 0 4px 16px rgba(212, 0, 109, 0.25);
+  --glow-cyan: 0 4px 16px rgba(0, 153, 204, 0.25);
+  --glow-purple: 0 4px 16px rgba(142, 36, 199, 0.25);
+  --glow-yellow: 0 2px 10px rgba(212, 165, 0, 0.2);
+  --shadow: 0 4px 24px rgba(142, 36, 199, 0.2);
+  --shadow-intense: 0 8px 32px rgba(142, 36, 199, 0.2);
+  --radius: 12px;
+
+  --grid-color: rgba(0, 153, 204, 0.2);
+}
+
+/* ============================================
+   Base Reset & Typography
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  color: var(--ink);
+  font-family: "Orbitron", "Rajdhani", "Exo 2", "Segoe UI", sans-serif;
+  background: var(--bg);
+  position: relative;
+  min-height: 100vh;
+  transition:
+    background 300ms ease,
+    color 300ms ease;
+}
+
+/* Retro grid background */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    linear-gradient(0deg, var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  opacity: 0.3;
+  z-index: 0;
+}
+
+/* Radial glow overlay */
+body::after {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -10%;
+  width: 120%;
+  height: 200%;
+  background:
+    radial-gradient(ellipse at top, rgba(180, 41, 249, 0.15), transparent 60%),
+    radial-gradient(
+      ellipse at bottom right,
+      rgba(255, 10, 120, 0.1),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at bottom left,
+      rgba(0, 217, 255, 0.1),
+      transparent 50%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+h3 {
+  color: var(--neon-purple);
+  font-size: 1.1rem;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+  transition: all 150ms ease;
+}
+
+a:hover {
+  text-shadow: var(--glow-cyan);
+}
+
+/* ============================================
+   Layout
+   ============================================ */
+
+.main {
+  position: relative;
+  width: 100vw;
+  margin: 0;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ============================================
+   Header Section
+   ============================================ */
+
+.header {
+  background: var(--header-gradient);
+  color: var(--ink);
+  padding: 10px 36px;
+  box-shadow: var(--shadow-intense);
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: var(--sunset-gradient);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.header-logo img {
+  display: block;
+  height: 50px;
+  width: auto;
+  filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.5));
+}
+
+.header-content h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-shadow: var(--glow-cyan);
+}
+
+.header-meta {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+}
+
+/* ============================================
+   Navigation & Actions
+   ============================================ */
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  z-index: 1;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-link {
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 8px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-cyan);
+  border-bottom-color: var(--neon-cyan);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Hamburger Menu */
+.menu-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-size: 1.8rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+@media (max-width: 900px) {
+  .menu-toggle {
+    display: block;
+  }
+
+  .header-nav {
+    position: fixed;
+    top: 73px;
+    left: 0;
+    width: 100%;
+    background: var(--bg-secondary);
+    flex-direction: column;
+    padding: 40px 20px;
+    gap: 30px;
+    transform: translateY(-150%);
+    transition: transform 0.3s ease-in-out;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .header-nav.open {
+    transform: translateY(0);
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .nav-link {
+    font-size: 1.2rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ============================================
+   Buttons & Pills
+   ============================================ */
+
+.pill {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: var(--glow-cyan);
+  transition: all 200ms ease;
+}
+
+.pill:hover {
+  background: rgba(0, 217, 255, 0.3);
+  box-shadow:
+    var(--glow-cyan),
+    0 0 30px rgba(0, 217, 255, 0.6);
+  transform: translateY(-2px);
+}
+
+.btn {
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--neon-pink);
+  font-weight: 800;
+  padding: 10px 16px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.88rem;
+  transition: all 200ms ease;
+  box-shadow: var(--glow-pink);
+  min-width: fit-content;
+}
+
+.btn:hover {
+  background: var(--neon-pink);
+  color: #ffffff;
+  box-shadow:
+    var(--glow-pink),
+    0 0 30px rgba(255, 10, 120, 0.8);
+  transform: translateY(-2px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-theme svg {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 2px currentColor);
+}
+
+.btn-theme:hover svg {
+  filter: drop-shadow(0 0 5px #fff);
+}
+
+.btn svg {
+  transition: transform 200ms ease;
+}
+
+.btn.refreshing svg {
+  animation: spin 600ms linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   Cards & Panels
+   ============================================ */
+
+.controls,
+.panel,
+.kpi,
+.score-card,
+.setup {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.panel::before,
+.kpi::before,
+.score-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--neon-pink),
+    var(--neon-purple),
+    var(--neon-cyan)
+  );
+  opacity: 0.25;
+  border-radius: var(--radius);
+}
+
+.panel {
+  padding: 14px;
+  display: grid;
+  gap: 24px;
+}
+
+.panel h3 {
+  font-size: 1rem;
+}
+
+.panel.panel-full {
+  grid-column: 1 / -1;
+}
+
+.kpi {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.kpi-label,
+.kpi .label {
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  font-weight: 800;
+  text-align: center;
+  gap: 6px;
+}
+
+.kpi-value,
+.kpi .value {
+  font-size: 1.6rem;
+  font-weight: 900;
+  background-clip: text;
+  text-align: center;
+}
+
+.kpi-sub,
+.kpi .sub {
+  color: var(--ink-muted);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+/* ============================================
+   Forms
+   ============================================ */
+
+.controls {
+  padding: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+input,
+select,
+textarea {
+  border: 2px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 200ms ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+/* ============================================
+   Tables
+   ============================================ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th {
+  color: var(--neon-cyan);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--surface-2);
+  font-weight: 800;
+  text-shadow: var(--glow-cyan);
+}
+
+tr td {
+  background: var(--table-row);
+}
+
+tbody tr:nth-child(even) td {
+  background: var(--table-row-alt);
+}
+
+tbody tr:hover td {
+  background: var(--table-hover);
+  border-left: 2px solid var(--neon-pink);
+}
+
+/* ============================================
+   Status & Utility Classes
+   ============================================ */
+
+.muted {
+  color: var(--ink-muted);
+}
+
+.mono {
+  font-family: "IBM Plex Mono", "Courier New", monospace;
+  letter-spacing: 0.01em;
+}
+
+.hidden {
+  display: none;
+}
+
+.status,
+.ok,
+.warn,
+.bad {
+  padding: 8px 12px;
+  border-radius: 24px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.status-ok,
+.ok {
+  color: var(--ok);
+  text-shadow: 0 0 10px var(--ok);
+  background: rgba(0, 255, 159, 0.1);
+}
+
+.status-bad,
+.bad {
+  color: var(--bad);
+  text-shadow: 0 0 10px var(--bad);
+  background: rgba(255, 10, 120, 0.1);
+}
+
+.warn {
+  color: var(--warn);
+  text-shadow: 0 0 10px var(--warn);
+  background: rgba(255, 217, 61, 0.1);
+}
+
+/* ============================================
+   Rating Stars
+   ============================================ */
+
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  white-space: nowrap;
+}
+
+.rating-star-cell {
+  position: relative;
+  display: inline-block;
+  width: 0.95em;
+  height: 1em;
+  line-height: 1;
+}
+
+.rating-star {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.rating-star.fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  color: var(--neon-yellow);
+  filter: drop-shadow(0 0 3px var(--neon-yellow));
+}
+
+.rating-star.empty {
+  color: var(--ink-muted);
+  opacity: 0.45;
+}
+
+.rating-value {
+  margin-left: 6px;
+  color: var(--ink-muted);
+  font-size: 0.84em;
+}
+
+.rating-separator {
+  color: var(--ink-muted);
+  margin: 0 6px;
+}
+
+/* ============================================
+   Grid Layouts
+   ============================================ */
+
+.grid-dashboard {
+  display: grid;
+  gap: 36px;
+}
+
+.grid-kpi {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 36px;
+}
+
+.grid-panels {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 36px;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 1050px) {
+  .grid-dashboard {
+    gap: 24px;
+  }
+
+  .grid-kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .grid-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: 20px;
+  }
+
+  .header-left {
+    gap: 12px;
+  }
+
+  .header-logo img {
+    height: 48px;
+  }
+
+  .header h1 {
+    font-size: 1.3rem;
+  }
+
+  .btn,
+  .pill {
+    font-size: 0.82rem;
+    padding: 7px 11px;
+  }
+
+  .grid-dashboard {
+    gap: 24px;
+  }
+
+  .grid-kpi {
+    grid-template-columns: 1fr;
+  }
+
+  input,
+  select,
+  textarea {
+    min-width: 0;
+    width: 100%;
+  }
+}
