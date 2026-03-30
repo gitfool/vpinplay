@@ -1,0 +1,29 @@
+@import url("./score-table-panel.css");
+
+.afm-kicker {
+  color: var(--afm-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-shadow: var(--glow-cyan);
+}
+
+.afm-header h2 {
+  margin: 4px 0 6px;
+  font-size: 1.45rem;
+}
+
+.afm-header-copy {
+  min-width: 0;
+}
+
+.afm-row {
+  grid-template-columns: 56px minmax(0, 88px) minmax(0, 1fr);
+}
+
+@media (max-width: 760px) {
+  .afm-row {
+    grid-template-columns: 52px 72px minmax(0, 1fr);
+  }
+}
