@@ -110,6 +110,23 @@ function getCardImageUrl(vpsId) {
   return `https://github.com/superhac/vpinmediadb/raw/refs/heads/main/${encodeURIComponent(vpsId)}/cab.png`;
 }
 
+function fmtLatestScoreValue(score) {
+  if (!score || typeof score !== "object") return "-";
+  const numericValue = score.value ?? score.score;
+  if (
+    numericValue !== null &&
+    numericValue !== undefined &&
+    numericValue !== ""
+  ) {
+    const base = fmtNumber(numericValue);
+    return score.value_suffix ? `${base} ${score.value_suffix}` : base;
+  }
+  if (Array.isArray(score.extra_lines) && score.extra_lines.length) {
+    return score.extra_lines.join(" | ");
+  }
+  return "-";
+}
+
 function renderCarousel(elId, rows, options = {}) {
   const el = q(elId);
   if (!rows || rows.length === 0) {
@@ -229,6 +246,7 @@ async function refreshDashboard() {
     topPlaytimeRes,
     mostPlayedRes,
     userNewlyAddedRes,
+    latestSubmittedScoresRes,
   ] = await Promise.all([
     api(`/api/v1/users/${encodeURIComponent(currentUserId)}/available`),
     api(`/api/v1/users/${encodeURIComponent(currentUserId)}/last-sync`),
@@ -259,6 +277,9 @@ async function refreshDashboard() {
     ),
     api(
       `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/newly-added?limit=5`,
+    ),
+    api(
+      `/api/v1/users/${encodeURIComponent(currentUserId)}/scores/latest?limit=5&offset=0`,
     ),
   ]);
 
@@ -411,6 +432,31 @@ async function refreshDashboard() {
           getter: (r) => fmtUserOverGlobalRating(r, globalAvgRatingMap),
           html: true,
         },
+      ],
+    },
+    {
+      id: "latestSubmittedScoresTable",
+      container: "latestSubmittedScoresContainer",
+      data:
+        latestSubmittedScoresRes.ok &&
+        Array.isArray(latestSubmittedScoresRes.data?.items)
+          ? latestSubmittedScoresRes.data.items
+          : [],
+      title: "Latest Submitted Scores",
+      sub: (r) => `${r.label || "Score"} • ${fmtDate(r.updatedAt)}`,
+      cols: [
+        {
+          label: "Table",
+          getter: (r) =>
+            linkTableName(
+              r.tableTitle || r.vpsdb?.name || "Unknown Table",
+              r.vpsId,
+            ),
+          html: true,
+        },
+        { label: "Label", getter: (r) => r.label || "-" },
+        { label: "Score", getter: (r) => fmtLatestScoreValue(r.score) },
+        { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
       ],
     },
   ];
