@@ -1,0 +1,137 @@
+/* ============================================
+   Player Dashboard Page Specific Styles
+   ============================================ */
+
+/* Setup section */
+.setup {
+  margin-top: 18px;
+  padding: 16px;
+}
+
+.setup h2 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.setup-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Carousel view */
+.grid-panels.carousel-view {
+  grid-template-columns: 1fr;
+}
+
+.grid-panels.carousel-view .panel {
+  min-height: 0;
+}
+
+.grid-panels.carousel-view .panel-details {
+  overflow: scroll;
+}
+
+.carousel-container {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 10px 4px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.carousel-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.carousel-container::-webkit-scrollbar-thumb {
+  background: var(--neon-purple);
+  border-radius: 3px;
+}
+
+.carousel-card {
+  flex: 0 0 160px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease;
+  cursor: pointer;
+}
+
+.carousel-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--glow-purple);
+}
+
+.card-img-wrap {
+  width: 100%;
+  height: 220px;
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    var(--glow-pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.card-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-sub {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.panel.carousel-shelf {
+  min-height: 0;
+}
+
+/* Embedded panel for iframe content */
+.panel-embed {
+  margin-top: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+
+.panel-embed h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.panel-embed-note {
+  margin: 0 0 12px;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+}
+
+.panel-embed-frame {
+  width: 100%;
+  min-height: 980px;
+  border-radius: 12px;
+  background: transparent;
+}

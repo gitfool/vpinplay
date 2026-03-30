@@ -1,41 +1,9 @@
-const API_BASE = "https://api.vpinplay.com:8888";
 let currentUserId = null;
 let currentViewMode = "table";
 
-function q(id) {
-  return document.getElementById(id);
-}
-
-function getPreferredTheme() {
-  const saved = localStorage.getItem("vpin-theme");
-  if (saved === "light" || saved === "dark") return saved;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
-
-function updateThemeToggleLabel(theme) {
-  const btn = q("themeToggleBtn");
-  if (!btn) return;
-  btn.textContent = theme === "dark" ? "Light" : "Dark";
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  updateThemeToggleLabel(theme);
-}
-
-function initTheme() {
-  applyTheme(getPreferredTheme());
-}
-
-function toggleTheme() {
-  const next =
-    document.documentElement.getAttribute("data-theme") === "dark"
-      ? "light"
-      : "dark";
-  localStorage.setItem("vpin-theme", next);
-  applyTheme(next);
+function handleSetupSubmit(event) {
+  event.preventDefault();
+  applyUserId();
 }
 
 function getPreferredViewMode() {
@@ -65,88 +33,6 @@ function toggleViewMode() {
   localStorage.setItem("vpin-view-mode", next);
   applyViewMode(next);
   refreshDashboard();
-}
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function fmtDate(value) {
-  if (!value) return "Never";
-  const raw = String(value).trim();
-  const hasTimeZone = /([zZ]|[+-]\d{2}:\d{2})$/.test(raw);
-  const normalized = !hasTimeZone && raw.includes("T") ? `${raw}Z` : raw;
-  const d = new Date(normalized);
-  if (Number.isNaN(d.getTime())) return "Invalid date";
-  return d.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "medium",
-  });
-}
-
-function fmtRuntime(minutes) {
-  const n = Number(minutes || 0);
-  return `${n} min`;
-}
-
-function fmtNumber(value) {
-  return Number(value || 0).toLocaleString();
-}
-
-function fmtRatingStars(value, options = {}) {
-  if (value === null || value === undefined || value === "") return "-";
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return "-";
-  const clamped = Math.max(0, Math.min(5, numeric));
-  const roundedToHalf = Math.round(clamped * 2) / 2;
-  const fullStars = Math.floor(roundedToHalf);
-  const hasHalf = roundedToHalf - fullStars >= 0.5;
-  let stars = "";
-  for (let i = 0; i < 5; i += 1) {
-    const fillPercent =
-      i < fullStars ? 100 : i === fullStars && hasHalf ? 50 : 0;
-    stars += `<span class="rating-star-cell" aria-hidden="true"><span class="rating-star empty">★</span><span class="rating-star fill" style="width:${fillPercent}%">★</span></span>`;
-  }
-  const numericText = options.showNumeric
-    ? ` <span class="rating-value">(${escapeHtml(clamped.toFixed(2))})</span>`
-    : "";
-  return `<span class="rating-stars" title="${escapeHtml(clamped.toFixed(2))} / 5" aria-label="${escapeHtml(clamped.toFixed(2))} out of 5 stars">${stars}</span>${numericText}`;
-}
-
-function fmtTableName(row) {
-  const name = row?.vpsdb?.name;
-  const manufacturer = row?.vpsdb?.manufacturer;
-  const year = row?.vpsdb?.year;
-  const suffixParts = [manufacturer, year].filter(
-    (v) => v !== null && v !== undefined && String(v).trim() !== "",
-  );
-  const baseName = name || "Unknown Table";
-  return suffixParts.length
-    ? `${baseName} (${suffixParts.join(", ")})`
-    : baseName;
-}
-
-function linkTableName(name, vpsId) {
-  const text =
-    name === null || name === undefined || name === "" ? "-" : String(name);
-  const id = String(vpsId || "").trim();
-  if (!id || text === "-") return escapeHtml(text);
-  return `<a href="table.html?vpsid=${encodeURIComponent(id)}">${escapeHtml(text)}</a>`;
-}
-
-async function api(path) {
-  try {
-    const response = await fetch(`${API_BASE}${path}`);
-    const data = await response.json().catch(() => ({}));
-    return { ok: response.ok, status: response.status, data };
-  } catch (error) {
-    return { ok: false, status: 0, data: { error: error.message } };
-  }
 }
 
 async function getGlobalAvgRatingMap(rows) {
@@ -180,33 +66,6 @@ function fmtUserOverGlobalRating(row, globalAvgRatingMap) {
   return `${fmtRatingStars(userRating)}<span class="rating-separator">/</span>${fmtRatingStars(globalAvg, { showNumeric: true })}`;
 }
 
-function renderTable(elId, columns, rows) {
-  const el = q(elId);
-  if (!rows || rows.length === 0) {
-    el.innerHTML = `<tr><td class="muted">No data</td></tr>`;
-    return;
-  }
-
-  let html = "<thead><tr>";
-  columns.forEach((col) => {
-    html += `<th>${escapeHtml(col.label)}</th>`;
-  });
-  html += "</tr></thead><tbody>";
-
-  rows.forEach((row) => {
-    html += "<tr>";
-    columns.forEach((col) => {
-      const raw = col.getter(row);
-      const text = raw === null || raw === undefined || raw === "" ? "-" : raw;
-      html += `<td>${col.html ? text : escapeHtml(text)}</td>`;
-    });
-    html += "</tr>";
-  });
-
-  html += "</tbody>";
-  el.innerHTML = html;
-}
-
 function getCardImageUrl(vpsId) {
   if (!vpsId) return "";
   return `https://github.com/superhac/vpinmediadb/raw/refs/heads/main/${encodeURIComponent(vpsId)}/cab.png`;
@@ -229,7 +88,7 @@ function renderCarousel(elId, rows, options = {}) {
       : "https://placehold.co/160x220/111d31/e8f0ff?text=No+VPS+ID";
 
     html += `
-                    <a href="table.html?vpsid=${encodeURIComponent(vpsId || "")}" class="carousel-card">
+                    <a href="tables.html?vpsid=${encodeURIComponent(vpsId || "")}" class="carousel-card">
                         <div class="card-img-wrap">
                             <img src="${imgUrl}" alt="${escapeHtml(title)}" onerror="this.src='https://placehold.co/160x220/111d31/e8f0ff?text=No+Image'; this.onerror=null;" loading="lazy">
                         </div>
@@ -260,10 +119,6 @@ function setUserStatus(availableResponse) {
     el.className = "status ok";
     el.textContent = "User ID is registered";
   }
-}
-
-function setKpi(id, value) {
-  q(id).textContent = value;
 }
 
 function buildSpotlightRows(
@@ -316,6 +171,9 @@ function buildSpotlightRows(
 
 async function refreshDashboard() {
   if (!currentUserId) return;
+
+  const btn = document.querySelector("#refreshDashboardBtn");
+  if (btn) btn.classList.add("refreshing");
 
   q("userBadge").textContent = `userid=${currentUserId}`;
 
@@ -531,6 +389,15 @@ async function refreshDashboard() {
       renderTable(panel.id, panel.cols, panel.data);
     }
   });
+
+  const header = document.querySelector("vpinplay-header");
+  if (header) {
+    header.markRefresh();
+  }
+
+  if (btn) {
+    setTimeout(() => btn.classList.remove("refreshing"), 600);
+  }
 }
 
 function applyUserId() {
@@ -548,16 +415,12 @@ function init() {
   const userId = params.get("userid");
 
   if (!userId) {
-    q("setup").classList.remove("hidden");
     q("dashboard").classList.add("hidden");
-    q("title").textContent = "Player Dashboard (Testing)";
     return;
   }
 
   currentUserId = userId;
-  q("setup").classList.add("hidden");
   q("dashboard").classList.remove("hidden");
-  q("title").textContent = `${userId}`;
   q("userBadge").textContent = `userid=${userId}`;
   refreshDashboard();
 }
