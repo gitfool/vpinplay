@@ -9,14 +9,28 @@ function resizeEmbedFrame() {
     const doc = frame.contentDocument || frame.contentWindow?.document;
     if (!doc || !doc.body || !doc.documentElement) return;
 
-    frame.style.height = "0px";
-    const nextHeight = Math.max(
+    const panel =
+      doc.getElementById("afm-score-panel") ||
+      doc.querySelector(".afm-score-panel") ||
+      doc.body.firstElementChild;
+    const shell = doc.querySelector(".afm-shell");
+
+    const contentHeight = Math.max(
+      panel?.scrollHeight || 0,
+      panel?.offsetHeight || 0,
+      shell?.scrollHeight || 0,
+      shell?.offsetHeight || 0,
+    );
+
+    const fallbackHeight = Math.max(
       doc.body.scrollHeight,
       doc.body.offsetHeight,
       doc.documentElement.scrollHeight,
       doc.documentElement.offsetHeight,
     );
-    frame.style.height = `${Math.ceil(nextHeight)}px`;
+
+    const nextHeight = contentHeight || fallbackHeight;
+    frame.style.height = `${Math.ceil(nextHeight + 8)}px`;
   } catch {
     // Ignore cross-document sizing issues if the frame origin changes.
   }
@@ -28,14 +42,24 @@ function initEmbedFrameSizing() {
 
   frame.addEventListener("load", () => {
     resizeEmbedFrame();
+    window.setTimeout(resizeEmbedFrame, 50);
+    window.setTimeout(resizeEmbedFrame, 250);
+    window.setTimeout(resizeEmbedFrame, 750);
 
     try {
       const win = frame.contentWindow;
       win?.addEventListener("resize", resizeEmbedFrame);
 
-      if (typeof ResizeObserver !== "undefined" && frame.contentDocument?.body) {
+      if (
+        typeof ResizeObserver !== "undefined" &&
+        frame.contentDocument?.documentElement
+      ) {
         const observer = new ResizeObserver(() => resizeEmbedFrame());
-        observer.observe(frame.contentDocument.body);
+        const panel =
+          frame.contentDocument.getElementById("afm-score-panel") ||
+          frame.contentDocument.querySelector(".afm-score-panel") ||
+          frame.contentDocument.body;
+        observer.observe(panel);
       }
     } catch {
       // Ignore cross-document sizing issues if the frame origin changes.
