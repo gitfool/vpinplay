@@ -156,30 +156,6 @@ body::before {
   z-index: 0;
 }
 
-/* Radial glow overlay */
-body::after {
-  content: "";
-  position: fixed;
-  top: -50%;
-  left: -10%;
-  width: 120%;
-  height: 200%;
-  background:
-    radial-gradient(ellipse at top, rgba(180, 41, 249, 0.15), transparent 60%),
-    radial-gradient(
-      ellipse at bottom right,
-      rgba(255, 10, 120, 0.1),
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse at bottom left,
-      rgba(0, 217, 255, 0.1),
-      transparent 50%
-    );
-  pointer-events: none;
-  z-index: 0;
-}
-
 h1,
 h2,
 h3,
@@ -478,29 +454,10 @@ a:hover {
   position: relative;
 }
 
-.panel::before,
-.kpi::before,
-.score-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    var(--neon-pink),
-    var(--neon-purple),
-    var(--neon-cyan)
-  );
-  opacity: 0.25;
-  border-radius: var(--radius);
-}
-
 .panel {
   padding: 14px;
   display: grid;
-  gap: 24px;
+  gap: 14px;
 }
 
 .panel h3 {

@@ -456,6 +456,11 @@ async function refreshDashboard() {
   const vpsId = q("vpsIdInput").value.trim();
   setVpisidInUrl(vpsId);
 
+  const scoresPanel = document.querySelector("table-scores-panel");
+  if (scoresPanel) {
+    scoresPanel.setAttribute("vps-id", vpsId);
+  }
+
   if (!vpsId) {
     await loadScoreTablePanel("");
     renderTable(

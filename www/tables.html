@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/tables.css" />
     <script src="js/main.js"></script>
     <script src="components/vpinplay-header.js"></script>
+    <script src="components/table-scores-panel.js"></script>
   </head>
   <body>
     <vpinplay-header></vpinplay-header>
@@ -59,16 +60,14 @@
           <div id="vpsdbByIdDetails" class="variation-details"></div>
         </section>
 
-        <section id="scoreTablePanelShell" class="panel panel-full hidden">
-          <div id="scoreTablePanelEmbed"></div>
-        </section>
+        <table-scores-panel class="panel panel-full"></table-scores-panel>
 
-        <section class="panel">
+        <section class="panel panel-full">
           <h3 id="playerRatingsTitle">Player Ratings (0)</h3>
           <table id="playerRatingsTable"></table>
         </section>
 
-        <section class="panel">
+        <section class="panel panel-full">
           <h3 id="associatedRomsTitle">Metadata</h3>
           <div id="associatedRomsDetails" class="variation-details"></div>
         </section>
