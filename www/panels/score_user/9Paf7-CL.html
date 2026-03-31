@@ -9,7 +9,7 @@
           src="https://github.com/superhac/vpinmediadb/raw/refs/heads/main/9Paf7-CL/1k/bg.png"
           alt="Attack from Mars backglass art">
         <div class="afm-header-copy">
-          <div class="afm-kicker">Attack from Mars</div>
+          <div class="afm-kicker" id="afm-kicker">Loading table...</div>
           <h2>Score Panel</h2>
           <div class="afm-meta" id="afm-meta">Waiting for user score data.</div>
         </div>
@@ -228,6 +228,16 @@
     return null;
   }
 
+  function getTableDisplayName(row) {
+    const vpsdbName = typeof row?.vpsdb?.name === "string" ? row.vpsdb.name.trim() : "";
+    if (vpsdbName) return vpsdbName;
+
+    const tableTitle = typeof row?.tableTitle === "string" ? row.tableTitle.trim() : "";
+    if (tableTitle) return tableTitle;
+
+    return PANEL_VPS_ID;
+  }
+
   async function api(path) {
     try {
       const response = await fetch(`${getApiBase()}${path}`);
@@ -276,6 +286,8 @@
       setStatus(`No Attack from Mars score data found for ${userId}.`, "error");
       return;
     }
+
+    q("afm-kicker").textContent = getTableDisplayName(row);
 
     const groups = groupEntries(entries);
     const replacement = initialsResult.ok && initialsResult.data
