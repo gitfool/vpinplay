@@ -458,67 +458,24 @@ async function refreshDashboard() {
 
   if (!vpsId) {
     await loadScoreTablePanel("");
-    renderTable(
-      "playerRatingsTable",
-      [{ label: "Info", getter: () => "Enter a VPS ID" }],
-      [],
-    );
-    q("playerRatingsTitle").textContent = "Player Ratings (0)";
-    renderAssociatedRoms([]);
-    syncDerivativeDifferences([], { resetCollapsed: true });
     renderVpsdbDetails(null, null, null, null);
     return;
   }
 
   const [
     ratingSummaryRes,
-    playerRatingsRes,
-    tableByIdRes,
     vpsdbByIdRes,
     activitySummaryRes,
     activityWeeklyRes,
   ] =
     await Promise.all([
       api(`/api/v1/tables/${encodeURIComponent(vpsId)}/rating-summary`),
-      api(`/api/v1/tables/${encodeURIComponent(vpsId)}/user-ratings`),
-      api(`/api/v1/tables/${encodeURIComponent(vpsId)}`),
       api(`/api/v1/vpsdb/${encodeURIComponent(vpsId)}`),
       api(`/api/v1/tables/${encodeURIComponent(vpsId)}/activity-summary`),
       api(`/api/v1/tables/${encodeURIComponent(vpsId)}/activity-weekly?days=7`),
     ]);
 
   await loadScoreTablePanel(vpsId);
-
-  const playerRatingsRows =
-    playerRatingsRes.ok && Array.isArray(playerRatingsRes.data)
-      ? playerRatingsRes.data
-      : [];
-  q("playerRatingsTitle").textContent =
-    `Player Ratings (${playerRatingsRows.length})`;
-  renderTable(
-    "playerRatingsTable",
-    [
-      { label: "Player", getter: (r) => linkUserId(r.userId), html: true },
-      {
-        label: "Score",
-        getter: (r) => fmtRatingStars(r.rating, { showNumeric: true }),
-        html: true,
-      },
-      { label: "Last Played", getter: (r) => fmtDate(r.lastRun) },
-      { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
-    ],
-    playerRatingsRows,
-  );
-
-  const byIdRows =
-    tableByIdRes.ok && Array.isArray(tableByIdRes.data)
-      ? tableByIdRes.data
-      : [];
-  renderAssociatedRoms(
-    byIdRows,
-    activitySummaryRes.ok ? activitySummaryRes.data : null,
-  );
-  syncDerivativeDifferences(byIdRows, { resetCollapsed: true });
 
   const vpsdbRecord =
     vpsdbByIdRes.ok && vpsdbByIdRes.data ? vpsdbByIdRes.data : null;
@@ -541,10 +498,6 @@ async function refreshDashboard() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
-  q("derivativeDifferencesToggle")?.addEventListener(
-    "click",
-    toggleDerivativeDifferences,
-  );
   const vpsid = getVpsidFromUrl();
   if (vpsid) {
     q("vpsIdInput").value = vpsid;
