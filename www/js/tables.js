@@ -317,7 +317,7 @@ function renderAssociatedRoms(rows, activitySummary = null) {
                 <div class="variation-card">
                     <div class="variation-title">Table Summary</div>
                     <div class="variation-grid">
-                        ${field("playerCount", String(playerCount))}
+                        ${field("player installs", String(playerCount))}
                         ${field("romCount", String(romEntries.filter((entry) => entry.rom !== "No ROM").length))}
                     </div>
                 </div>
@@ -329,10 +329,9 @@ function renderAssociatedRoms(rows, activitySummary = null) {
       .map(
         (entry) => `
                 <div class="variation-card">
-                    <div class="variation-title">${escapeHtml(entry.rom)}</div>
                     <div class="variation-grid">
+                        ${field("rom", entry.rom)}
                         ${field("variationCount", String(entry.variants))}
-                        ${field("submitters", fmtSubmitters([...entry.submitters]), true)}
                         ${field("files", [...entry.filenames].map(escapeHtml).join("<br>") || "-", true)}
                     </div>
                 </div>

@@ -147,23 +147,6 @@
   position: relative;
 }
 
-.variation-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    var(--neon-pink),
-    var(--neon-purple),
-    var(--neon-cyan)
-  );
-  opacity: 0.7;
-  border-radius: 12px 12px 0 0;
-}
-
 .variation-title {
   font-weight: 800;
   margin-bottom: 8px;
