@@ -333,14 +333,13 @@ function renderVpsdbDetails(record, ratingSummary = null, activitySummary = null
                             class="table-focus-art"
                             src="${artUrl}"
                             alt="${escapeHtml(title)} backglass art"
-                            onerror="this.style.display='none'; this.nextElementSibling?.classList.remove('hidden');"
+                            onerror="this.style.display='none';"
                         >
-                        <div class="table-focus-art table-focus-art-fallback hidden">${escapeHtml(record?.vpsId || "No Art")}</div>
                         <div class="table-focus-copy">
                             <div class="table-focus-title">${escapeHtml(title)}</div>
                             <div class="table-focus-rating-row">
                                 <div class="table-focus-label">Rating</div>
-                            <div class="table-focus-rating">${fmtRatingStars(avgRating, { showNumeric: true })}</div>
+                                <div class="table-focus-rating">${fmtRatingStars(avgRating, { showNumeric: true })}</div>
                             </div>
                             <div class="table-focus-subhead">${escapeHtml(subtitle || "Unknown Manufacturer")}</div>
                             <div class="table-focus-meta">Last update: ${escapeHtml(lastUpdated)}</div>
