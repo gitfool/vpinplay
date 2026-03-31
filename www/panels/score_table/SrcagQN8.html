@@ -171,12 +171,6 @@
     `;
   }
 
-  function rankText(entry, index) {
-    const rank = Number(entry?.rank);
-    if (Number.isFinite(rank)) return `#${rank}`;
-    return index === 0 ? "STAT" : `#${index + 1}`;
-  }
-
   function renderRankedList(hostId, entries) {
     const host = q(hostId);
     if (!host) return;
@@ -191,7 +185,7 @@
           .map(
             (entry, index) => `
           <div class="afm-row">
-            <div class="afm-rank">${rankText(entry, index)}</div>
+            <div class="afm-rank">#${index + 1}</div>
             <div class="afm-initials">${scoreOwnerLabel(entry)}</div>
             <div class="afm-value">${scoreText(entry)}</div>
           </div>
@@ -245,6 +239,21 @@
       }));
   }
 
+  function getDreamBoard(entries) {
+    const combined = entries
+      .filter((entry) => {
+        const section = String(entry?.section || "").trim().toUpperCase();
+        return section === "DREAM MASTER" || section === "DREAM WARRIORS";
+      })
+      .slice()
+      .sort(compareEntries);
+
+    return {
+      dreamMaster: combined[0] || null,
+      dreamWarriors: combined.slice(1, 1 + RANKED_SECTION_LIMIT),
+    };
+  }
+
   async function loadPanel() {
     setStatus(`Loading global score data for ${PANEL_VPS_ID}...`);
     const bestEverResult = await fetchBestEverScoreItems();
@@ -272,11 +281,9 @@
     }
 
     const groups = groupEntries(entries);
-    renderGrandChampion((groups.get("DREAM MASTER") || [])[0] || null);
-    renderRankedList(
-      "afm-highest-body",
-      (groups.get("DREAM WARRIORS") || []).slice(0, RANKED_SECTION_LIMIT),
-    );
+    const dreamBoard = getDreamBoard(entries);
+    renderGrandChampion(dreamBoard.dreamMaster);
+    renderRankedList("afm-highest-body", dreamBoard.dreamWarriors);
     renderRankedList(
       "afm-souls-body",
       (groups.get("MOST SOULS SAVED") || []).slice(0, 1),
