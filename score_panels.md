@@ -11,6 +11,11 @@ The goal is to make future panel creation fast and consistent for both:
 - `www/panels/score_table/*.html`
 - `www/panels/score_user/*.html`
 
+There are now two main score JSON families in use:
+
+- leaderboard-style payloads with `entries[]`
+- single-value payloads with `score_type` + `value`
+
 ## Current Working Examples
 
 Use these as the reference implementations:
@@ -45,11 +50,14 @@ Helpful extra info:
 
 Always start from the closest existing panel instead of building from scratch.
 
+Choose the base by score shape, not by table theme or ROM name.
+
 In practice:
 
 - If the JSON has `GRAND CHAMPION` plus one ranked section, use `vZDUDUii` as the simplest base
 - If the JSON has several custom sections, use `9Paf7-CL` as the richer base
 - If the sections are dynamic or not yet known, `WyxpJ3Wjt3` can be a good flexible `score_table` base
+- If the JSON is a single-value score with no `entries` array, use `fz-KTflv` as the base
 
 ## Creating a New `score_table` Panel
 
@@ -64,6 +72,7 @@ Usually copy one of:
 - `www/panels/score_table/vZDUDUii.html` for simple two-section boards
 - `www/panels/score_table/9Paf7-CL.html` for `GRAND CHAMPION` plus multiple ranked sections
 - `www/panels/score_table/WyxpJ3Wjt3.html` for dynamic section-title handling
+- `www/panels/score_table/fz-KTflv.html` for `score.value` / single-value score types
 
 ### 2. Update the VPS ID
 
@@ -76,6 +85,29 @@ const PANEL_VPS_ID = "<NEW_VPSID>";
 ### 3. Map the JSON Sections to Cards
 
 Read `Score.entries` from the JSON blob and list unique `section` values.
+
+If the JSON does not have an `entries` array and instead looks like this:
+
+```json
+{
+  "score_type": "HIGHEST SCORE",
+  "value": 42520
+}
+```
+
+then do not use section grouping. Use the `fz-KTflv` pattern instead:
+
+- one card
+- title from `score.score_type`
+- value from `score.value`
+- in `score_table`, render a ranked user list by sorting all matched rows on `score.value`
+- in `score_user`, render the user’s single value in a hero card
+
+Important:
+
+- panel layout decisions should be driven by the actual score payload shape
+- do not choose the panel structure from `rom` or `resolved_rom` alone
+- `rom` and `resolved_rom` may differ without affecting the needed panel layout
 
 Example:
 
@@ -129,6 +161,12 @@ For global panels, `scoreOwnerLabel(...)` should usually prefer:
 1. `matchedUserId`
 2. `initials`
 
+For single-value global panels like `fz-KTflv`:
+
+1. sort all matched rows by `score.value` descending
+2. render a top-N user list
+3. use `score.score_type` as the visible card title
+
 ### 6. Keep the Clean Status Behavior
 
 On successful load, the panel should hide the status bar instead of leaving a success message visible.
@@ -158,6 +196,7 @@ Usually copy one of:
 
 - `www/panels/score_user/vZDUDUii.html` for simple `Grand Champion` + `Highest Scores`
 - `www/panels/score_user/9Paf7-CL.html` for tables with several sections
+- `www/panels/score_user/fz-KTflv.html` for `score.value` / single-value score types
 
 ### 2. Update the VPS ID
 
@@ -290,6 +329,8 @@ Keep this logic:
 - build a `replacement` object with `userId` and `initials`
 - pass it to `renderGrandChampion(...)`, `renderRankedList(...)`, and `renderSpecial(...)`
 
+For single-value score panels with no `entries[]`, initials replacement is not usually needed because the panel renders only the current user’s value.
+
 ### 9. Keep the Clean Status Behavior
 
 Use the same approach as the table panels:
@@ -310,6 +351,8 @@ When given a JSON score blob, use this guide:
   Consider the `WyxpJ3Wjt3` pattern for `score_table`
 - One-off stat sections:
   Use a `renderSpecial(...)`-style card in `score_user`
+- No `entries`, only `score_type` and `value`:
+  Use the `fz-KTflv` pattern
 
 ## Common Things to Change
 
@@ -320,6 +363,7 @@ For every new panel, always check these:
 - which cards exist in the HTML
 - which section names are rendered in JS
 - ranked list limit
+- whether this is an `entries[]` panel or a `score.value` panel
 - error messages that still mention an old table
 - title source: must use VPSDB name, not a hard-coded table name
 
@@ -339,15 +383,17 @@ For every new panel, always check these:
 When asked to create a new panel:
 
 1. Identify whether `score_table`, `score_user`, or both are needed.
-2. Pick the closest existing base.
-3. Copy to the new VPS ID filename.
-4. Inspect the JSON blob and list all section names.
-5. Remove unused cards.
-6. Update render calls to exactly match the JSON sections.
-7. Set ranked-entry limits to the intended count.
-8. In user panels, verify header title, rating, manufacturer, year, and last update are wired correctly.
-9. Remove any old hard-coded table names or leftover messages.
-10. Verify the status panel hides after successful load.
+2. Identify the score payload shape first:
+   `entries[]` or single-value `score.value`.
+3. Pick the closest existing base for that shape.
+4. Copy to the new VPS ID filename.
+5. Inspect the JSON blob and list all section names, or confirm it is a single-value score.
+6. Remove unused cards.
+7. Update render calls to exactly match the JSON structure.
+8. Set ranked-entry limits to the intended count when applicable.
+9. In user panels, verify header title, rating, manufacturer, year, and last update are wired correctly.
+10. Remove any old hard-coded table names or leftover messages.
+11. Verify the status panel hides after successful load.
 
 ## What To Provide In Future Requests
 
@@ -370,6 +416,7 @@ If no special instruction is given:
 
 - use `vZDUDUii` as the base for simple new scoreboards
 - use `9Paf7-CL` as the base for complex multi-section scoreboards
+- use `fz-KTflv` as the base for single-value score types
 - always use VPSDB name as the visible title in `score_user`
 - always include rating, manufacturer, year, and last update in `score_user`
 - always hide success status bars after the panel loads
