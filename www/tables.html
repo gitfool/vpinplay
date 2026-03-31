@@ -67,6 +67,33 @@
         <section id="scoreTablePanelShell" class="panel panel-full hidden">
           <div id="scoreTablePanelEmbed"></div>
         </section>
+
+        <section class="panel">
+          <h3 id="playerRatingsTitle">Player Ratings (0)</h3>
+          <table id="playerRatingsTable"></table>
+        </section>
+
+        <section class="panel">
+          <h3 id="associatedRomsTitle">Metadata</h3>
+          <div id="associatedRomsDetails" class="variation-details"></div>
+        </section>
+
+        <section class="panel panel-full">
+          <button
+            id="derivativeDifferencesToggle"
+            class="panel-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="derivativeDifferencesDetails"
+          >
+            <span id="derivativeDifferencesTitle">Derivative Differences</span>
+            <span class="panel-toggle-indicator" aria-hidden="true">+</span>
+          </button>
+          <div
+            id="derivativeDifferencesDetails"
+            class="variation-details hidden"
+          ></div>
+        </section>
       </section>
     </div>
 
