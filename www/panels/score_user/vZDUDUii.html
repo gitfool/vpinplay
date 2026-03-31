@@ -10,8 +10,14 @@
           alt="vZDUDUii backglass art">
         <div class="afm-header-copy">
           <div class="afm-kicker" id="afm-kicker">Loading table...</div>
-          <h2>Score Panel</h2>
-          <div class="afm-meta" id="afm-meta">Waiting for user score data.</div>
+          <div class="afm-meta-stack">
+            <div class="afm-meta-line afm-rating-line">
+              <span class="afm-rating-label">Rating</span>
+              <span id="afm-rating">Loading...</span>
+            </div>
+            <div class="afm-meta-line" id="afm-subtitle">Loading metadata...</div>
+            <div class="afm-meta-line" id="afm-meta">Waiting for user score data.</div>
+          </div>
         </div>
       </div>
       <div class="afm-badge" id="afm-user-badge">No User</div>
@@ -40,6 +46,15 @@
 
   function q(id) {
     return document.getElementById(id);
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function getCaseInsensitiveValue(obj, key) {
@@ -96,6 +111,19 @@
     if (!el) return;
     el.hidden = true;
     el.textContent = "";
+  }
+
+  function fmtRatingStars(value) {
+    if (value === null || value === undefined || value === "") return "Unrated";
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return "Unrated";
+    const clamped = Math.max(0, Math.min(5, numeric));
+    const rounded = Math.round(clamped);
+    const stars = Array.from({ length: 5 }, (_, index) => {
+      const filled = index < rounded;
+      return `<span class="afm-rating-star${filled ? " is-filled" : ""}">★</span>`;
+    }).join("");
+    return `<span class="afm-rating-stars" aria-label="${escapeHtml(clamped.toFixed(2))} out of 5 stars">${stars}</span><span class="afm-rating-value">(${escapeHtml(clamped.toFixed(2))})</span>`;
   }
 
   function fmtNumber(value) {
@@ -222,6 +250,11 @@
     return api(path);
   }
 
+  async function fetchRatingSummary() {
+    const path = `/api/v1/tables/${encodeURIComponent(PANEL_VPS_ID)}/rating-summary`;
+    return api(path);
+  }
+
   async function loadPanel() {
     const userId = getUserId();
     q("afm-user-badge").textContent = userId || "No User";
@@ -232,9 +265,10 @@
     }
 
     setStatus(`Loading score data for ${userId}...`);
-    const [scoreResult, initialsResult] = await Promise.all([
+    const [scoreResult, initialsResult, ratingSummaryResult] = await Promise.all([
       fetchScoreRow(userId),
       fetchUserInitials(userId),
+      fetchRatingSummary(),
     ]);
 
     if (!scoreResult.ok || !Array.isArray(scoreResult.data)) {
@@ -252,6 +286,11 @@
     }
 
     q("afm-kicker").textContent = getTableDisplayName(row);
+    q("afm-rating").innerHTML = fmtRatingStars(ratingSummaryResult.ok ? ratingSummaryResult.data?.avgRating : null);
+
+    const manufacturer = typeof row?.vpsdb?.manufacturer === "string" ? row.vpsdb.manufacturer.trim() : "";
+    const year = row?.vpsdb?.year === null || row?.vpsdb?.year === undefined ? "" : String(row.vpsdb.year).trim();
+    q("afm-subtitle").innerHTML = `<strong>${escapeHtml(manufacturer || "Unknown Manufacturer")}</strong>${year ? ` • ${escapeHtml(year)}` : ""}`;
 
     const groups = groupEntries(entries);
     const replacement = initialsResult.ok && initialsResult.data
