@@ -17,7 +17,7 @@
       <div class="afm-badge" id="afm-user-badge">No User</div>
     </div>
 
-    <div class="afm-status" id="afm-status">Ready.</div>
+    <div class="afm-status" id="afm-status" hidden>Ready.</div>
 
     <div class="afm-grid" id="afm-grid" hidden>
       <section class="afm-card afm-card-hero" id="afm-grand-card">
@@ -78,6 +78,7 @@
   function setStatus(message, tone = "info") {
     const el = q("afm-status");
     if (!el) return;
+    el.hidden = false;
     el.textContent = message;
     if (tone === "error") {
       el.style.color = "var(--afm-danger)";
@@ -88,6 +89,13 @@
     el.style.color = "var(--afm-accent)";
     el.style.borderColor = "rgba(0, 217, 255, 0.2)";
     el.style.background = "rgba(0, 217, 255, 0.08)";
+  }
+
+  function clearStatus() {
+    const el = q("afm-status");
+    if (!el) return;
+    el.hidden = true;
+    el.textContent = "";
   }
 
   function fmtNumber(value) {
@@ -249,7 +257,7 @@
 
     const updatedAt = row.updatedAt ? new Date(row.updatedAt).toLocaleString() : "Unknown";
     q("afm-meta").textContent = `Last update: ${updatedAt}`;
-    setStatus("Score data loaded.");
+    clearStatus();
   }
 
   loadPanel();
