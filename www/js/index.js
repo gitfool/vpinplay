@@ -1,11 +1,22 @@
 const EXPANDED_DASHBOARD_PANEL_LIMIT = 100;
 let expandedDashboardPanelId = null;
+const dashboardPanelOffsets = {};
+
+function getDashboardPanelOffset(panelId) {
+  return dashboardPanelOffsets[panelId] || 0;
+}
+
+function setDashboardPanelOffset(panelId, offset) {
+  dashboardPanelOffsets[panelId] = Math.max(0, Number(offset || 0));
+}
 
 function getDashboardPanelConfigs() {
   return {
     topRatedPanel: {
       tableId: "topRatedTable",
-      fetchRows: (limit) => fetchPaginatedRows("/api/v1/tables/top-rated", limit),
+      pagerId: "topRatedPager",
+      fetchPage: (limit, offset) =>
+        fetchDashboardListPage("/api/v1/tables/top-rated", limit, offset),
       columns: [
         {
           label: "Table",
@@ -23,8 +34,9 @@ function getDashboardPanelConfigs() {
     },
     topPlayTimePanel: {
       tableId: "topPlayTimeGlobalTable",
-      fetchRows: (limit) =>
-        fetchPaginatedRows("/api/v1/tables/top-play-time", limit),
+      pagerId: "topPlayTimePager",
+      fetchPage: (limit, offset) =>
+        fetchDashboardListPage("/api/v1/tables/top-play-time", limit, offset),
       columns: [
         {
           label: "Table",
@@ -42,7 +54,9 @@ function getDashboardPanelConfigs() {
     },
     newlyAddedPanel: {
       tableId: "newlyAddedTable",
-      fetchRows: (limit) => fetchPaginatedRows("/api/v1/tables/newly-added", limit),
+      pagerId: "newlyAddedPager",
+      fetchPage: (limit, offset) =>
+        fetchDashboardListPage("/api/v1/tables/newly-added", limit, offset),
       columns: [
         {
           label: "Table",
@@ -56,7 +70,9 @@ function getDashboardPanelConfigs() {
     },
     topVariantsPanel: {
       tableId: "topVariantsTable",
-      fetchRows: (limit) => fetchPaginatedRows("/api/v1/tables/top-variants", limit),
+      pagerId: "topVariantsPager",
+      fetchPage: (limit, offset) =>
+        fetchDashboardListPage("/api/v1/tables/top-variants", limit, offset),
       columns: [
         {
           label: "Table",
@@ -69,7 +85,9 @@ function getDashboardPanelConfigs() {
     },
     topPlayerPlaysPanel: {
       tableId: "topPlayerPlaysTable",
-      fetchRows: (limit) => loadTopPlayerActivity("startCountPlayed", TOP_PLAYER_DAYS, limit),
+      pagerId: "topPlayerPlaysPager",
+      fetchPage: (limit, offset) =>
+        loadTopPlayerActivityPage("startCountPlayed", TOP_PLAYER_DAYS, limit, offset),
       beforeRender: () => {
         q("topPlayerPlaysTitle").textContent = `Top Player Plays (${TOP_PLAYER_DAYS}d)`;
       },
@@ -80,7 +98,9 @@ function getDashboardPanelConfigs() {
     },
     topPlayerPlaytimePanel: {
       tableId: "topPlayerPlaytimeTable",
-      fetchRows: (limit) => loadTopPlayerActivity("runTimePlayed", TOP_PLAYER_DAYS, limit),
+      pagerId: "topPlayerPlaytimePager",
+      fetchPage: (limit, offset) =>
+        loadTopPlayerActivityPage("runTimePlayed", TOP_PLAYER_DAYS, limit, offset),
       beforeRender: () => {
         q("topPlayerPlaytimeTitle").textContent =
           `Top Player Playtime (${TOP_PLAYER_DAYS}d)`;
@@ -92,7 +112,8 @@ function getDashboardPanelConfigs() {
     },
     latestSubmittedScoresPanel: {
       tableId: "latestSubmittedScoresTable",
-      fetchRows: (limit) => fetchLatestSubmittedScores(limit),
+      pagerId: "latestSubmittedScoresPager",
+      fetchPage: (limit, offset) => fetchLatestSubmittedScoresPage(limit, offset),
       columns: [
         {
           label: "Table",
@@ -124,8 +145,11 @@ function syncExpandedDashboardPanelState() {
   panels.forEach((panel) => {
     const button = panel.querySelector(".panel-expand-btn");
     const expanded = panel.id === expandedDashboardPanelId;
+    const config = getDashboardPanelConfigs()[panel.id];
+    const pager = config ? q(config.pagerId) : null;
 
     panel.classList.toggle("is-expanded", expanded);
+    if (pager) pager.hidden = !expanded;
 
     if (button) {
       button.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -137,23 +161,76 @@ function syncExpandedDashboardPanelState() {
   });
 }
 
+function renderDashboardPanelPager(panelId, pagination) {
+  const config = getDashboardPanelConfigs()[panelId];
+  const pager = config ? q(config.pagerId) : null;
+  if (!pager) return;
+
+  if (!expandedDashboardPanelId || expandedDashboardPanelId !== panelId) {
+    pager.hidden = true;
+    pager.innerHTML = "";
+    return;
+  }
+
+  const limit = Number(pagination?.limit || EXPANDED_DASHBOARD_PANEL_LIMIT);
+  const offset = Number(pagination?.offset || 0);
+  const returned = Number(pagination?.returned || 0);
+  const hasPrev = Boolean(pagination?.hasPrev);
+  const hasNext = Boolean(pagination?.hasNext);
+  const pageNumber = Math.floor(offset / limit) + 1;
+  const start = returned > 0 ? offset + 1 : 0;
+  const end = offset + returned;
+  const summary =
+    pagination?.total !== undefined && pagination?.total !== null
+      ? `Page ${pageNumber} (${start}-${end} of ${pagination.total})`
+      : `Page ${pageNumber} (${start}-${end})`;
+
+  pager.hidden = false;
+  pager.innerHTML = `
+    <button
+      class="btn"
+      type="button"
+      onclick="changeDashboardPanelPage('${panelId}', -1)"
+      ${hasPrev ? "" : "disabled"}
+    >
+      Prev
+    </button>
+    <button
+      class="btn"
+      type="button"
+      onclick="changeDashboardPanelPage('${panelId}', 1)"
+      ${hasNext ? "" : "disabled"}
+    >
+      Next
+    </button>
+    <span class="panel-pager-info">${escapeHtml(summary)}</span>
+    <span class="panel-pager-info">${escapeHtml(`${limit} per page`)}</span>
+  `;
+}
+
 async function renderDashboardPanels(defaultLimit) {
   const configs = getDashboardPanelConfigs();
   const entries = Object.entries(configs);
 
   await Promise.all(
     entries.map(async ([panelId, config]) => {
-      const limit =
-        expandedDashboardPanelId === panelId
-          ? EXPANDED_DASHBOARD_PANEL_LIMIT
-          : defaultLimit;
-      const rows = await config.fetchRows(limit);
+      const isExpanded = expandedDashboardPanelId === panelId;
+      const limit = isExpanded ? EXPANDED_DASHBOARD_PANEL_LIMIT : defaultLimit;
+      const offset = isExpanded ? getDashboardPanelOffset(panelId) : 0;
+      const page = await config.fetchPage(limit, offset);
+      const rows = Array.isArray(page?.items) ? page.items : [];
 
       if (typeof config.beforeRender === "function") {
         config.beforeRender();
       }
 
       renderTable(config.tableId, config.columns, rows);
+      renderDashboardPanelPager(panelId, {
+        limit,
+        offset,
+        returned: rows.length,
+        ...page.pagination,
+      });
     }),
   );
 }
@@ -161,7 +238,8 @@ async function renderDashboardPanels(defaultLimit) {
 async function refreshDashboard() {
   const header = document.querySelector("vpinplay-header");
   if (header) header.setRefreshing(true);
-  const limit = 5;
+  const limit = parseDashboardLimit();
+  q("limitInput").value = String(limit);
 
   const [
     lastSyncRes,
@@ -228,9 +306,21 @@ async function refreshDashboard() {
 }
 
 async function toggleDashboardPanel(panelId) {
-  expandedDashboardPanelId =
-    expandedDashboardPanelId === panelId ? null : panelId;
+  if (expandedDashboardPanelId === panelId) {
+    expandedDashboardPanelId = null;
+  } else {
+    expandedDashboardPanelId = panelId;
+    setDashboardPanelOffset(panelId, 0);
+  }
   syncExpandedDashboardPanelState();
+  await refreshDashboard();
+}
+
+async function changeDashboardPanelPage(panelId, direction) {
+  if (expandedDashboardPanelId !== panelId) return;
+  const nextOffset =
+    getDashboardPanelOffset(panelId) + direction * EXPANDED_DASHBOARD_PANEL_LIMIT;
+  setDashboardPanelOffset(panelId, nextOffset);
   await refreshDashboard();
 }
 
@@ -247,12 +337,69 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function fetchLatestSubmittedScores(limit) {
+  const page = await fetchLatestSubmittedScoresPage(limit, 0);
+  return page.items;
+}
+
+async function fetchDashboardListPage(basePath, limit, offset = 0) {
   const safeLimit = Math.max(
     1,
     Math.min(API_PAGE_LIMIT, Number(limit || 0) || 5),
   );
+  const safeOffset = Math.max(0, Number(offset || 0));
+  const joiner = basePath.includes("?") ? "&" : "?";
   const res = await api(
-    `/api/v1/users/scores/latest?limit=${encodeURIComponent(safeLimit)}&offset=0`,
+    `${basePath}${joiner}limit=${encodeURIComponent(safeLimit)}&offset=${encodeURIComponent(safeOffset)}`,
   );
-  return res.ok && Array.isArray(res.data?.items) ? res.data.items : [];
+  const items = res.ok && Array.isArray(res.data) ? res.data : [];
+  return {
+    items,
+    pagination: {
+      limit: safeLimit,
+      offset: safeOffset,
+      returned: items.length,
+      hasPrev: safeOffset > 0,
+      hasNext: items.length === safeLimit,
+    },
+  };
+}
+
+async function loadTopPlayerActivityPage(metric, days, limit, offset = 0) {
+  const safeLimit = Math.max(
+    1,
+    Math.min(API_PAGE_LIMIT, Number(limit || TOP_PLAYER_LIMIT)),
+  );
+  const safeOffset = Math.max(0, Number(offset || 0));
+  const res = await api(
+    `/api/v1/users/top-activity?metric=${encodeURIComponent(metric)}&days=${encodeURIComponent(days)}&limit=${encodeURIComponent(safeLimit)}&offset=${encodeURIComponent(safeOffset)}`,
+  );
+  const items = res.ok && Array.isArray(res.data?.items) ? res.data.items : [];
+  return {
+    items,
+    pagination: {
+      limit: safeLimit,
+      offset: safeOffset,
+      returned: items.length,
+      ...(res.ok ? res.data?.pagination || {} : {}),
+    },
+  };
+}
+
+async function fetchLatestSubmittedScoresPage(limit, offset = 0) {
+  const safeLimit = Math.max(
+    1,
+    Math.min(API_PAGE_LIMIT, Number(limit || 0) || 5),
+  );
+  const safeOffset = Math.max(0, Number(offset || 0));
+  const res = await api(
+    `/api/v1/users/scores/latest?limit=${encodeURIComponent(safeLimit)}&offset=${encodeURIComponent(safeOffset)}`,
+  );
+  return {
+    items: res.ok && Array.isArray(res.data?.items) ? res.data.items : [],
+    pagination: {
+      limit: safeLimit,
+      offset: safeOffset,
+      ...(res.ok ? res.data?.pagination || {} : {}),
+    },
+  };
 }

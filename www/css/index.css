@@ -91,6 +91,31 @@
   font-size: 0.95rem;
 }
 
+.panel-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.panel-pager .btn {
+  background: var(--surface-2);
+  border: 2px solid var(--line);
+}
+
+.panel-pager .btn:hover:not(:disabled) {
+  background: var(--neon-purple);
+  border-color: var(--neon-purple);
+  color: #fff;
+}
+
+.panel-pager-info {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
 .pager {
   display: flex;
   gap: 8px;
