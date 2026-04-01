@@ -49,6 +49,7 @@ async function selectVpsNameMatch(match) {
   const nextVpsId = String(match.vpsId).trim();
   const currentVpsId = q("vpsIdInput")?.value.trim() || "";
   q("vpsIdInput").value = nextVpsId;
+  setVpisidInUrl(nextVpsId);
 
   const input = q("vpsNameInput");
   if (input) input.value = formatVpsNameOption(match);
@@ -96,12 +97,13 @@ function syncNameInputFromVpsdbRecord(record) {
 
 async function handleVpsNameInput() {
   const value = q("vpsNameInput")?.value || "";
-  await searchVpsNames(value);
-
   const match = findVpsNameMatch(value);
   if (match) {
     await selectVpsNameMatch(match);
+    return;
   }
+
+  await searchVpsNames(value);
 }
 
 async function handleVpsNameCommit() {
