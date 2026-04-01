@@ -2,7 +2,7 @@ import json
 import re
 
 from fastapi import APIRouter, Depends, Query
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timedelta
 from pymongo.database import Database
 
