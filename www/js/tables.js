@@ -1,6 +1,7 @@
 let derivativeRowsCache = [];
 let vpsNameSearchCache = [];
 let vpsNameSearchRequestId = 0;
+let activeVpsNameDisplay = "";
 
 function formatVpsNameOption(item) {
   if (!item || !item.name || !item.vpsId) return "";
@@ -53,6 +54,7 @@ async function selectVpsNameMatch(match) {
 
   const input = q("vpsNameInput");
   if (input) input.value = formatVpsNameOption(match);
+  activeVpsNameDisplay = formatVpsNameOption(match);
 
   setLookupStatus(`Selected VPS ID: ${nextVpsId}`);
 
@@ -91,8 +93,19 @@ function syncNameInputFromVpsdbRecord(record) {
     year: vpsdb?.year,
   };
   const displayValue = formatVpsNameOption(item);
+  activeVpsNameDisplay = displayValue;
   input.value = displayValue;
   syncVpsNameOptions(displayValue ? [item] : []);
+}
+
+function handleVpsNameFocus() {
+  const input = q("vpsNameInput");
+  if (!input) return;
+
+  if (input.value === activeVpsNameDisplay) {
+    input.value = "";
+    syncVpsNameOptions([]);
+  }
 }
 
 async function handleVpsNameInput() {
@@ -599,6 +612,7 @@ async function refreshDashboard() {
   if (!vpsId) {
     const nameInput = q("vpsNameInput");
     if (nameInput) nameInput.value = "";
+    activeVpsNameDisplay = "";
     syncVpsNameOptions([]);
     await loadScoreTablePanel("");
     renderTable(
@@ -694,3 +708,4 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 window.handleVpsNameInput = handleVpsNameInput;
 window.handleVpsNameCommit = handleVpsNameCommit;
+window.handleVpsNameFocus = handleVpsNameFocus;
