@@ -100,7 +100,7 @@ async function refreshDashboard() {
       },
       {
         label: "Run Time (Total)",
-        getter: (r) => `${Number(r.runTimeTotal || 0)} min`,
+        getter: (r) => fmtWeeklyRuntime(r.runTimeTotal),
       },
       { label: "Starts (Total)", getter: (r) => r.startCountTotal },
       { label: "Players", getter: (r) => r.playerCount },
