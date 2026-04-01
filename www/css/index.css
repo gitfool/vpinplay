@@ -37,6 +37,7 @@
   color: var(--text);
   cursor: pointer;
   flex: 0 0 auto;
+  margin-left: auto;
   transition:
     background-color 120ms ease,
     border-color 120ms ease,
@@ -60,9 +61,17 @@
 }
 
 .panel-expand-icon {
-  font-size: 1.25rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   transition: transform 120ms ease;
+}
+
+.panel-expand-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .grid-panels.panel-expanded {
