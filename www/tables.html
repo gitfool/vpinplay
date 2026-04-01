@@ -30,8 +30,10 @@
             type="text"
             value="lkSumsrF"
             placeholder="Enter VPS ID"
+            onchange="refreshDashboard()"
             onkeydown="
               if (event.key === 'Enter') {
+                event.preventDefault();
                 refreshDashboard();
               }
             "
@@ -56,7 +58,7 @@
           />
           <datalist id="vpsNameOptions"></datalist>
         </div>
-        <button class="btn" onclick="refreshDashboard()">Apply</button>
+        <button class="btn" type="button" onclick="refreshDashboard()">Apply</button>
         <div class="field">
           <label for="filehashInput">Lookup by VPX File Hash</label>
           <input

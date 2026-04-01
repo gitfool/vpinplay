@@ -8,8 +8,8 @@ function formatVpsNameOption(item) {
     (value) => value !== null && value !== undefined && String(value).trim() !== "",
   );
   return meta.length
-    ? `${item.name} (${meta.join(", ")}) [${item.vpsId}]`
-    : `${item.name} [${item.vpsId}]`;
+    ? `${item.name} (${meta.join(", ")})`
+    : `${item.name}`;
 }
 
 function syncVpsNameOptions(items) {
@@ -29,11 +29,35 @@ function findVpsNameMatch(value) {
   const normalized = String(value || "").trim().toLowerCase();
   if (!normalized) return null;
 
-  return (
+  const exactDisplayMatch =
     vpsNameSearchCache.find(
       (item) => formatVpsNameOption(item).trim().toLowerCase() === normalized,
-    ) || null
+    ) || null;
+  if (exactDisplayMatch) return exactDisplayMatch;
+
+  const exactNameMatches = vpsNameSearchCache.filter(
+    (item) => String(item.name || "").trim().toLowerCase() === normalized,
   );
+  if (exactNameMatches.length === 1) return exactNameMatches[0];
+
+  return null;
+}
+
+async function selectVpsNameMatch(match) {
+  if (!match?.vpsId) return;
+
+  const nextVpsId = String(match.vpsId).trim();
+  const currentVpsId = q("vpsIdInput")?.value.trim() || "";
+  q("vpsIdInput").value = nextVpsId;
+
+  const input = q("vpsNameInput");
+  if (input) input.value = formatVpsNameOption(match);
+
+  setLookupStatus(`Selected VPS ID: ${nextVpsId}`);
+
+  if (nextVpsId !== currentVpsId) {
+    await refreshDashboard();
+  }
 }
 
 async function searchVpsNames(query) {
@@ -71,7 +95,13 @@ function syncNameInputFromVpsdbRecord(record) {
 }
 
 async function handleVpsNameInput() {
-  await searchVpsNames(q("vpsNameInput")?.value || "");
+  const value = q("vpsNameInput")?.value || "";
+  await searchVpsNames(value);
+
+  const match = findVpsNameMatch(value);
+  if (match) {
+    await selectVpsNameMatch(match);
+  }
 }
 
 async function handleVpsNameCommit() {
@@ -86,10 +116,7 @@ async function handleVpsNameCommit() {
     return;
   }
 
-  q("vpsIdInput").value = match.vpsId;
-  input.value = formatVpsNameOption(match);
-  setLookupStatus(`Selected VPS ID: ${match.vpsId}`);
-  await refreshDashboard();
+  await selectVpsNameMatch(match);
 }
 
 async function loadScoreTablePanel(vpsId) {
@@ -557,6 +584,7 @@ function renderVpsdbDetails(
 async function refreshDashboard() {
   const header = document.querySelector("vpinplay-header");
   if (header) header.setRefreshing(true);
+  setLookupStatus("");
 
   const vpsId = q("vpsIdInput").value.trim();
   setVpisidInUrl(vpsId);
