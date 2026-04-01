@@ -269,7 +269,7 @@ async function handleFilehashCommit() {
   if (!input) return;
 
   const nextFilehash = input.value.trim();
-  if (!nextFilehash || nextFilehash === activeFilehashValue) return;
+  if (!nextFilehash) return;
   await lookupByFilehash();
 }
 
@@ -631,6 +631,8 @@ async function refreshDashboard() {
 
   const vpsId = q("vpsIdInput").value.trim();
   activeVpsIdValue = vpsId;
+  const currentFilehash = q("filehashInput")?.value.trim() || "";
+  activeFilehashValue = currentFilehash;
   setVpisidInUrl(vpsId);
 
   const scoresPanel = document.querySelector("table-scores-panel");
