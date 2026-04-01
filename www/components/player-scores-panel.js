@@ -447,6 +447,8 @@ class PlayerScoresPanel extends HTMLElement {
         `Failed to load score data (${scoreResult.status || "network"}).`,
         "error",
       );
+      const gridPanels = this.q("grid-score-panels");
+      if (gridPanels) gridPanels.innerHTML = "";
       return;
     }
 
@@ -461,10 +463,11 @@ class PlayerScoresPanel extends HTMLElement {
         `No score data found for ${this.userId} on ${this.vpsId}.`,
         "error",
       );
+      const gridPanels = this.q("grid-score-panels");
+      if (gridPanels) gridPanels.innerHTML = "";
       return;
     }
 
-    // Update header
     this.q("table-title").textContent = this.getTableDisplayName(row);
     this.q("rating-display").innerHTML = this.fmtRatingStars(
       ratingSummaryResult.ok ? ratingSummaryResult.data?.avgRating : null,
@@ -481,7 +484,6 @@ class PlayerScoresPanel extends HTMLElement {
     this.q("table-subtitle").innerHTML =
       `<strong>${manufacturer || "Unknown Manufacturer"}</strong>${year ? ` • ${year}` : ""}`;
 
-    // Set table art
     const artUrl = `https://github.com/superhac/vpinmediadb/raw/refs/heads/main/${this.vpsId}/1k/bg.png`;
     this.q("table-art").src = artUrl;
 

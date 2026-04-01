@@ -281,6 +281,8 @@ class TableScoresPanel extends HTMLElement {
         `Failed to load score data (${bestEverResult.status || "network"}).`,
         "error",
       );
+      const gridPanels = this.q("grid-score-panels");
+      if (gridPanels) gridPanels.innerHTML = "";
       return;
     }
 
@@ -300,6 +302,8 @@ class TableScoresPanel extends HTMLElement {
         `No historical matched score entries were found for ${this.vpsId}.`,
         "error",
       );
+      const gridPanels = this.q("grid-score-panels");
+      if (gridPanels) gridPanels.innerHTML = "";
       return;
     }
 
