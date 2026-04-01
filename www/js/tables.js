@@ -444,12 +444,12 @@ function renderVpsdbDetails(
                         </section>
                         <section class="table-focus-stat-card">
                             <div class="table-focus-label">Total Play Time</div>
-                            <div class="table-focus-stat-value">${escapeHtml(fmtRuntime(totalRuntime))}</div>
+                            <div class="table-focus-stat-value">${escapeHtml(fmtWeeklyRuntime(totalRuntime))}</div>
                             <div class="table-focus-stat-sub">Sum of runTime</div>
                         </section>
                         <section class="table-focus-stat-card">
                             <div class="table-focus-label">This Week Play Time</div>
-                            <div class="table-focus-stat-value">${escapeHtml(fmtRuntime(weeklyRuntime))}</div>
+                            <div class="table-focus-stat-value">${escapeHtml(fmtWeeklyRuntime(weeklyRuntime))}</div>
                             <div class="table-focus-stat-sub">Last 7 days (delta)</div>
                         </section>
                         <section class="table-focus-stat-card">

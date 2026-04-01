@@ -359,7 +359,7 @@ async function refreshDashboard() {
     lastSyncRes.ok ? fmtDate(lastSyncRes.data.lastSyncAt) : "-",
   );
   setKpi("kpiStarts", fmtNumber(totalStarts));
-  setKpi("kpiRuntime", fmtRuntime(totalRuntime));
+  setKpi("kpiRuntime", fmtWeeklyRuntime(totalRuntime));
   setKpi("kpiRuntimeWeek", fmtWeeklyRuntime(runtimeWeek));
   setKpi("kpiStartsWeek", fmtNumber(startsWeek));
 
@@ -371,7 +371,7 @@ async function refreshDashboard() {
         getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
         html: true,
       },
-      { label: "Run Time", getter: (r) => fmtRuntime(r.runTime) },
+      { label: "Run Time", getter: (r) => fmtWeeklyRuntime(r.runTime) },
       { label: "Starts", getter: (r) => fmtNumber(r.startCount) },
     ],
     topPlaytimeRes.ok ? topPlaytimeRes.data : [],
@@ -426,14 +426,14 @@ async function refreshDashboard() {
       data: topPlaytimeRes.ok ? topPlaytimeRes.data : [],
       title: "Top Play Time",
       sub: (r) =>
-        `${fmtRuntime(r.runTime)} (${fmtNumber(r.startCount)} starts)`,
+        `${fmtWeeklyRuntime(r.runTime)} (${fmtNumber(r.startCount)} starts)`,
       cols: [
         {
           label: "Table",
           getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
           html: true,
         },
-        { label: "Run Time", getter: (r) => fmtRuntime(r.runTime) },
+        { label: "Run Time", getter: (r) => fmtWeeklyRuntime(r.runTime) },
         { label: "Starts", getter: (r) => fmtNumber(r.startCount) },
       ],
     },
