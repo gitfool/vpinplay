@@ -54,39 +54,126 @@
         </div>
       </section>
 
-      <section class="grid-panels">
-        <section class="panel">
-          <h3>Top Rated Tables</h3>
+      <section id="dashboardPanels" class="grid-panels">
+        <section id="topRatedPanel" class="panel dashboard-panel">
+          <div class="panel-heading">
+            <button
+              class="panel-expand-btn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="topRatedTable"
+              aria-label="Expand Top Rated Tables panel"
+              onclick="toggleDashboardPanel('topRatedPanel')"
+            >
+              <span class="panel-expand-icon" aria-hidden="true">+</span>
+            </button>
+            <h3>Top Rated Tables</h3>
+          </div>
           <table id="topRatedTable"></table>
         </section>
 
-        <section class="panel">
-          <h3>Top Table Play Time</h3>
+        <section id="topPlayTimePanel" class="panel dashboard-panel">
+          <div class="panel-heading">
+            <button
+              class="panel-expand-btn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="topPlayTimeGlobalTable"
+              aria-label="Expand Top Table Play Time panel"
+              onclick="toggleDashboardPanel('topPlayTimePanel')"
+            >
+              <span class="panel-expand-icon" aria-hidden="true">+</span>
+            </button>
+            <h3>Top Table Play Time</h3>
+          </div>
           <table id="topPlayTimeGlobalTable"></table>
         </section>
 
-        <section class="panel">
-          <h3>Newly Added Tables</h3>
+        <section id="newlyAddedPanel" class="panel dashboard-panel">
+          <div class="panel-heading">
+            <button
+              class="panel-expand-btn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="newlyAddedTable"
+              aria-label="Expand Newly Added Tables panel"
+              onclick="toggleDashboardPanel('newlyAddedPanel')"
+            >
+              <span class="panel-expand-icon" aria-hidden="true">+</span>
+            </button>
+            <h3>Newly Added Tables</h3>
+          </div>
           <table id="newlyAddedTable"></table>
         </section>
 
-        <section class="panel">
-          <h3>Top Tables by Variants</h3>
+        <section id="topVariantsPanel" class="panel dashboard-panel">
+          <div class="panel-heading">
+            <button
+              class="panel-expand-btn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="topVariantsTable"
+              aria-label="Expand Top Tables by Variants panel"
+              onclick="toggleDashboardPanel('topVariantsPanel')"
+            >
+              <span class="panel-expand-icon" aria-hidden="true">+</span>
+            </button>
+            <h3>Top Tables by Variants</h3>
+          </div>
           <table id="topVariantsTable"></table>
         </section>
 
-        <section class="panel">
-          <h3 id="topPlayerPlaysTitle">Top Player Plays (7d)</h3>
+        <section id="topPlayerPlaysPanel" class="panel dashboard-panel">
+          <div class="panel-heading">
+            <button
+              class="panel-expand-btn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="topPlayerPlaysTable"
+              aria-label="Expand Top Player Plays panel"
+              onclick="toggleDashboardPanel('topPlayerPlaysPanel')"
+            >
+              <span class="panel-expand-icon" aria-hidden="true">+</span>
+            </button>
+            <h3 id="topPlayerPlaysTitle">Top Player Plays (7d)</h3>
+          </div>
           <table id="topPlayerPlaysTable"></table>
         </section>
 
-        <section class="panel">
-          <h3 id="topPlayerPlaytimeTitle">Top Player Playtime (7d)</h3>
+        <section id="topPlayerPlaytimePanel" class="panel dashboard-panel">
+          <div class="panel-heading">
+            <button
+              class="panel-expand-btn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="topPlayerPlaytimeTable"
+              aria-label="Expand Top Player Playtime panel"
+              onclick="toggleDashboardPanel('topPlayerPlaytimePanel')"
+            >
+              <span class="panel-expand-icon" aria-hidden="true">+</span>
+            </button>
+            <h3 id="topPlayerPlaytimeTitle">Top Player Playtime (7d)</h3>
+          </div>
           <table id="topPlayerPlaytimeTable"></table>
         </section>
 
-        <section class="panel">
-          <h3>Latest Submitted Scores</h3>
+        <section
+          id="latestSubmittedScoresPanel"
+          class="panel dashboard-panel"
+        >
+          <div class="panel-heading">
+            <button
+              class="panel-expand-btn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="latestSubmittedScoresTable"
+              aria-label="Expand Latest Submitted Scores panel"
+              onclick="toggleDashboardPanel('latestSubmittedScoresPanel')"
+            >
+              <span class="panel-expand-icon" aria-hidden="true">+</span>
+            </button>
+            <h3>Latest Submitted Scores</h3>
+          </div>
           <table id="latestSubmittedScoresTable"></table>
         </section>
       </section>
