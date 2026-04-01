@@ -265,7 +265,7 @@ async function refreshDashboard() {
   const header = document.querySelector("vpinplay-header");
   if (header) header.setRefreshing(true);
 
-  const userId = q("userIdInput").value.trim();
+  const userId = q("setupUserId").value.trim();
   const vpsIdFilter = q("vpsIdInput").value.trim();
 
   setParams(userId, vpsIdFilter);
@@ -351,7 +351,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await customElements.whenDefined("vpinplay-header");
 
   const params = getParams();
-  if (params.userId) q("userIdInput").value = params.userId;
+  if (params.userId) q("setupUserId").value = params.userId;
   if (params.vpsId) q("vpsIdInput").value = params.vpsId;
   refreshDashboard();
 });
