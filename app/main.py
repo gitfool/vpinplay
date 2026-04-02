@@ -82,9 +82,12 @@ async def create_indexes():
     )
     db["user_table_ratings"].create_index([("vpsId", 1), ("rating", 1)])
     db["user_table_ratings"].create_index([("userIdNormalized", 1), ("vpsId", 1)])
+    db["user_table_rating_deltas"].create_index([("changedAt", -1), ("newRating", 1)])
+    db["user_table_rating_deltas"].create_index(
+        [("userIdNormalized", 1), ("vpsId", 1), ("vpxFileSignature", 1), ("changedAt", -1)]
+    )
     # Indexes for user state deltas (analytics)
     db["user_table_state_deltas"].create_index("changedAt")
-    db["user_table_state_deltas"].create_index([("changedAt", -1), ("newRating", 1)])
     db["user_table_state_deltas"].create_index([("userIdNormalized", 1), ("changedAt", -1)])
     db["user_table_state_deltas"].create_index([("userIdNormalized", 1), ("vpsId", 1), ("changedAt", -1)])
     db["user_table_state_deltas"].create_index([("userId", 1), ("changedAt", -1)])

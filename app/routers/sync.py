@@ -175,6 +175,7 @@ async def submit_sync(request: FullSyncRequest, db: Database = Depends(get_db)):
     user_state_col = db["user_table_state"]  # TODO: Collection structure may change
     user_state_deltas_col = db["user_table_state_deltas"]  # Per-sync change log for weekly/runtime analytics
     user_ratings_col = db["user_table_ratings"]  # Per-user, per-variation ratings for vote aggregation
+    user_rating_deltas_col = db["user_table_rating_deltas"]  # Per-user, per-variation rating change log
     
     for table_payload in request.tables:
         try:
@@ -224,6 +225,31 @@ async def submit_sync(request: FullSyncRequest, db: Database = Depends(get_db)):
             else:
                 tables_col.insert_one(table_doc)
                 summary.tablesCreated += 1
+
+            existing_user_rating = user_ratings_col.find_one(
+                {
+                    "userIdNormalized": user_id,
+                    "vpsId": vps_id,
+                    "vpxFileSignature": vpx_file_signature,
+                },
+                {
+                    "_id": 1,
+                    "rating": 1,
+                },
+            )
+            previous_variation_rating = existing_user_rating.get("rating") if existing_user_rating else None
+
+            if previous_variation_rating != normalized_rating:
+                user_rating_deltas_col.insert_one({
+                    "userId": user_id,
+                    "userIdNormalized": user_id,
+                    "vpsId": vps_id,
+                    "vpxFile": vpx_file_data,
+                    "vpxFileSignature": vpx_file_signature,
+                    "prevRating": previous_variation_rating,
+                    "newRating": normalized_rating,
+                    "changedAt": received_at,
+                })
 
             # Upsert per-variation rating document.
             # This preserves one rating row per user + vpsId + variation, so vote counts
@@ -342,28 +368,6 @@ async def submit_sync(request: FullSyncRequest, db: Database = Depends(get_db)):
                         {"$set": {"lastSeenAt": received_at, "userId": user_id, "userIdNormalized": user_id}}
                     )
             else:
-                user_state_deltas_col.insert_one({
-                    "userId": user_id,
-                    "userIdNormalized": user_id,
-                    "vpsId": vps_id,
-                    "changedAt": received_at,
-                    "prevRating": None,
-                    "newRating": normalized_rating,
-                    "prevLastRun": None,
-                    "newLastRun": incoming_last_run,
-                    "prevStartCount": 0,
-                    "newStartCount": incoming_start_count,
-                    "deltaStartCount": incoming_start_count,
-                    "prevRunTime": 0,
-                    "newRunTime": incoming_run_time,
-                    "deltaRunTime": incoming_run_time,
-                    "prevScore": None,
-                    "newScore": incoming_score,
-                    "prevAlttitle": None,
-                    "newAlttitle": table_payload.vpinfe.alttitle,
-                    "prevAltvpsid": None,
-                    "newAltvpsid": table_payload.vpinfe.altvpsid,
-                })
                 user_state_col.insert_one({
                     **user_state_doc,
                     "createdAt": received_at

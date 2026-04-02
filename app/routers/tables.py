@@ -63,7 +63,7 @@ async def get_global_latest_submitted_ratings(
     Get the most recent actual rating submissions/changes across all users.
     """
     rows = list(
-        db["user_table_state_deltas"]
+        db["user_table_rating_deltas"]
         .find(
             {
                 "newRating": {"$gte": 1, "$lte": 5},
