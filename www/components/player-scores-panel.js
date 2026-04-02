@@ -49,41 +49,396 @@ class PlayerScoresPanel extends HTMLElement {
   render() {
     this.shadowRoot.innerHTML = `
       <link rel="stylesheet" href="css/base.css">
-      <link rel="stylesheet" href="css/player-scores-panel.css">      
-        <div class="panel-header">
-          <div>
-            <h3>Scoreboard Viewer</h3>
-            <p class="panel-note">
-              Choose a table score panel from scoreboards you have submitted.
-            </p>
-          </div>
-          <label class="panel-picker">
-            <span>Scoreboard</span>
-            <select id="scoreUserPanelSelect">
-              <option value="">Loading available scoreboards...</option>
-            </select>
-          </label>
-        </div>
-        <div class="panel-body">
-          <div class="scoreboard-header">
-            <img class="table-art" src="" alt="Table backglass art" id="table-art">
-            <div class="header-content">
-              <div class="table-title" id="table-title">Loading table...</div>
-              <div class="meta-stack">
-                <div class="meta-line rating-line">
-                  <span class="rating-label">Rating</span>
-                  <span id="rating-display">Loading...</span>
-                </div>
-                <div class="meta-line" id="table-subtitle">Loading metadata...</div>
-                <div class="meta-line" id="table-meta">Waiting for user score data.</div>
-              </div>
-            </div>
-            <div class="user-badge" id="user-badge">No User</div>
-          </div>
+      <style>
+        .panel-header {
+          display: flex;
+          gap: 16px;
+          justify-content: space-between;
+          align-items: end;
+          flex-wrap: wrap;
+          margin-bottom: 12px;
+        }
 
-          <div class="status" id="status" hidden>Ready.</div>
-          <div class="grid-score-panels" id="grid-score-panels"></div>
+        .panel-note {
+          margin: 0;
+          color: var(--ink-muted);
+          font-size: 0.9rem;
+        }
+
+        .panel-picker {
+          display: grid;
+          gap: 6px;
+          min-width: min(100%, 320px);
+          color: var(--ink-muted);
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .panel-picker select {
+          width: 100%;
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          background: var(--surface-2);
+          color: var(--ink);
+          padding: 10px 12px;
+          font: inherit;
+        }
+
+        .panel-body {
+          width: 100%;
+          border-radius: 12px;
+          background: transparent;
+          display: block;
+        }
+
+        /* Scoreboard header */
+        .scoreboard-header {
+          display: grid;
+          grid-template-columns: 290px minmax(0, 1fr) auto;
+          gap: 22px;
+          align-items: start;
+          background: var(--surface);
+          border-radius: var(--radius);
+          padding: 20px;
+          box-shadow: var(--shadow);
+          margin-bottom: 24px;
+        }
+
+        .table-art {
+          width: 290px;
+          height: 164px;
+          border-radius: 12px;
+          object-fit: cover;
+        }
+
+        .header-content {
+          min-width: 0;
+          display: grid;
+          gap: 0.7rem;
+          align-content: center;
+        }
+
+        .table-title {
+          margin: 0;
+          color: var(--ink);
+          font-size: clamp(2.4rem, 5vw, 4.3rem);
+          line-height: 0.92;
+          font-weight: 500;
+          letter-spacing: 0.02em;
+          text-shadow: 0 0 28px rgba(198, 134, 255, 0.2);
+        }
+
+        .meta-stack {
+          display: grid;
+          gap: 0.46rem;
+        }
+
+        .meta-line {
+          margin: 0;
+          color: var(--ink-muted);
+          font-size: 1.14rem;
+          line-height: 1.32;
+        }
+
+        .meta-line strong {
+          color: var(--ink);
+          font-weight: 700;
+        }
+
+        .rating-line {
+          display: flex;
+          align-items: center;
+          gap: 0.8rem;
+          flex-wrap: wrap;
+        }
+
+        .rating-label {
+          color: var(--ink-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          font-size: 0.9rem;
+          font-weight: 700;
+        }
+
+        .rating-stars {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.16rem;
+        }
+
+        .rating-star {
+          color: rgba(255, 239, 188, 0.28);
+          font-size: 1.12rem;
+          line-height: 1;
+        }
+
+        .rating-star.is-filled {
+          color: var(--neon-yellow);
+          text-shadow: var(--glow-yellow);
+        }
+
+        .rating-value {
+          color: var(--ink-muted);
+          font-size: 1.08rem;
+        }
+
+        .user-badge {
+          background: var(--surface-2);
+          color: var(--neon-cyan);
+          padding: 10px 20px;
+          border-radius: 8px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          border: 1px solid var(--line);
+        }
+
+        /* Special entries */
+        .special-entry {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 12px;
+        }
+
+        .special-pill {
+          background: var(--surface-2);
+          color: var(--neon-cyan);
+          padding: 8px 16px;
+          border-radius: 24px;
+          font-weight: 700;
+          width: fit-content;
+        }
+
+        .special-detail {
+          font-size: 1.1rem;
+          color: var(--ink);
+        }
+
+        .special-subtle {
+          font-size: 0.9rem;
+          color: var(--ink-muted);
+        }
+
+      .status {
+        margin-bottom: 14px;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: rgba(0, 217, 255, 0.08);
+        border: 1px solid rgba(0, 217, 255, 0.18);
+        color: var(--neon-cyan);
+        font-size: 0.9rem;
+        font-weight: 700;
+        box-shadow: var(--glow-cyan);
+      }
+
+      .status.error {
+        color: var(--bad);
+        border-color: rgba(255, 10, 120, 0.24);
+        background: rgba(255, 10, 120, 0.12);
+      }
+
+      .grid-score-panels {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: start;
+        width: 100%;
+      }
+
+      .score-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        position: relative;
+        padding: 14px;
+        min-width: 0;
+        display: grid;
+        gap: 12px;
+        flex: 1 1 calc(50% - 6px);
+        max-width: calc(50% - 6px);
+      }
+
+      .score-card:last-child:nth-child(odd) {
+        margin: 0 auto;
+      }
+
+      .score-card.hero {
+        background:
+          linear-gradient(135deg, rgba(180, 41, 249, 0.12), rgba(0, 217, 255, 0.08)),
+          var(--surface-soft);
+        border-radius: var(--radius);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: fit-content;
+        flex-basis: 100%;
+        max-width: none;
+        margin: 0 auto;
+        padding: 12px;
+      }
+
+      .score-card-title {
+        color: var(--ink-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .hero-empty,
+      .empty-state {
+        color: var(--ink-muted);
+      }
+
+      .grand-initials {
+        font-size: 2.4rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        color: var(--neon-cyan);
+        text-shadow: var(--glow-cyan);
+      }
+
+      .grand-score {
+        font-size: 1.6rem;
+        font-weight: 800;
+      }
+
+      .score-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .score-row {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 140px) minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+      }
+
+      .score-rank {
+        color: var(--neon-cyan);
+        font-weight: 800;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        text-shadow: var(--glow-cyan);
+      }
+
+      .score-initials {
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        font-size: 1rem;
+        min-height: 1.2em;
+        color: var(--ink);
+      }
+
+      .score-value {
+        text-align: right;
+        font-weight: 700;
+        font-size: 1rem;
+        min-width: 0;
+        color: var(--ink);
+      }
+
+      @media (max-width: 900px) {
+        .panel-picker {
+          min-width: 100%;
+        }
+
+        .table-art {
+          width: 100%;
+          max-width: 320px;
+          height: auto;
+          aspect-ratio: 250 / 141;
+        }
+
+        .table-title {
+          font-size: clamp(2rem, 8.4vw, 3rem);
+        }
+
+        .meta-line, .rating-line {
+          font-size: 0.8rem;
+        }
+
+        .user-badge {
+          text-align: center;
+        }
+
+        .scoreboard-header {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+
+        .score-card {
+          min-width: 100%;
+        }
+
+        .score-row {
+          grid-template-columns: minmax(0, 60px) minmax(0, 100px) minmax(0, 1fr);
+          gap: 8px;
+          padding: 4px 6px;
+        }
+
+        .score-rank, .score-initials, .score-value {
+          font-size: 0.8rem;
+          font-weight: 500;
+        }
+
+        .score-initials {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .grand-initials {
+          font-size: 2rem;
+        }
+
+        .grand-score {
+          font-size: 1.3rem;
+        }
+      }
+    </style>    
+      <div class="panel-header">
+        <div>
+          <h3>Scoreboard Viewer</h3>
+          <p class="panel-note">
+            Choose a table score panel from scoreboards you have submitted.
+          </p>
         </div>
+        <label class="panel-picker">
+          <span>Scoreboard</span>
+          <select id="scoreUserPanelSelect">
+            <option value="">Loading available scoreboards...</option>
+          </select>
+        </label>
+      </div>
+      <div class="panel-body">
+        <div class="scoreboard-header">
+          <img class="table-art" src="" alt="Table backglass art" id="table-art">
+          <div class="header-content">
+            <div class="table-title" id="table-title">Loading table...</div>
+            <div class="meta-stack">
+            <div class="meta-line" id="table-subtitle">Loading metadata...</div>
+              <div class="meta-line rating-line">
+                <span class="rating-label">Rating</span>
+                <span id="rating-display">Loading...</span>
+              </div>
+              <div class="meta-line" id="table-meta">Waiting for user score data.</div>
+            </div>
+          </div>
+          <div class="user-badge" id="user-badge">No User</div>
+        </div>
+
+        <div class="status" id="status" hidden>Ready.</div>
+        <div class="grid-score-panels" id="grid-score-panels"></div>
+      </div>
     `;
 
     // Attach select change handler
