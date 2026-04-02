@@ -140,7 +140,11 @@
 
 .table-focus-header {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(280px, 340px);
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    minmax(220px, 280px)
+    minmax(220px, 280px);
   gap: 16px;
   align-items: start;
   width: 100%;
@@ -231,13 +235,15 @@
   font-size: 0.8rem;
 }
 
-.table-focus-stats {
-  display: grid;
+.table-focus-stat-total {
   grid-column: 3;
   grid-row: 1;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  width: 100%;
+  align-self: center;
+}
+
+.table-focus-stat-week {
+  grid-column: 4;
+  grid-row: 1;
   align-self: center;
 }
 
@@ -402,15 +408,14 @@
     grid-row: auto;
   }
 
-  .table-focus-stats {
+  .table-focus-stat-total,
+  .table-focus-stat-week {
     grid-column: 1;
     grid-row: auto;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 640px) {
-  .table-focus-stats,
   .variation-grid {
     grid-template-columns: 1fr;
   }
