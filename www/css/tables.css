@@ -169,6 +169,10 @@
   flex-direction: column;
   gap: 10px;
   justify-content: center;
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 14px 16px;
+  border: 1px solid var(--line);
 }
 
 .table-focus-title {
