@@ -153,6 +153,45 @@ async def get_table_user_ratings(vpsId: str, db: Database = Depends(get_db)):
     ]
 
 
+@router.get("/tables/{vpsId}/top-runtime-players")
+async def get_table_top_runtime_players(
+    vpsId: str,
+    limit: int = Query(5, ge=1, le=100),
+    db: Database = Depends(get_db),
+):
+    """
+    Get top players for a table by cumulative runTime (highest first).
+    """
+    rows = list(
+        db["user_table_state"]
+        .find(
+            {
+                "vpsId": vpsId,
+                "runTime": {"$gt": 0},
+            },
+            {
+                "_id": 0,
+                "userId": 1,
+                "runTime": 1,
+                "lastRun": 1,
+                "updatedAt": 1,
+            },
+        )
+        .sort([("runTime", -1), ("userId", 1)])
+        .limit(limit)
+    )
+
+    return [
+        {
+            "userId": row.get("userId"),
+            "runTime": row.get("runTime"),
+            "lastRun": row.get("lastRun"),
+            "updatedAt": row.get("updatedAt"),
+        }
+        for row in rows
+    ]
+
+
 @router.get("/tables/{vpsId}/activity-summary")
 async def get_table_activity_summary(vpsId: str, db: Database = Depends(get_db)):
     """
