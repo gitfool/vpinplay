@@ -13,29 +13,24 @@ class PlayerScoresPanel extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue !== newValue) {
-      if (name === "vps-id") {
-        this.vpsId = newValue;
-      } else if (name === "user-id") {
-        this.userId = newValue;
-      } else if (name === "api-base") {
-        this.apiBase = newValue.replace(/\/$/, "");
+    if (oldValue === newValue) return;
+
+    // Update the internal state variables
+    this.syncState();
+
+    // Only trigger a load if the component is actually attached and rendered
+    if (this.shadowRoot && this.shadowRoot.innerHTML !== "") {
+      if (this.vpsId && this.userId) {
+        this.loadPanel();
+      } else {
+        this.hidePanel();
       }
-      if (this.vpsId && this.userId) this.loadPanel();
     }
   }
 
   connectedCallback() {
-    this.render();
-    const urlParams = new URLSearchParams(window.location.search);
-    this.vpsId =
-      this.getAttribute("vps-id") ||
-      urlParams.get("score_vpsid") ||
-      urlParams.get("vpsid");
-    this.userId = this.getAttribute("user-id") || urlParams.get("userid");
-    this.apiBase = (
-      this.getAttribute("api-base") || "https://api.vpinplay.com:8888"
-    ).replace(/\/$/, "");
+    this.render(); // Build the DOM structure ONCE
+    this.syncState(); // Get the initial data
 
     if (this.userId) {
       this.loadAvailableTables();
@@ -43,13 +38,48 @@ class PlayerScoresPanel extends HTMLElement {
 
     if (this.vpsId && this.userId) {
       this.loadPanel();
+    } else {
+      this.hidePanel();
     }
+  }
+
+  syncState() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Priority: Attribute > URL Param > Internal State
+    this.vpsId =
+      this.getAttribute("vps-id") ||
+      urlParams.get("score_vpsid") ||
+      urlParams.get("vpsid") ||
+      this.vpsId;
+
+    this.userId =
+      this.getAttribute("user-id") || urlParams.get("userid") || this.userId;
+
+    const rawApi =
+      this.getAttribute("api-base") || "https://api.vpinplay.com:8888";
+    this.apiBase = rawApi.replace(/\/$/, "");
   }
 
   render() {
     this.shadowRoot.innerHTML = `
       <link rel="stylesheet" href="css/base.css">
       <style>
+        :host {
+          position: relative;
+          color: var(--ink);
+          z-index: 1;
+          display: block;
+          width: 100%;
+          contain: layout;
+        }
+
+        :host,
+        :host * {
+          box-sizing: border-box;
+          font-family: inherit;
+        }
+
         .panel-header {
           display: flex;
           gap: 16px;
@@ -66,29 +96,102 @@ class PlayerScoresPanel extends HTMLElement {
         }
 
         .panel-picker {
-          display: grid;
-          gap: 6px;
-          min-width: min(100%, 320px);
-          color: var(--ink-muted);
-          font-size: 0.8rem;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
+          position: relative; /* Anchor for the dropdown list */
+          width: 100%;
+          max-width: 320px;
         }
 
-        .panel-picker select {
+        .panel-picker span {
+          display: block;
+          margin: 8px 0;
+        }
+
+        .picker-trigger {
           width: 100%;
           border: 1px solid var(--line);
           border-radius: 10px;
           background: var(--surface-2);
           color: var(--ink);
           padding: 10px 12px;
+          text-align: left;
+          cursor: pointer;
           font: inherit;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .picker-trigger::after {
+          content: '▼';
+          font-size: 0.6rem;
+          color: var(--ink-muted);
+        }
+
+        .picker-options {
+          display: none;
+          position: absolute;
+          left: 0;
+          right: 0;
+          z-index: 100;
+          background: var(--surface-2);
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          max-height: 250px; /* Adjust as needed */
+          overflow-y: auto;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        /* Default: Opens Down */
+        .picker-options.open-down {
+          display: block;
+          top: 100%;
+          margin-top: 4px;
+        }
+
+        /* Smart Direction: Opens Up */
+        .picker-options.open-up {
+          display: block;
+          bottom: 100%;
+          margin-bottom: 4px;
+        }
+
+        .picker-option {
+          padding: 10px 12px;
+          cursor: pointer;
+          color: var(--ink);
+          transition: background 0.2s;
+        }
+
+        .picker-option:hover {
+          background: var(--surface);
+          color: var(--neon-cyan);
+        }
+
+        .picker-option.active {
+          background: var(--surface);
+          color: var(--neon-cyan);
+          border-left: 3px solid var(--neon-cyan);
+        }
+
+        .picker-option.is-highlighted {
+          background: var(--surface);
+          color: var(--neon-cyan);
+        }
+
+        .picker-trigger:focus {
+          outline: none;
+          border-color: var(--neon-cyan);
+          box-shadow: 0 0 2px var(--glow-cyan);
         }
 
         .panel-body {
           width: 100%;
           border-radius: 12px;
           background: transparent;
+          display: none;
+        }
+
+        .panel-body.visible {
           display: block;
         }
 
@@ -409,15 +512,15 @@ class PlayerScoresPanel extends HTMLElement {
         <div>
           <h3>Scoreboard Viewer</h3>
           <p class="panel-note">
-            Choose a table score panel from scoreboards you have submitted.
+            Choose a table with scores you have submitted.
           </p>
         </div>
-        <label class="panel-picker">
+        <div class="panel-picker" id="pickerContainer">
           <span>Scoreboard</span>
-          <select id="scoreUserPanelSelect">
-            <option value="">Loading available scoreboards...</option>
-          </select>
-        </label>
+          <button id="pickerTrigger" class="picker-trigger" tabindex="0">Select a scoreboard...</button>
+          <div id="pickerOptions" class="picker-options">
+            </div>
+        </div>
       </div>
       <div class="panel-body">
         <div class="scoreboard-header">
@@ -441,10 +544,99 @@ class PlayerScoresPanel extends HTMLElement {
       </div>
     `;
 
-    // Attach select change handler
-    const select = this.shadowRoot.getElementById("scoreUserPanelSelect");
-    if (select) {
-      select.addEventListener("change", (e) => this.handleScorePanelChange(e));
+    const trigger = this.shadowRoot.getElementById("pickerTrigger");
+    const optionsMenu = this.shadowRoot.getElementById("pickerOptions");
+
+    trigger.addEventListener("click", () => {
+      if (
+        optionsMenu.classList.contains("open-up") ||
+        optionsMenu.classList.contains("open-down")
+      ) {
+        optionsMenu.classList.remove("open-up", "open-down");
+        return;
+      }
+      const rect = trigger.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const menuHeight = 260;
+
+      optionsMenu.classList.remove("open-up", "open-down");
+
+      if (spaceBelow < menuHeight) {
+        optionsMenu.classList.add("open-up");
+      } else {
+        optionsMenu.classList.add("open-down");
+      }
+    });
+
+    this.shadowRoot.addEventListener("click", (e) => {
+      if (!this.q("pickerContainer").contains(e.target)) {
+        optionsMenu.classList.remove("open-up", "open-down");
+      }
+    });
+
+    let highlightedIndex = -1;
+
+    trigger.addEventListener("keydown", (e) => {
+      const options = Array.from(
+        optionsMenu.querySelectorAll(".picker-option"),
+      );
+      const isOpen =
+        optionsMenu.classList.contains("open-up") ||
+        optionsMenu.classList.contains("open-down");
+
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (!isOpen) {
+          trigger.click();
+          return;
+        }
+
+        if (e.key === "ArrowDown") {
+          highlightedIndex = (highlightedIndex + 1) % options.length;
+        } else {
+          highlightedIndex =
+            (highlightedIndex - 1 + options.length) % options.length;
+        }
+
+        options.forEach((opt, idx) => {
+          opt.classList.toggle("is-highlighted", idx === highlightedIndex);
+          if (idx === highlightedIndex)
+            opt.scrollIntoView({ block: "nearest" });
+        });
+      }
+
+      if (e.key === "Enter" && isOpen) {
+        e.preventDefault();
+        if (highlightedIndex >= 0) {
+          options[highlightedIndex].click();
+        }
+      }
+
+      if (e.key === "Escape") {
+        optionsMenu.classList.remove("open-up", "open-down");
+      }
+    });
+
+    trigger.addEventListener("click", () => {
+      highlightedIndex = this.availableTables.findIndex(
+        (t) => t.vpsId === this.vpsId,
+      );
+    });
+  }
+
+  showPanel() {
+    const panel = this.q("panel-body");
+    if (panel) {
+      panel.classList.add("visible");
+    } else {
+      requestAnimationFrame(() => this.showPanel());
+    }
+  }
+
+  hidePanel() {
+    const panel = this.q("panel-body");
+    if (panel) {
+      panel.classList.remove("visible");
     }
   }
 
@@ -460,47 +652,68 @@ class PlayerScoresPanel extends HTMLElement {
     window.history.pushState({}, "", url);
 
     this.loadPanel();
+
+    const offsetHeader = 73;
+    const elementRect = this.getBoundingClientRect();
+    const absoluteElementTop = elementRect.top + window.pageYOffset;
+
+    window.scrollTo({
+      top: absoluteElementTop - offsetHeader,
+      behavior: "smooth",
+    });
   }
 
   async loadAvailableTables() {
     if (!this.userId) return;
-
-    const select = this.shadowRoot.getElementById("scoreUserPanelSelect");
-    if (!select) return;
+    const menu = this.shadowRoot.getElementById("pickerOptions");
+    const trigger = this.shadowRoot.getElementById("pickerTrigger");
 
     try {
       const result = await this.api(
         `/api/v1/users/${encodeURIComponent(this.userId)}/tables/with-score?limit=100&offset=0`,
       );
-
-      if (!result.ok || !Array.isArray(result.data)) {
-        select.innerHTML =
-          '<option value="">Failed to load scoreboards</option>';
-        return;
-      }
+      if (!result.ok) return;
 
       this.availableTables = result.data;
 
-      if (this.availableTables.length === 0) {
-        select.innerHTML = '<option value="">No scoreboards found</option>';
-        return;
+      menu.innerHTML = this.availableTables
+        .map((table) => {
+          const name = table.vpsdb?.name || table.tableTitle || table.vpsId;
+          return `<div class="picker-option" data-value="${table.vpsId}">${name}</div>`;
+        })
+        .join("");
+
+      if (this.vpsId) {
+        const currentTable = this.availableTables.find(
+          (t) => t.vpsId === this.vpsId,
+        );
+        if (currentTable) {
+          trigger.textContent =
+            currentTable.vpsdb?.name ||
+            currentTable.tableTitle ||
+            currentTable.vpsId;
+        }
       }
 
-      select.innerHTML =
-        '<option value="">Select a scoreboard...</option>' +
-        this.availableTables
-          .map((table) => {
-            const name = table.vpsdb?.name || table.tableTitle || table.vpsId;
-            return `<option value="${table.vpsId}" ${table.vpsId === this.vpsId ? "selected" : ""}>${name}</option>`;
-          })
-          .join("");
-    } catch (error) {
-      select.innerHTML = '<option value="">Error loading scoreboards</option>';
+      menu.querySelectorAll(".picker-option").forEach((opt) => {
+        opt.addEventListener("click", () => {
+          const val = opt.getAttribute("data-value");
+          trigger.textContent = opt.textContent;
+          menu.classList.remove("open-up", "open-down");
+
+          this.handleScorePanelChange({ target: { value: val } });
+        });
+      });
+    } catch (e) {
+      trigger.textContent = "Error loading tables";
     }
   }
 
-  q(id) {
-    return this.shadowRoot.getElementById(id);
+  q(selector) {
+    return (
+      this.shadowRoot.getElementById(selector) ||
+      this.shadowRoot.querySelector(`.${selector}`)
+    );
   }
 
   setStatus(message, tone = "info") {
@@ -786,6 +999,8 @@ class PlayerScoresPanel extends HTMLElement {
 
   async loadPanel() {
     if (!this.vpsId || !this.userId) return;
+
+    this.showPanel();
 
     this.q("user-badge").textContent = this.userId;
 
