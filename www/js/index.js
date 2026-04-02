@@ -52,6 +52,30 @@ function getDashboardPanelConfigs() {
         { label: "VPS ID", getter: (r) => linkVpsId(r.vpsId), html: true },
       ],
     },
+    latestSubmittedRatingsPanel: {
+      tableId: "latestSubmittedRatingsTable",
+      pagerId: "latestSubmittedRatingsPager",
+      fetchPage: (limit, offset) =>
+        fetchDashboardListPage(
+          "/api/v1/tables/latest-submitted-ratings",
+          limit,
+          offset,
+        ),
+      columns: [
+        {
+          label: "Table",
+          getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
+          html: true,
+        },
+        { label: "User", getter: (r) => linkUserId(r.userId), html: true },
+        {
+          label: "Rating",
+          getter: (r) => fmtRatingStars(r.rating, { showNumeric: true }),
+          html: true,
+        },
+        { label: "Submitted", getter: (r) => fmtDate(r.updatedAt) },
+      ],
+    },
     newlyAddedPanel: {
       tableId: "newlyAddedTable",
       pagerId: "newlyAddedPager",

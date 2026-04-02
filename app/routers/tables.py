@@ -53,6 +53,46 @@ async def get_global_top_rated_tables(
     return enrich_with_vpsdb(response, db)
 
 
+@router.get("/tables/latest-submitted-ratings")
+async def get_global_latest_submitted_ratings(
+    limit: int = Query(5, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Database = Depends(get_db)
+):
+    """
+    Get the most recently submitted valid table ratings across all users.
+    """
+    rows = list(
+        db["user_table_ratings"]
+        .find(
+            {"rating": {"$gte": 1, "$lte": 5}},
+            {
+                "_id": 0,
+                "userId": 1,
+                "vpsId": 1,
+                "rating": 1,
+                "createdAt": 1,
+                "updatedAt": 1,
+            },
+        )
+        .sort([("updatedAt", -1), ("createdAt", -1), ("userId", 1), ("vpsId", 1)])
+        .skip(offset)
+        .limit(limit)
+    )
+
+    response = [
+        {
+            "userId": row.get("userId"),
+            "vpsId": row.get("vpsId"),
+            "rating": row.get("rating"),
+            "createdAt": row.get("createdAt"),
+            "updatedAt": row.get("updatedAt"),
+        }
+        for row in rows
+    ]
+    return enrich_with_vpsdb(response, db)
+
+
 @router.get("/tables/{vpsId}/rating-summary")
 async def get_global_table_rating_summary(vpsId: str, db: Database = Depends(get_db)):
     """
