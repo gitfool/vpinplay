@@ -176,11 +176,21 @@
 
 .table-focus-title {
   grid-area: title;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
   margin: 0;
   font-size: clamp(2rem, 3.2vw, 3rem);
   line-height: 1.02;
   letter-spacing: 0.03em;
   color: inherit;
+}
+
+.table-focus-vps-link {
+  text-decoration: none;
+  font-size: 0.72rem;
+  line-height: 1;
 }
 
 .table-focus-rating-row {

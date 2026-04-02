@@ -653,6 +653,9 @@ function renderVpsdbDetails(
   const totalRuntime = Number(activitySummary?.runTimeTotal || 0);
   const weeklyRuntime = Number(activityWeekly?.runTimePlayed || 0);
   const weeklyStarts = Number(activityWeekly?.startCountPlayed || 0);
+  const vpsLink = record?.vpsId
+    ? `https://virtualpinballspreadsheet.github.io/games?game=${encodeURIComponent(record.vpsId)}`
+    : "";
 
   container.innerHTML = `
                 <div class="table-focus-panel">
@@ -663,7 +666,10 @@ function renderVpsdbDetails(
                             alt="${escapeHtml(title)} backglass art"
                             onerror="this.style.display='none';"
                         >
-                        <div class="table-focus-title">${escapeHtml(title)}</div>
+                        <div class="table-focus-title">
+                            <span>${escapeHtml(title)}</span>
+                            ${vpsLink ? `<a class="table-focus-pill table-focus-vps-link" href="${vpsLink}" target="_blank" rel="noopener noreferrer">VPS</a>` : ""}
+                        </div>
                         <div class="table-focus-copy">
                             <div class="table-focus-rating-row">
                                 <div class="table-focus-label">Rating</div>
