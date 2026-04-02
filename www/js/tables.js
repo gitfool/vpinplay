@@ -624,75 +624,6 @@ function renderAssociatedRoms(rows, activitySummary = null) {
       .join("");
 }
 
-function renderVpsdbDetails(
-  record,
-  ratingSummary = null,
-  activitySummary = null,
-  activityWeekly = null,
-) {
-  const container = q("vpsdbByIdDetails");
-  if (!record) {
-    container.innerHTML = `<div class="muted">No VPSDB record found for this VPS ID.</div>`;
-    return;
-  }
-
-  const vpsdb =
-    record?.vpsdb && typeof record.vpsdb === "object" ? record.vpsdb : {};
-  const title = vpsdb?.name || record?.vpsId || "Unknown Table";
-  const manufacturer =
-    typeof vpsdb?.manufacturer === "string" ? vpsdb.manufacturer.trim() : "";
-  const year =
-    vpsdb?.year === null || vpsdb?.year === undefined
-      ? ""
-      : String(vpsdb.year).trim();
-  const subtitle = [manufacturer, year].filter(Boolean).join(" • ");
-  const artUrl = getTableArtUrl(record?.vpsId);
-  const avgRating = ratingSummary?.avgRating;
-  const lastUpdated = record?.updatedAt ? fmtDate(record.updatedAt) : "-";
-  const totalStarts = Number(activitySummary?.startCountTotal || 0);
-  const totalRuntime = Number(activitySummary?.runTimeTotal || 0);
-  const weeklyRuntime = Number(activityWeekly?.runTimePlayed || 0);
-  const weeklyStarts = Number(activityWeekly?.startCountPlayed || 0);
-  const vpsLink = record?.vpsId
-    ? `https://virtualpinballspreadsheet.github.io/games?game=${encodeURIComponent(record.vpsId)}`
-    : "";
-
-  container.innerHTML = `
-                <div class="table-focus-panel">
-                    <div class="table-focus-header">
-                        <img
-                            class="table-focus-art"
-                            src="${artUrl}"
-                            alt="${escapeHtml(title)} backglass art"
-                            onerror="this.style.display='none';"
-                        >
-                        <div class="table-focus-title">
-                            <span>${escapeHtml(title)}</span>
-                            ${vpsLink ? `<a class="table-focus-vps-link" href="${vpsLink}" target="_blank" rel="noopener noreferrer" aria-label="Open VPS entry for ${escapeHtml(title)}"><img class="table-focus-vps-logo" src="img/vpsLogo.png" alt="VPS"></a>` : ""}
-                        </div>
-                        <div class="table-focus-copy">
-                            <div class="table-focus-subhead">${escapeHtml(subtitle || "Unknown Manufacturer")}</div>
-                            <div class="table-focus-rating-row">
-                                <div class="table-focus-label">Rating</div>
-                                <div class="table-focus-rating">${fmtRatingStars(avgRating, { showNumeric: true })}</div>
-                            </div>
-                            <div class="table-focus-meta">Last update: ${escapeHtml(lastUpdated)}</div>
-                        </div>
-                        <section class="table-focus-stat-card table-focus-stat-total">
-                            <div class="table-focus-label">Total Activity</div>
-                            <div class="table-focus-stat-value">${escapeHtml(`${fmtWeeklyRuntime(totalRuntime)} / ${fmtNumber(totalStarts)}`)}</div>
-                            <div class="table-focus-stat-sub">All-time playtime / starts</div>
-                        </section>
-                        <section class="table-focus-stat-card table-focus-stat-week">
-                            <div class="table-focus-label">This Week Activity</div>
-                            <div class="table-focus-stat-value">${escapeHtml(`${fmtWeeklyRuntime(weeklyRuntime)} / ${fmtNumber(weeklyStarts)}`)}</div>
-                            <div class="table-focus-stat-sub">Last 7 days (delta)</div>
-                        </section>
-                    </div>
-                </div>
-            `;
-}
-
 async function refreshDashboard() {
   const header = document.querySelector("vpinplay-header");
   if (header) header.setRefreshing(true);
@@ -706,6 +637,11 @@ async function refreshDashboard() {
   const scoresPanel = document.querySelector("table-scores-panel");
   if (scoresPanel) {
     scoresPanel.setAttribute("vps-id", vpsId);
+  }
+
+  const detailsPanel = document.querySelector("table-details-panel");
+  if (detailsPanel) {
+    detailsPanel.setAttribute("vps-id", vpsId);
   }
 
   if (!vpsId) {
@@ -728,26 +664,21 @@ async function refreshDashboard() {
     q("topRuntimePlayersTitle").textContent = "Top Player Play Time (0)";
     renderAssociatedRoms([]);
     syncDerivativeDifferences([], { resetCollapsed: true });
-    renderVpsdbDetails(null, null, null, null);
     return;
   }
 
   const [
-    ratingSummaryRes,
     playerRatingsRes,
     topRuntimePlayersRes,
     tableByIdRes,
     vpsdbByIdRes,
     activitySummaryRes,
-    activityWeeklyRes,
   ] = await Promise.all([
-    api(`/api/v1/tables/${encodeURIComponent(vpsId)}/rating-summary`),
     api(`/api/v1/tables/${encodeURIComponent(vpsId)}/user-ratings`),
     api(`/api/v1/tables/${encodeURIComponent(vpsId)}/top-runtime-players?limit=10`),
     api(`/api/v1/tables/${encodeURIComponent(vpsId)}`),
     api(`/api/v1/vpsdb/${encodeURIComponent(vpsId)}`),
     api(`/api/v1/tables/${encodeURIComponent(vpsId)}/activity-summary`),
-    api(`/api/v1/tables/${encodeURIComponent(vpsId)}/activity-weekly?days=7`),
   ]);
 
   const playerRatingsRows =
@@ -801,12 +732,6 @@ async function refreshDashboard() {
   const vpsdbRecord =
     vpsdbByIdRes.ok && vpsdbByIdRes.data ? vpsdbByIdRes.data : null;
   syncNameInputFromVpsdbRecord(vpsdbRecord);
-  renderVpsdbDetails(
-    vpsdbRecord,
-    ratingSummaryRes.ok ? ratingSummaryRes.data : null,
-    activitySummaryRes.ok ? activitySummaryRes.data : null,
-    activityWeeklyRes.ok ? activityWeeklyRes.data : null,
-  );
 
   if (header) {
     header.markRefresh();
