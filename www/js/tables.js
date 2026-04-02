@@ -685,13 +685,8 @@ function renderVpsdbDetails(
                             <div class="table-focus-stat-sub">Sum of runTime</div>
                         </section>
                         <section class="table-focus-stat-card">
-                            <div class="table-focus-label">This Week Play Time</div>
-                            <div class="table-focus-stat-value">${escapeHtml(fmtWeeklyRuntime(weeklyRuntime))}</div>
-                            <div class="table-focus-stat-sub">Last 7 days (delta)</div>
-                        </section>
-                        <section class="table-focus-stat-card">
-                            <div class="table-focus-label">This Week Plays</div>
-                            <div class="table-focus-stat-value">${escapeHtml(fmtNumber(weeklyStarts))}</div>
+                            <div class="table-focus-label">This Week Activity</div>
+                            <div class="table-focus-stat-value">${escapeHtml(`${fmtWeeklyRuntime(weeklyRuntime)} / ${fmtNumber(weeklyStarts)}`)}</div>
                             <div class="table-focus-stat-sub">Last 7 days (delta)</div>
                         </section>
                     </div>
