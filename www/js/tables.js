@@ -663,8 +663,8 @@ function renderVpsdbDetails(
                             alt="${escapeHtml(title)} backglass art"
                             onerror="this.style.display='none';"
                         >
+                        <div class="table-focus-title">${escapeHtml(title)}</div>
                         <div class="table-focus-copy">
-                            <div class="table-focus-title">${escapeHtml(title)}</div>
                             <div class="table-focus-rating-row">
                                 <div class="table-focus-label">Rating</div>
                                 <div class="table-focus-rating">${fmtRatingStars(avgRating, { showNumeric: true })}</div>

@@ -148,7 +148,7 @@
 
 .table-focus-art {
   grid-column: 1;
-  grid-row: 1;
+  grid-row: 1 / span 2;
   width: auto;
   height: 100%;
   max-height: 170px;
@@ -161,7 +161,7 @@
 
 .table-focus-copy {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 2;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -170,6 +170,9 @@
 }
 
 .table-focus-title {
+  grid-column: 2 / 5;
+  grid-row: 1;
+  align-self: end;
   margin: 0;
   font-size: clamp(2rem, 3.2vw, 3rem);
   line-height: 1.02;
@@ -233,13 +236,13 @@
 
 .table-focus-stat-total {
   grid-column: 3;
-  grid-row: 1;
+  grid-row: 2;
   align-self: center;
 }
 
 .table-focus-stat-week {
   grid-column: 4;
-  grid-row: 1;
+  grid-row: 2;
   align-self: center;
 }
 
@@ -399,6 +402,7 @@
     justify-self: start;
   }
 
+  .table-focus-title,
   .table-focus-copy {
     grid-column: 1;
     grid-row: auto;
