@@ -111,9 +111,15 @@ function getDashboardPanelConfigs() {
       tableId: "topPlayerPlaysTable",
       pagerId: "topPlayerPlaysPager",
       fetchPage: (limit, offset) =>
-        loadTopPlayerActivityPage("startCountPlayed", TOP_PLAYER_DAYS, limit, offset),
+        loadTopPlayerActivityPage(
+          "startCountPlayed",
+          TOP_PLAYER_DAYS,
+          limit,
+          offset,
+        ),
       beforeRender: () => {
-        q("topPlayerPlaysTitle").textContent = `Top Player Plays (${TOP_PLAYER_DAYS}d)`;
+        q("topPlayerPlaysTitle").textContent =
+          `Top Player Plays (${TOP_PLAYER_DAYS}d)`;
       },
       columns: [
         { label: "User", getter: (r) => linkUserId(r.userId), html: true },
@@ -124,7 +130,12 @@ function getDashboardPanelConfigs() {
       tableId: "topPlayerPlaytimeTable",
       pagerId: "topPlayerPlaytimePager",
       fetchPage: (limit, offset) =>
-        loadTopPlayerActivityPage("runTimePlayed", TOP_PLAYER_DAYS, limit, offset),
+        loadTopPlayerActivityPage(
+          "runTimePlayed",
+          TOP_PLAYER_DAYS,
+          limit,
+          offset,
+        ),
       beforeRender: () => {
         q("topPlayerPlaytimeTitle").textContent =
           `Top Player Playtime (${TOP_PLAYER_DAYS}d)`;
@@ -137,7 +148,8 @@ function getDashboardPanelConfigs() {
     latestSubmittedScoresPanel: {
       tableId: "latestSubmittedScoresTable",
       pagerId: "latestSubmittedScoresPager",
-      fetchPage: (limit, offset) => fetchLatestSubmittedScoresPage(limit, offset),
+      fetchPage: (limit, offset) =>
+        fetchLatestSubmittedScoresPage(limit, offset),
       columns: [
         {
           label: "Table",
@@ -262,73 +274,76 @@ async function renderDashboardPanels(defaultLimit) {
 async function refreshDashboard() {
   const header = document.querySelector("vpinplay-header");
   if (header) header.setRefreshing(true);
-  const limit = parseDashboardLimit();
-  const limitInput = q("limitInput");
-  if (limitInput) {
-    limitInput.value = String(limit);
-  }
 
-  const [
-    lastSyncRes,
-    vpsdbStatusRes,
-    weeklyActivityRes,
-    userCountRes,
-    tableCountRes,
-  ] = await Promise.all([
-    api("/api/v1/sync/last"),
-    api("/api/v1/vpsdb/status"),
-    api("/api/v1/tables/activity-weekly?days=7"),
-    api("/api/v1/users/count"),
-    api("/api/v1/tables/count"),
-  ]);
+  try {
+    const limit = parseDashboardLimit();
+    const limitInput = q("limitInput");
+    if (limitInput) {
+      limitInput.value = String(limit);
+    }
 
-  q("kpiLastSync").textContent = lastSyncRes.ok
-    ? fmtDate(lastSyncRes.data.lastSyncAt)
-    : "-";
-  q("kpiLastSyncUser").textContent =
-    `Last sync by user: ${lastSyncRes.ok ? lastSyncRes.data.userId || "-" : "-"}`;
+    const [
+      lastSyncRes,
+      vpsdbStatusRes,
+      weeklyActivityRes,
+      userCountRes,
+      tableCountRes,
+    ] = await Promise.all([
+      api("/api/v1/sync/last"),
+      api("/api/v1/vpsdb/status"),
+      api("/api/v1/tables/activity-weekly?days=7"),
+      api("/api/v1/users/count"),
+      api("/api/v1/tables/count"),
+    ]);
 
-  q("kpiTotalTables").textContent = tableCountRes.ok
-    ? fmtNumber(tableCountRes.data.totalTableRows)
-    : "-";
-  q("kpiUserCount").textContent = userCountRes.ok
-    ? fmtNumber(userCountRes.data.userCount)
-    : "-";
+    q("kpiLastSync").textContent = lastSyncRes.ok
+      ? fmtDate(lastSyncRes.data.lastSyncAt)
+      : "-";
+    q("kpiLastSyncUser").textContent =
+      `Last sync by user: ${lastSyncRes.ok ? lastSyncRes.data.userId || "-" : "-"}`;
 
-  if (vpsdbStatusRes.ok) {
-    const statusText = String(vpsdbStatusRes.data.status || "unknown");
-    setKpi(
-      "kpiVpsdbStatus",
-      statusText,
-      statusText === "ok" ? "status-ok" : "status-bad",
-    );
-    q("kpiVpsdbMeta").textContent =
-      `records: ${vpsdbStatusRes.data.recordCount ?? "-"} | last: ${fmtDate(vpsdbStatusRes.data.lastSyncAt)}`;
-  } else {
-    setKpi("kpiVpsdbStatus", "error", "status-bad");
-    q("kpiVpsdbMeta").textContent = "Unable to fetch VPSDB status";
-  }
+    q("kpiTotalTables").textContent = tableCountRes.ok
+      ? fmtNumber(tableCountRes.data.totalTableRows)
+      : "-";
+    q("kpiUserCount").textContent = userCountRes.ok
+      ? fmtNumber(userCountRes.data.userCount)
+      : "-";
 
-  if (weeklyActivityRes.ok) {
-    q("kpiRuntimeWeek").textContent = fmtWeeklyRuntime(
-      weeklyActivityRes.data.runTimePlayed,
-    );
-    q("kpiStartsWeek").textContent = fmtNumber(
-      weeklyActivityRes.data.startCountPlayed,
-    );
-  } else {
-    q("kpiRuntimeWeek").textContent = "-";
-    q("kpiStartsWeek").textContent = "-";
-  }
+    if (vpsdbStatusRes.ok) {
+      const statusText = String(vpsdbStatusRes.data.status || "unknown");
+      setKpi(
+        "kpiVpsdbStatus",
+        statusText,
+        statusText === "ok" ? "status-ok" : "status-bad",
+      );
+      q("kpiVpsdbMeta").textContent =
+        `records: ${vpsdbStatusRes.data.recordCount ?? "-"} | last: ${fmtDate(vpsdbStatusRes.data.lastSyncAt)}`;
+    } else {
+      setKpi("kpiVpsdbStatus", "error", "status-bad");
+      q("kpiVpsdbMeta").textContent = "Unable to fetch VPSDB status";
+    }
 
-  await renderDashboardPanels(limit);
+    if (weeklyActivityRes.ok) {
+      q("kpiRuntimeWeek").textContent = fmtWeeklyRuntime(
+        weeklyActivityRes.data.runTimePlayed,
+      );
+      q("kpiStartsWeek").textContent = fmtNumber(
+        weeklyActivityRes.data.startCountPlayed,
+      );
+    } else {
+      q("kpiRuntimeWeek").textContent = "-";
+      q("kpiStartsWeek").textContent = "-";
+    }
 
-  if (ENABLE_ALL_TABLES_PANEL) {
-    await loadAllTablesPage();
-  }
+    await renderDashboardPanels(limit);
 
-  if (header) {
-    header.markRefresh();
+    if (ENABLE_ALL_TABLES_PANEL) {
+      await loadAllTablesPage();
+    }
+  } finally {
+    if (header) {
+      header.markRefresh();
+    }
   }
 }
 
@@ -346,7 +361,8 @@ async function toggleDashboardPanel(panelId) {
 async function changeDashboardPanelPage(panelId, direction) {
   if (expandedDashboardPanelId !== panelId) return;
   const nextOffset =
-    getDashboardPanelOffset(panelId) + direction * EXPANDED_DASHBOARD_PANEL_LIMIT;
+    getDashboardPanelOffset(panelId) +
+    direction * EXPANDED_DASHBOARD_PANEL_LIMIT;
   setDashboardPanelOffset(panelId, nextOffset);
   await refreshDashboard();
   q(panelId)?.scrollIntoView({ behavior: "smooth", block: "start" });

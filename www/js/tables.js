@@ -628,113 +628,115 @@ async function refreshDashboard() {
   const header = document.querySelector("vpinplay-header");
   if (header) header.setRefreshing(true);
 
-  const vpsId = q("vpsIdInput").value.trim();
-  activeVpsIdValue = vpsId;
-  const currentFilehash = q("filehashInput")?.value.trim() || "";
-  activeFilehashValue = currentFilehash;
-  setVpisidInUrl(vpsId);
+  try {
+    const vpsId = q("vpsIdInput").value.trim();
+    activeVpsIdValue = vpsId;
+    const currentFilehash = q("filehashInput")?.value.trim() || "";
+    activeFilehashValue = currentFilehash;
+    setVpisidInUrl(vpsId);
 
-  const scoresPanel = document.querySelector("table-scores-panel");
-  if (scoresPanel) {
-    scoresPanel.setAttribute("vps-id", vpsId);
-  }
+    const scoresPanel = document.querySelector("table-scores-panel");
+    if (scoresPanel) {
+      scoresPanel.setAttribute("vps-id", vpsId);
+    }
 
-  const detailsPanel = document.querySelector("table-details-panel");
-  if (detailsPanel) {
-    detailsPanel.setAttribute("vps-id", vpsId);
-  }
+    const detailsPanel = document.querySelector("table-details-panel");
+    if (detailsPanel) {
+      detailsPanel.setAttribute("vps-id", vpsId);
+    }
 
-  if (!vpsId) {
-    const nameInput = q("vpsNameInput");
-    if (nameInput) nameInput.value = "";
-    activeVpsNameDisplay = "";
-    activeFilehashValue = "";
-    syncVpsNameOptions([]);
+    if (!vpsId) {
+      const nameInput = q("vpsNameInput");
+      if (nameInput) nameInput.value = "";
+      activeVpsNameDisplay = "";
+      activeFilehashValue = "";
+      syncVpsNameOptions([]);
+      renderTable(
+        "playerRatingsTable",
+        [{ label: "Info", getter: () => "Enter a VPS ID" }],
+        [],
+      );
+      q("playerRatingsTitle").textContent = "Player Ratings (0)";
+      renderTable(
+        "topRuntimePlayersTable",
+        [{ label: "Info", getter: () => "Enter a VPS ID" }],
+        [],
+      );
+      q("topRuntimePlayersTitle").textContent = "Top Player Play Time (0)";
+      renderAssociatedRoms([]);
+      syncDerivativeDifferences([], { resetCollapsed: true });
+      return; // Early return for no vpsId
+    }
+
+    const [
+      playerRatingsRes,
+      topRuntimePlayersRes,
+      tableByIdRes,
+      vpsdbByIdRes,
+      activitySummaryRes,
+    ] = await Promise.all([
+      api(`/api/v1/tables/${encodeURIComponent(vpsId)}/user-ratings`),
+      api(`/api/v1/tables/${encodeURIComponent(vpsId)}/top-runtime-players?limit=10`),
+      api(`/api/v1/tables/${encodeURIComponent(vpsId)}`),
+      api(`/api/v1/vpsdb/${encodeURIComponent(vpsId)}`),
+      api(`/api/v1/tables/${encodeURIComponent(vpsId)}/activity-summary`),
+    ]);
+
+    const playerRatingsRows =
+      playerRatingsRes.ok && Array.isArray(playerRatingsRes.data)
+        ? playerRatingsRes.data
+        : [];
+    q("playerRatingsTitle").textContent =
+      `Player Ratings (${playerRatingsRows.length})`;
     renderTable(
       "playerRatingsTable",
-      [{ label: "Info", getter: () => "Enter a VPS ID" }],
-      [],
+      [
+        { label: "Player", getter: (r) => linkUserId(r.userId), html: true },
+        {
+          label: "Score",
+          getter: (r) => fmtRatingStars(r.rating, { showNumeric: true }),
+          html: true,
+        },
+        { label: "Last Played", getter: (r) => fmtDate(r.lastRun) },
+        { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
+      ],
+      playerRatingsRows,
     );
-    q("playerRatingsTitle").textContent = "Player Ratings (0)";
+
+    const topRuntimePlayersRows =
+      topRuntimePlayersRes.ok && Array.isArray(topRuntimePlayersRes.data)
+        ? topRuntimePlayersRes.data
+        : [];
+    q("topRuntimePlayersTitle").textContent =
+      `Top Player Play Time (${topRuntimePlayersRows.length})`;
     renderTable(
       "topRuntimePlayersTable",
-      [{ label: "Info", getter: () => "Enter a VPS ID" }],
-      [],
+      [
+        { label: "Player", getter: (r) => linkUserId(r.userId), html: true },
+        { label: "Run Time", getter: (r) => fmtWeeklyRuntime(r.runTime) },
+        { label: "Last Played", getter: (r) => fmtDate(r.lastRun) },
+        { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
+      ],
+      topRuntimePlayersRows,
     );
-    q("topRuntimePlayersTitle").textContent = "Top Player Play Time (0)";
-    renderAssociatedRoms([]);
-    syncDerivativeDifferences([], { resetCollapsed: true });
-    return;
-  }
 
-  const [
-    playerRatingsRes,
-    topRuntimePlayersRes,
-    tableByIdRes,
-    vpsdbByIdRes,
-    activitySummaryRes,
-  ] = await Promise.all([
-    api(`/api/v1/tables/${encodeURIComponent(vpsId)}/user-ratings`),
-    api(`/api/v1/tables/${encodeURIComponent(vpsId)}/top-runtime-players?limit=10`),
-    api(`/api/v1/tables/${encodeURIComponent(vpsId)}`),
-    api(`/api/v1/vpsdb/${encodeURIComponent(vpsId)}`),
-    api(`/api/v1/tables/${encodeURIComponent(vpsId)}/activity-summary`),
-  ]);
+    const byIdRows =
+      tableByIdRes.ok && Array.isArray(tableByIdRes.data)
+        ? tableByIdRes.data
+        : [];
+    renderAssociatedRoms(
+      byIdRows,
+      activitySummaryRes.ok ? activitySummaryRes.data : null,
+    );
+    syncDerivativeDifferences(byIdRows, { resetCollapsed: true });
 
-  const playerRatingsRows =
-    playerRatingsRes.ok && Array.isArray(playerRatingsRes.data)
-      ? playerRatingsRes.data
-      : [];
-  q("playerRatingsTitle").textContent =
-    `Player Ratings (${playerRatingsRows.length})`;
-  renderTable(
-    "playerRatingsTable",
-    [
-      { label: "Player", getter: (r) => linkUserId(r.userId), html: true },
-      {
-        label: "Score",
-        getter: (r) => fmtRatingStars(r.rating, { showNumeric: true }),
-        html: true,
-      },
-      { label: "Last Played", getter: (r) => fmtDate(r.lastRun) },
-      { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
-    ],
-    playerRatingsRows,
-  );
-
-  const topRuntimePlayersRows =
-    topRuntimePlayersRes.ok && Array.isArray(topRuntimePlayersRes.data)
-      ? topRuntimePlayersRes.data
-      : [];
-  q("topRuntimePlayersTitle").textContent =
-    `Top Player Play Time (${topRuntimePlayersRows.length})`;
-  renderTable(
-    "topRuntimePlayersTable",
-    [
-      { label: "Player", getter: (r) => linkUserId(r.userId), html: true },
-      { label: "Run Time", getter: (r) => fmtWeeklyRuntime(r.runTime) },
-      { label: "Last Played", getter: (r) => fmtDate(r.lastRun) },
-      { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
-    ],
-    topRuntimePlayersRows,
-  );
-
-  const byIdRows =
-    tableByIdRes.ok && Array.isArray(tableByIdRes.data)
-      ? tableByIdRes.data
-      : [];
-  renderAssociatedRoms(
-    byIdRows,
-    activitySummaryRes.ok ? activitySummaryRes.data : null,
-  );
-  syncDerivativeDifferences(byIdRows, { resetCollapsed: true });
-
-  const vpsdbRecord =
-    vpsdbByIdRes.ok && vpsdbByIdRes.data ? vpsdbByIdRes.data : null;
-  syncNameInputFromVpsdbRecord(vpsdbRecord);
-
-  if (header) {
-    header.markRefresh();
+    const vpsdbRecord =
+      vpsdbByIdRes.ok && vpsdbByIdRes.data ? vpsdbByIdRes.data : null;
+    syncNameInputFromVpsdbRecord(vpsdbRecord);
+  } finally {
+    if (header) {
+      header.markRefresh();
+    }
   }
 }
 document.addEventListener("DOMContentLoaded", async () => {

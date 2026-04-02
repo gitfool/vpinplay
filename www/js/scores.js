@@ -265,85 +265,87 @@ async function refreshDashboard() {
   const header = document.querySelector("vpinplay-header");
   if (header) header.setRefreshing(true);
 
-  const userId = q("setupUserId").value.trim();
-  const vpsIdFilter = q("vpsIdInput").value.trim();
+  try {
+    const userId = q("setupUserId").value.trim();
+    const vpsIdFilter = q("vpsIdInput").value.trim();
 
-  setParams(userId, vpsIdFilter);
+    setParams(userId, vpsIdFilter);
 
-  if (!vpsIdFilter && !userId) {
-    setStatus(
-      "Enter a userId, or enter a VPS ID to view scored rows across all users.",
-    );
-    renderOverview([]);
-    renderKeyChips([]);
-    renderScoreCards([]);
-    q("kpiScoreCount").textContent = "0";
-    q("kpiTableCount").textContent = "0";
-    q("kpiScoreTypes").textContent = "0";
-    q("kpiMaxValue").textContent = "-";
-    return;
-  }
-
-  const usingCrossUserVpsIdQuery = !userId && !!vpsIdFilter;
-  setStatus(
-    usingCrossUserVpsIdQuery
-      ? `Loading scored rows for ${vpsIdFilter} across all users...`
-      : userId && vpsIdFilter
-        ? `Loading scored rows for ${userId} filtered to ${vpsIdFilter}...`
-        : `Loading scored tables for ${userId}...`,
-  );
-  const result = usingCrossUserVpsIdQuery
-    ? await fetchRowsWithScoreForVpsId(vpsIdFilter)
-    : await fetchRowsWithUserScore(userId, vpsIdFilter);
-
-  if (!result.ok) {
-    setStatus(`Failed to load scored rows (${result.status || "network"}).`);
-    renderOverview([]);
-    renderKeyChips([]);
-    renderScoreCards([]);
-    return;
-  }
-
-  const filteredRows = result.rows
-    .filter((row) => !!getScorePayload(row))
-    .sort((a, b) => {
-      const aValue = Number(getScorePayload(a)?.value);
-      const bValue = Number(getScorePayload(b)?.value);
-      if (
-        Number.isFinite(aValue) &&
-        Number.isFinite(bValue) &&
-        aValue !== bValue
-      ) {
-        return bValue - aValue;
-      }
-      return String(b?.updatedAt || "").localeCompare(
-        String(a?.updatedAt || ""),
+    if (!vpsIdFilter && !userId) {
+      setStatus(
+        "Enter a userId, or enter a VPS ID to view scored rows across all users.",
       );
-    });
+      renderOverview([]);
+      renderKeyChips([]);
+      renderScoreCards([]);
+      q("kpiScoreCount").textContent = "0";
+      q("kpiTableCount").textContent = "0";
+      q("kpiScoreTypes").textContent = "0";
+      q("kpiMaxValue").textContent = "-";
+      return;
+    }
 
-  const summary = summarizeScores(filteredRows);
-  q("kpiScoreCount").textContent = String(summary.scoreCount);
-  q("kpiTableCount").textContent = String(summary.tableCount);
-  q("kpiScoreTypes").textContent = String(summary.scoreTypeCount);
-  q("kpiMaxValue").textContent =
-    summary.maxValue === null ? "-" : fmtNumber(summary.maxValue);
-
-  renderOverview(filteredRows);
-  renderKeyChips(summary.keyCounts);
-  renderScoreCards(filteredRows);
-
-  if (usingCrossUserVpsIdQuery) {
+    const usingCrossUserVpsIdQuery = !userId && !!vpsIdFilter;
     setStatus(
-      `Loaded ${filteredRows.length} scored row${filteredRows.length === 1 ? "" : "s"} for ${vpsIdFilter} across all users.`,
+      usingCrossUserVpsIdQuery
+        ? `Loading scored rows for ${vpsIdFilter} across all users...`
+        : userId && vpsIdFilter
+          ? `Loading scored rows for ${userId} filtered to ${vpsIdFilter}...`
+          : `Loading scored tables for ${userId}...`,
     );
-  } else {
-    setStatus(
-      `Loaded ${filteredRows.length} scored table entr${filteredRows.length === 1 ? "y" : "ies"} for ${userId}${vpsIdFilter ? ` filtered to ${vpsIdFilter}` : ""}.`,
-    );
-  }
+    const result = usingCrossUserVpsIdQuery
+      ? await fetchRowsWithScoreForVpsId(vpsIdFilter)
+      : await fetchRowsWithUserScore(userId, vpsIdFilter);
 
-  if (header) {
-    header.markRefresh();
+    if (!result.ok) {
+      setStatus(`Failed to load scored rows (${result.status || "network"}).`);
+      renderOverview([]);
+      renderKeyChips([]);
+      renderScoreCards([]);
+      return;
+    }
+
+    const filteredRows = result.rows
+      .filter((row) => !!getScorePayload(row))
+      .sort((a, b) => {
+        const aValue = Number(getScorePayload(a)?.value);
+        const bValue = Number(getScorePayload(b)?.value);
+        if (
+          Number.isFinite(aValue) &&
+          Number.isFinite(bValue) &&
+          aValue !== bValue
+        ) {
+          return bValue - aValue;
+        }
+        return String(b?.updatedAt || "").localeCompare(
+          String(a?.updatedAt || ""),
+        );
+      });
+
+    const summary = summarizeScores(filteredRows);
+    q("kpiScoreCount").textContent = String(summary.scoreCount);
+    q("kpiTableCount").textContent = String(summary.tableCount);
+    q("kpiScoreTypes").textContent = String(summary.scoreTypeCount);
+    q("kpiMaxValue").textContent =
+      summary.maxValue === null ? "-" : fmtNumber(summary.maxValue);
+
+    renderOverview(filteredRows);
+    renderKeyChips(summary.keyCounts);
+    renderScoreCards(filteredRows);
+
+    if (usingCrossUserVpsIdQuery) {
+      setStatus(
+        `Loaded ${filteredRows.length} scored row${filteredRows.length === 1 ? "" : "s"} for ${vpsIdFilter} across all users.`,
+      );
+    } else {
+      setStatus(
+        `Loaded ${filteredRows.length} scored table entr${filteredRows.length === 1 ? "y" : "ies"} for ${userId}${vpsIdFilter ? ` filtered to ${vpsIdFilter}` : ""}.`,
+      );
+    }
+  } finally {
+    if (header) {
+      header.markRefresh();
+    }
   }
 }
 

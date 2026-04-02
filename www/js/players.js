@@ -104,160 +104,99 @@ function renderCarousel(elId, rows, options = {}) {
 }
 
 async function refreshDashboard() {
-  if (!currentUserId) return;
-
   const header = document.querySelector("vpinplay-header");
   if (header) header.setRefreshing(true);
 
-  const [
-    lastSyncRes,
-    countRes,
-    runtimeSumRes,
-    runtimeWeekRes,
-    startCountSumRes,
-    startCountWeekRes,
-    topRatedRes,
-    recentRes,
-    topPlaytimeRes,
-    mostPlayedRes,
-    userNewlyAddedRes,
-    latestSubmittedScoresRes,
-    scorePanelRows,
-  ] = await Promise.all([
-    api(`/api/v1/users/${encodeURIComponent(currentUserId)}/last-sync`),
-    api(`/api/v1/users/${encodeURIComponent(currentUserId)}/tables/count`),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/runtime-sum`,
-    ),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/runtime-weekly?days=7`,
-    ),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/start-count-sum`,
-    ),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/start-count-weekly?days=7`,
-    ),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/top-rated?limit=5`,
-    ),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/recently-played?limit=5`,
-    ),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/top-play-time?limit=5&offset=0`,
-    ),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/most-played?limit=5`,
-    ),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/newly-added?limit=5`,
-    ),
-    api(
-      `/api/v1/users/${encodeURIComponent(currentUserId)}/scores/latest?limit=5&offset=0`,
-    ),
-  ]);
+  try {
+    if (!currentUserId) return;
 
-  const rowsNeedingGlobalRating = [
-    ...(topRatedRes.ok ? topRatedRes.data : []),
-    ...(recentRes.ok ? recentRes.data : []),
-    ...(userNewlyAddedRes.ok ? userNewlyAddedRes.data : []),
-  ];
-  const globalAvgRatingMap = await getGlobalAvgRatingMap(
-    rowsNeedingGlobalRating,
-  );
+    const [
+      lastSyncRes,
+      countRes,
+      runtimeSumRes,
+      runtimeWeekRes,
+      startCountSumRes,
+      startCountWeekRes,
+      topRatedRes,
+      recentRes,
+      topPlaytimeRes,
+      mostPlayedRes,
+      userNewlyAddedRes,
+      latestSubmittedScoresRes,
+      scorePanelRows,
+    ] = await Promise.all([
+      api(`/api/v1/users/${encodeURIComponent(currentUserId)}/last-sync`),
+      api(`/api/v1/users/${encodeURIComponent(currentUserId)}/tables/count`),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/runtime-sum`,
+      ),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/runtime-weekly?days=7`,
+      ),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/start-count-sum`,
+      ),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/start-count-weekly?days=7`,
+      ),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/top-rated?limit=5`,
+      ),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/recently-played?limit=5`,
+      ),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/top-play-time?limit=5&offset=0`,
+      ),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/most-played?limit=5`,
+      ),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/tables/newly-added?limit=5`,
+      ),
+      api(
+        `/api/v1/users/${encodeURIComponent(currentUserId)}/scores/latest?limit=5&offset=0`,
+      ),
+    ]);
 
-  const totalStarts = startCountSumRes.ok
-    ? Number(startCountSumRes.data.startCountTotal || 0)
-    : 0;
-  const totalRuntime = runtimeSumRes.ok
-    ? Number(runtimeSumRes.data.runTimeTotal || 0)
-    : 0;
-  const runtimeWeek = runtimeWeekRes.ok
-    ? Number(runtimeWeekRes.data.runTimePlayed || 0)
-    : 0;
-  const startsWeek = startCountWeekRes.ok
-    ? Number(startCountWeekRes.data.startCountPlayed || 0)
-    : 0;
+    const rowsNeedingGlobalRating = [
+      ...(topRatedRes.ok ? topRatedRes.data : []),
+      ...(recentRes.ok ? recentRes.data : []),
+      ...(userNewlyAddedRes.ok ? userNewlyAddedRes.data : []),
+    ];
+    const globalAvgRatingMap = await getGlobalAvgRatingMap(
+      rowsNeedingGlobalRating,
+    );
 
-  setKpi(
-    "kpiTableCount",
-    countRes.ok ? fmtNumber(countRes.data.tableCount) : "-",
-  );
-  setKpi(
-    "kpiLastSync",
-    lastSyncRes.ok ? fmtDate(lastSyncRes.data.lastSyncAt) : "-",
-  );
-  setKpi("kpiStarts", fmtNumber(totalStarts));
-  setKpi("kpiRuntime", fmtWeeklyRuntime(totalRuntime));
-  setKpi("kpiRuntimeWeek", fmtWeeklyRuntime(runtimeWeek));
-  setKpi("kpiStartsWeek", fmtNumber(startsWeek));
+    const totalStarts = startCountSumRes.ok
+      ? Number(startCountSumRes.data.startCountTotal || 0)
+      : 0;
+    const totalRuntime = runtimeSumRes.ok
+      ? Number(runtimeSumRes.data.runTimeTotal || 0)
+      : 0;
+    const runtimeWeek = runtimeWeekRes.ok
+      ? Number(runtimeWeekRes.data.runTimePlayed || 0)
+      : 0;
+    const startsWeek = startCountWeekRes.ok
+      ? Number(startCountWeekRes.data.startCountPlayed || 0)
+      : 0;
 
-  renderTable(
-    "spotlightTable",
-    [
-      {
-        label: "Table",
-        getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
-        html: true,
-      },
-      { label: "Run Time", getter: (r) => fmtWeeklyRuntime(r.runTime) },
-      { label: "Starts", getter: (r) => fmtNumber(r.startCount) },
-    ],
-    topPlaytimeRes.ok ? topPlaytimeRes.data : [],
-  );
+    setKpi(
+      "kpiTableCount",
+      countRes.ok ? fmtNumber(countRes.data.tableCount) : "-",
+    );
+    setKpi(
+      "kpiLastSync",
+      lastSyncRes.ok ? fmtDate(lastSyncRes.data.lastSyncAt) : "-",
+    );
+    setKpi("kpiStarts", fmtNumber(totalStarts));
+    setKpi("kpiRuntime", fmtWeeklyRuntime(totalRuntime));
+    setKpi("kpiRuntimeWeek", fmtWeeklyRuntime(runtimeWeek));
+    setKpi("kpiStartsWeek", fmtNumber(startsWeek));
 
-  const isCarousel = currentViewMode === "carousel";
-  const tableListPanels = [
-    {
-      id: "topRatedTable",
-      container: "topRatedContainer",
-      data: topRatedRes.ok ? topRatedRes.data : [],
-      title: "Top Rated (User)",
-      sub: (r) => fmtUserOverGlobalRating(r, globalAvgRatingMap),
-      cols: [
-        {
-          label: "Table",
-          getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
-          html: true,
-        },
-        {
-          label: "Mine / Avg Rating",
-          getter: (r) => fmtUserOverGlobalRating(r, globalAvgRatingMap),
-          html: true,
-        },
-        { label: "Starts", getter: (r) => r.startCount },
-      ],
-    },
-    {
-      id: "recentlyPlayedTable",
-      container: "recentlyPlayedContainer",
-      data: recentRes.ok ? recentRes.data : [],
-      title: "Recently Played",
-      sub: (r) =>
-        `${fmtDate(r.lastRun)} • ${fmtUserOverGlobalRating(r, globalAvgRatingMap)}`,
-      cols: [
-        {
-          label: "Table",
-          getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
-          html: true,
-        },
-        { label: "Last Run", getter: (r) => fmtDate(r.lastRun) },
-        {
-          label: "Mine / Avg Rating",
-          getter: (r) => fmtUserOverGlobalRating(r, globalAvgRatingMap),
-          html: true,
-        },
-      ],
-    },
-    {
-      id: "topPlaytimeTable",
-      container: "topPlaytimeContainer",
-      data: topPlaytimeRes.ok ? topPlaytimeRes.data : [],
-      title: "Top Play Time",
-      sub: (r) =>
-        `${fmtWeeklyRuntime(r.runTime)} (${fmtNumber(r.startCount)} starts)`,
-      cols: [
+    renderTable(
+      "spotlightTable",
+      [
         {
           label: "Table",
           getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
@@ -266,88 +205,151 @@ async function refreshDashboard() {
         { label: "Run Time", getter: (r) => fmtWeeklyRuntime(r.runTime) },
         { label: "Starts", getter: (r) => fmtNumber(r.startCount) },
       ],
-    },
-    {
-      id: "mostPlayedTable",
-      container: "mostPlayedContainer",
-      data: mostPlayedRes.ok ? mostPlayedRes.data : [],
-      title: "Most Played",
-      sub: (r) =>
-        `${fmtNumber(r.startCount)} starts (Last: ${fmtDate(r.lastRun)})`,
-      cols: [
-        {
-          label: "Table",
-          getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
-          html: true,
-        },
-        { label: "Starts", getter: (r) => fmtNumber(r.startCount) },
-        { label: "Last Run", getter: (r) => fmtDate(r.lastRun) },
-      ],
-    },
-    {
-      id: "userNewlyAddedTable",
-      container: "userNewlyAddedContainer",
-      data: userNewlyAddedRes.ok ? userNewlyAddedRes.data : [],
-      title: "Newest Added",
-      sub: (r) =>
-        `Added: ${fmtDate(r.createdAt)} • ${fmtUserOverGlobalRating(r, globalAvgRatingMap)}`,
-      cols: [
-        {
-          label: "Table",
-          getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
-          html: true,
-        },
-        { label: "Added", getter: (r) => fmtDate(r.createdAt) },
-        {
-          label: "My / Avg Rating",
-          getter: (r) => fmtUserOverGlobalRating(r, globalAvgRatingMap),
-          html: true,
-        },
-      ],
-    },
-    {
-      id: "latestSubmittedScoresTable",
-      container: "latestSubmittedScoresContainer",
-      data:
-        latestSubmittedScoresRes.ok &&
-        Array.isArray(latestSubmittedScoresRes.data?.items)
-          ? latestSubmittedScoresRes.data.items
-          : [],
-      title: "Latest Submitted Scores",
-      sub: (r) => `${r.label || "Score"} • ${fmtDate(r.updatedAt)}`,
-      cols: [
-        {
-          label: "Table",
-          getter: (r) =>
-            linkTableName(
-              r.tableTitle || r.vpsdb?.name || "Unknown Table",
-              r.vpsId,
-            ),
-          html: true,
-        },
-        { label: "Label", getter: (r) => r.label || "-" },
-        { label: "Score", getter: (r) => fmtLatestScoreValue(r.score) },
-        { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
-      ],
-    },
-  ];
+      topPlaytimeRes.ok ? topPlaytimeRes.data : [],
+    );
 
-  tableListPanels.forEach((panel) => {
-    const container = q(panel.container);
-    if (isCarousel) {
-      renderCarousel(panel.container, panel.data, {
-        titleGetter: (r) => fmtTableName(r),
-        subGetter: panel.sub,
-        subHtml: true,
-      });
-    } else {
-      container.innerHTML = `<table id="${panel.id}"></table>`;
-      renderTable(panel.id, panel.cols, panel.data);
+    const isCarousel = currentViewMode === "carousel";
+    const tableListPanels = [
+      {
+        id: "topRatedTable",
+        container: "topRatedContainer",
+        data: topRatedRes.ok ? topRatedRes.data : [],
+        title: "Top Rated (User)",
+        sub: (r) => fmtUserOverGlobalRating(r, globalAvgRatingMap),
+        cols: [
+          {
+            label: "Table",
+            getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
+            html: true,
+          },
+          {
+            label: "Mine / Avg Rating",
+            getter: (r) => fmtUserOverGlobalRating(r, globalAvgRatingMap),
+            html: true,
+          },
+          { label: "Starts", getter: (r) => r.startCount },
+        ],
+      },
+      {
+        id: "recentlyPlayedTable",
+        container: "recentlyPlayedContainer",
+        data: recentRes.ok ? recentRes.data : [],
+        title: "Recently Played",
+        sub: (r) =>
+          `${fmtDate(r.lastRun)} • ${fmtUserOverGlobalRating(r, globalAvgRatingMap)}`,
+        cols: [
+          {
+            label: "Table",
+            getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
+            html: true,
+          },
+          { label: "Last Run", getter: (r) => fmtDate(r.lastRun) },
+          {
+            label: "Mine / Avg Rating",
+            getter: (r) => fmtUserOverGlobalRating(r, globalAvgRatingMap),
+            html: true,
+          },
+        ],
+      },
+      {
+        id: "topPlaytimeTable",
+        container: "topPlaytimeContainer",
+        data: topPlaytimeRes.ok ? topPlaytimeRes.data : [],
+        title: "Top Play Time",
+        sub: (r) =>
+          `${fmtWeeklyRuntime(r.runTime)} (${fmtNumber(r.startCount)} starts)`,
+        cols: [
+          {
+            label: "Table",
+            getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
+            html: true,
+          },
+          { label: "Run Time", getter: (r) => fmtWeeklyRuntime(r.runTime) },
+          { label: "Starts", getter: (r) => fmtNumber(r.startCount) },
+        ],
+      },
+      {
+        id: "mostPlayedTable",
+        container: "mostPlayedContainer",
+        data: mostPlayedRes.ok ? mostPlayedRes.data : [],
+        title: "Most Played",
+        sub: (r) =>
+          `${fmtNumber(r.startCount)} starts (Last: ${fmtDate(r.lastRun)})`,
+        cols: [
+          {
+            label: "Table",
+            getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
+            html: true,
+          },
+          { label: "Starts", getter: (r) => fmtNumber(r.startCount) },
+          { label: "Last Run", getter: (r) => fmtDate(r.lastRun) },
+        ],
+      },
+      {
+        id: "userNewlyAddedTable",
+        container: "userNewlyAddedContainer",
+        data: userNewlyAddedRes.ok ? userNewlyAddedRes.data : [],
+        title: "Newest Added",
+        sub: (r) =>
+          `Added: ${fmtDate(r.createdAt)} • ${fmtUserOverGlobalRating(r, globalAvgRatingMap)}`,
+        cols: [
+          {
+            label: "Table",
+            getter: (r) => linkTableName(fmtTableName(r), r.vpsId),
+            html: true,
+          },
+          { label: "Added", getter: (r) => fmtDate(r.createdAt) },
+          {
+            label: "My / Avg Rating",
+            getter: (r) => fmtUserOverGlobalRating(r, globalAvgRatingMap),
+            html: true,
+          },
+        ],
+      },
+      {
+        id: "latestSubmittedScoresTable",
+        container: "latestSubmittedScoresContainer",
+        data:
+          latestSubmittedScoresRes.ok &&
+          Array.isArray(latestSubmittedScoresRes.data?.items)
+            ? latestSubmittedScoresRes.data.items
+            : [],
+        title: "Latest Submitted Scores",
+        sub: (r) => `${r.label || "Score"} • ${fmtDate(r.updatedAt)}`,
+        cols: [
+          {
+            label: "Table",
+            getter: (r) =>
+              linkTableName(
+                r.tableTitle || r.vpsdb?.name || "Unknown Table",
+                r.vpsId,
+              ),
+            html: true,
+          },
+          { label: "Label", getter: (r) => r.label || "-" },
+          { label: "Score", getter: (r) => fmtLatestScoreValue(r.score) },
+          { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
+        ],
+      },
+    ];
+
+    tableListPanels.forEach((panel) => {
+      const container = q(panel.container);
+      if (isCarousel) {
+        renderCarousel(panel.container, panel.data, {
+          titleGetter: (r) => fmtTableName(r),
+          subGetter: panel.sub,
+          subHtml: true,
+        });
+      } else {
+        container.innerHTML = `<table id="${panel.id}"></table>`;
+        renderTable(panel.id, panel.cols, panel.data);
+      }
+    });
+  } finally {
+    if (header) {
+      header.markRefresh();
     }
-  });
-
-  if (header) {
-    header.markRefresh();
   }
 }
 
