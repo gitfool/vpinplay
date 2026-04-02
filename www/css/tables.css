@@ -141,14 +141,17 @@
 .table-focus-header {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "art title title title"
+    "art copy total week";
   gap: 16px;
   align-items: start;
   width: 100%;
 }
 
 .table-focus-art {
-  grid-column: 1;
-  grid-row: 1 / span 2;
+  grid-area: art;
   width: auto;
   height: 100%;
   max-height: 170px;
@@ -160,8 +163,7 @@
 }
 
 .table-focus-copy {
-  grid-column: 2;
-  grid-row: 2;
+  grid-area: copy;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -170,9 +172,7 @@
 }
 
 .table-focus-title {
-  grid-column: 2 / 5;
-  grid-row: 1;
-  align-self: end;
+  grid-area: title;
   margin: 0;
   font-size: clamp(2rem, 3.2vw, 3rem);
   line-height: 1.02;
@@ -235,14 +235,12 @@
 }
 
 .table-focus-stat-total {
-  grid-column: 3;
-  grid-row: 2;
+  grid-area: total;
   align-self: center;
 }
 
 .table-focus-stat-week {
-  grid-column: 4;
-  grid-row: 2;
+  grid-area: week;
   align-self: center;
 }
 
@@ -391,11 +389,16 @@
 
   .table-focus-header {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-template-areas:
+      "art"
+      "title"
+      "copy"
+      "total"
+      "week";
   }
 
   .table-focus-art {
-    grid-column: 1;
-    grid-row: auto;
     width: 100%;
     height: auto;
     max-width: 420px;
@@ -403,15 +406,10 @@
   }
 
   .table-focus-title,
-  .table-focus-copy {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
+  .table-focus-copy,
   .table-focus-stat-total,
   .table-focus-stat-week {
-    grid-column: 1;
-    grid-row: auto;
+    align-self: auto;
   }
 }
 
