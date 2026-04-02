@@ -668,7 +668,7 @@ function renderVpsdbDetails(
                         >
                         <div class="table-focus-title">
                             <span>${escapeHtml(title)}</span>
-                            ${vpsLink ? `<a class="table-focus-pill table-focus-vps-link" href="${vpsLink}" target="_blank" rel="noopener noreferrer">VPS</a>` : ""}
+                            ${vpsLink ? `<a class="table-focus-vps-link" href="${vpsLink}" target="_blank" rel="noopener noreferrer" aria-label="Open VPS entry for ${escapeHtml(title)}"><img class="table-focus-vps-logo" src="img/vpsLogo.png" alt="VPS"></a>` : ""}
                         </div>
                         <div class="table-focus-copy">
                             <div class="table-focus-rating-row">

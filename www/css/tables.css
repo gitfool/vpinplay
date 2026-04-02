@@ -188,9 +188,18 @@
 }
 
 .table-focus-vps-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
-  font-size: 0.72rem;
-  line-height: 1;
+  line-height: 0;
+}
+
+.table-focus-vps-logo {
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: contain;
+  display: block;
 }
 
 .table-focus-rating-row {
