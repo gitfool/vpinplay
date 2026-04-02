@@ -735,6 +735,7 @@ async function refreshDashboard() {
   const [
     ratingSummaryRes,
     playerRatingsRes,
+    topRuntimePlayersRes,
     tableByIdRes,
     vpsdbByIdRes,
     activitySummaryRes,
@@ -742,6 +743,7 @@ async function refreshDashboard() {
   ] = await Promise.all([
     api(`/api/v1/tables/${encodeURIComponent(vpsId)}/rating-summary`),
     api(`/api/v1/tables/${encodeURIComponent(vpsId)}/user-ratings`),
+    api(`/api/v1/tables/${encodeURIComponent(vpsId)}/top-runtime-players?limit=10`),
     api(`/api/v1/tables/${encodeURIComponent(vpsId)}`),
     api(`/api/v1/vpsdb/${encodeURIComponent(vpsId)}`),
     api(`/api/v1/tables/${encodeURIComponent(vpsId)}/activity-summary`),
@@ -767,6 +769,23 @@ async function refreshDashboard() {
       { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
     ],
     playerRatingsRows,
+  );
+
+  const topRuntimePlayersRows =
+    topRuntimePlayersRes.ok && Array.isArray(topRuntimePlayersRes.data)
+      ? topRuntimePlayersRes.data
+      : [];
+  q("topRuntimePlayersTitle").textContent =
+    `Top Player Play Time (${topRuntimePlayersRows.length})`;
+  renderTable(
+    "topRuntimePlayersTable",
+    [
+      { label: "Player", getter: (r) => linkUserId(r.userId), html: true },
+      { label: "Run Time", getter: (r) => fmtWeeklyRuntime(r.runTime) },
+      { label: "Last Played", getter: (r) => fmtDate(r.lastRun) },
+      { label: "Updated", getter: (r) => fmtDate(r.updatedAt) },
+    ],
+    topRuntimePlayersRows,
   );
 
   const byIdRows =
