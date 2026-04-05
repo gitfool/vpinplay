@@ -386,7 +386,7 @@ class TablesDataTable extends HTMLElement {
           overflow-x: auto;
           overflow-y: auto;
           width: 100%;
-          max-height: 420px;
+          max-height: 530px;
           box-sizing: border-box;
           white-space: nowrap;
         }
@@ -550,9 +550,18 @@ class TablesDataTable extends HTMLElement {
         }
 
         @media (max-width: 900px) {
+          .container {
+            max-height: calc(100vh - 140px);;
+          }
+          
+          .table-title-panel {
+            padding: 10px;
+          }
+
           .filters {
             flex-wrap: wrap;
             justify-content: flex-end;
+            gap: 8px;
           }
             
           .filter-group {
@@ -566,12 +575,23 @@ class TablesDataTable extends HTMLElement {
             min-width: 0;
           }
 
-          .table-wrapper {
-            max-height: 100%;
+          .filter-group, .filter-group input {
+            font-size: 0.7rem;
           }
 
-          th, tr td {
-            font-size: 0.9rem;
+          .picker-trigger, input {
+            padding: 4px 6px;
+          }
+
+          .table-wrapper {
+            max-height: calc(100vh - 220px);
+          }
+
+          th {
+            font-size: 0.7rem;
+          }
+          tr td {
+            font-size: 0.8rem;
           }
 
           .column-name {
@@ -583,12 +603,8 @@ class TablesDataTable extends HTMLElement {
           }
         }
         @media (max-width: 600px) {
-
-          th {
-            font-size: 0.7rem;
-          }
-          tr td {
-            font-size: 0.8rem;
+          .table-wrapper {
+            max-height: calc(100vh - 300px);
           }
 
           .column-name {
@@ -596,10 +612,6 @@ class TablesDataTable extends HTMLElement {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-          }
-
-          .filter-group, .filter-group input {
-            font-size: 0.7rem;
           }
 
           .table-title-panel {
