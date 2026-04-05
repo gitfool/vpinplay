@@ -74,6 +74,7 @@ async def create_indexes():
     db["tables"].create_index("submittedByUserIdsNormalized")
     db["user_table_state"].create_index([("userIdNormalized", 1), ("vpsId", 1)])
     db["user_table_state"].create_index([("userId", 1), ("vpsId", 1)])
+    db["user_table_state"].create_index("vpsId")
     db["user_table_state"].create_index("userIdNormalized")
     db["user_table_state"].create_index("userId")
     db["user_table_ratings"].create_index(

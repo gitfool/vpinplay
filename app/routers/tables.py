@@ -1052,11 +1052,6 @@ async def get_tables_plus_search(
     if match_stage:
         pipeline.append({"$match": match_stage})
 
-    count_pipeline = pipeline.copy()
-    count_pipeline.append({"$count": "total"})
-    count_result = list(db["tables"].aggregate(count_pipeline))
-    filtered_total = count_result[0]["total"] if count_result else 0
-
     sort_stage = {actual_sort_by: sort_order}
 
     if actual_sort_by != "avgRating":
@@ -1068,34 +1063,46 @@ async def get_tables_plus_search(
     if actual_sort_by != "vpsId":
         sort_stage["vpsId"] = 1
 
-    pipeline.extend(
-        [
-            {"$sort": sort_stage},
-            {"$skip": offset},
-            {"$limit": limit},
-            {
-                "$project": {
-                    "_id": 0,
-                    "name": {"$ifNull": ["$vpsdbRaw.data.name", ""]},
-                    "manufacturer": {"$ifNull": ["$vpsdbRaw.data.manufacturer", ""]},
-                    "year": {"$ifNull": ["$vpsdbRaw.data.year", 0]},
-                    "authors": {"$ifNull": [{"$arrayElemAt": ["$vpsdbRaw.data.authors", 0]}, ""]},
-                    "avgRating": {"$round": [{"$ifNull": ["$ratingData.avgRating", 0]}, 3]},
-                    "ratingCount": {"$ifNull": ["$ratingData.ratingCount", 0]},
-                    "playerCount": {"$ifNull": ["$stateData.playerCount", 0]},
-                    "startCountTotal": {"$ifNull": ["$stateData.startCountTotal", 0]},
-                    "runTimeTotal": {"$ifNull": ["$stateData.runTimeTotal", 0]},
-                    "variationCount": 1,
-                    "vpsId": "$_id",
-                    "firstSeenAt": 1,
-                    "sortName": {"$toLower": {"$ifNull": ["$vpsdbRaw.data.name", ""]}},
-                }
-            },
-        ]
+    projection_stage = {
+        "$project": {
+            "_id": 0,
+            "name": {"$ifNull": ["$vpsdbRaw.data.name", ""]},
+            "manufacturer": {"$ifNull": ["$vpsdbRaw.data.manufacturer", ""]},
+            "year": {"$ifNull": ["$vpsdbRaw.data.year", 0]},
+            "authors": {"$ifNull": [{"$arrayElemAt": ["$vpsdbRaw.data.authors", 0]}, ""]},
+            "avgRating": {"$round": [{"$ifNull": ["$ratingData.avgRating", 0]}, 3]},
+            "ratingCount": {"$ifNull": ["$ratingData.ratingCount", 0]},
+            "playerCount": {"$ifNull": ["$stateData.playerCount", 0]},
+            "startCountTotal": {"$ifNull": ["$stateData.startCountTotal", 0]},
+            "runTimeTotal": {"$ifNull": ["$stateData.runTimeTotal", 0]},
+            "variationCount": 1,
+            "vpsId": "$_id",
+            "firstSeenAt": 1,
+            "sortName": {"$toLower": {"$ifNull": ["$vpsdbRaw.data.name", ""]}},
+        }
+    }
+
+    pipeline.append(
+        {
+            "$facet": {
+                "items": [
+                    {"$sort": sort_stage},
+                    {"$skip": offset},
+                    {"$limit": limit},
+                    projection_stage,
+                ],
+                "totalCount": [
+                    {"$count": "total"},
+                ],
+            }
+        }
     )
 
-    items = list(db["tables"].aggregate(pipeline))
-    
+    result = list(db["tables"].aggregate(pipeline))
+    facet = result[0] if result else {"items": [], "totalCount": []}
+    items = facet.get("items", [])
+    filtered_total = ((facet.get("totalCount") or [{}])[0]).get("total", 0)
+
     for item in items:
         item.pop("sortName", None)
 
