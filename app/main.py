@@ -9,6 +9,7 @@ from pymongo import MongoClient
 
 from app.dependencies import set_db
 from app.routers import sync, tables, users
+from app.tables_plus_cache import TABLES_PLUS_CACHE_COLLECTION, rebuild_tables_plus_cache
 from app.vpsdb import vpsdb_sync_loop
 
 load_dotenv()
@@ -36,6 +37,9 @@ async def lifespan(app: FastAPI):
 
     # Create indexes
     await create_indexes()
+
+    # Build search cache from the current database snapshot.
+    rebuild_tables_plus_cache(db)
 
     # Start VPS DB background sync loop
     vpsdb_stop_event = asyncio.Event()
@@ -96,6 +100,19 @@ async def create_indexes():
 
     # Indexes for VPS DB cache
     db["vpsdb_aux"].create_index("vpsId")
+
+    # Indexes for flattened table search cache
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("sortName")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("manufacturer")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("year")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("avgRating")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("ratingCount")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("playerCount")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("startCountTotal")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("runTimeTotal")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("variationCount")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("firstSeenAt")
+    db[TABLES_PLUS_CACHE_COLLECTION].create_index("firstAuthor")
 
 
 # Create FastAPI app

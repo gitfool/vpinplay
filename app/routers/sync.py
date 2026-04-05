@@ -5,6 +5,7 @@ from datetime import datetime
 from pymongo.database import Database
 from app.models import FullSyncRequest, SyncResponse, SyncSummary
 from app.dependencies import get_db
+from app.tables_plus_cache import rebuild_tables_plus_cache
 from app.userid import normalize_user_id, user_id_filter, and_user_id_filter
 
 router = APIRouter(
@@ -176,6 +177,7 @@ async def submit_sync(request: FullSyncRequest, db: Database = Depends(get_db)):
     user_state_deltas_col = db["user_table_state_deltas"]  # Per-sync change log for weekly/runtime analytics
     user_ratings_col = db["user_table_ratings"]  # Per-user, per-variation ratings for vote aggregation
     user_rating_deltas_col = db["user_table_rating_deltas"]  # Per-user, per-variation rating change log
+    touched_vps_ids: set[str] = set()
     
     for table_payload in request.tables:
         try:
@@ -185,6 +187,7 @@ async def submit_sync(request: FullSyncRequest, db: Database = Depends(get_db)):
                 continue
             
             vps_id = table_payload.info.vpsId
+            touched_vps_ids.add(vps_id)
             normalized_rating = (
                 table_payload.user.rating
                 if table_payload.user.rating is not None and 1 <= table_payload.user.rating <= 5
@@ -377,6 +380,9 @@ async def submit_sync(request: FullSyncRequest, db: Database = Depends(get_db)):
         except Exception as e:
             print(f"Error processing table {table_payload.info.vpsId}: {e}")
             summary.errors += 1
+
+    if touched_vps_ids:
+        rebuild_tables_plus_cache(db, list(touched_vps_ids))
     
     return SyncResponse(
         status="ok",

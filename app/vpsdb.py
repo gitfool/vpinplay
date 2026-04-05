@@ -8,6 +8,8 @@ import requests
 from pymongo import UpdateOne
 from pymongo.database import Database
 
+from app.tables_plus_cache import rebuild_tables_plus_cache
+
 logger = logging.getLogger(__name__)
 
 VPSDB_URL = os.getenv(
@@ -132,6 +134,8 @@ def sync_vpsdb_snapshot(db: Database) -> dict[str, Any]:
         },
         upsert=True,
     )
+
+    rebuild_tables_plus_cache(db)
 
     return {
         "lastSyncAt": finished_at,
