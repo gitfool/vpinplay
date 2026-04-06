@@ -307,45 +307,16 @@ async function refreshDashboard() {
     }
 
     const [
-      lastSyncRes,
-      vpsdbStatusRes,
       weeklyActivityRes,
-      userCountRes,
       tableCountRes,
     ] = await Promise.all([
-      api("/api/v1/sync/last"),
-      api("/api/v1/vpsdb/status"),
       api("/api/v1/tables/activity-weekly?days=7"),
-      api("/api/v1/users/count"),
       api("/api/v1/tables/count"),
     ]);
-
-    q("kpiLastSync").textContent = lastSyncRes.ok
-      ? fmtDate(lastSyncRes.data.lastSyncAt)
-      : "-";
-    q("kpiLastSyncUser").textContent =
-      `Last sync by user: ${lastSyncRes.ok ? lastSyncRes.data.userId || "-" : "-"}`;
 
     q("kpiTotalTables").textContent = tableCountRes.ok
       ? fmtNumber(tableCountRes.data.totalTableRows)
       : "-";
-    q("kpiUserCount").textContent = userCountRes.ok
-      ? fmtNumber(userCountRes.data.userCount)
-      : "-";
-
-    if (vpsdbStatusRes.ok) {
-      const statusText = String(vpsdbStatusRes.data.status || "unknown");
-      setKpi(
-        "kpiVpsdbStatus",
-        statusText,
-        statusText === "ok" ? "status-ok" : "status-bad",
-      );
-      q("kpiVpsdbMeta").textContent =
-        `records: ${vpsdbStatusRes.data.recordCount ?? "-"} | last: ${fmtDate(vpsdbStatusRes.data.lastSyncAt)}`;
-    } else {
-      setKpi("kpiVpsdbStatus", "error", "status-bad");
-      q("kpiVpsdbMeta").textContent = "Unable to fetch VPSDB status";
-    }
 
     if (weeklyActivityRes.ok) {
       q("kpiRuntimeWeek").textContent = fmtWeeklyRuntime(

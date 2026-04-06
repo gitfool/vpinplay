@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VPin Play Status</title>
+    <link rel="icon" type="image/png" href="img/logo.png" />
+    <link rel="apple-touch-icon" href="img/logo.png" />
+    <link rel="shortcut icon" href="img/logo.png" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/index.css" />
+    <script src="js/main.js"></script>
+    <script src="components/vpinplay-header.js"></script>
+  </head>
+  <body>
+    <vpinplay-header refresh-btn-id="refreshDashboardBtn"></vpinplay-header>
+    <div class="main">
+      <section class="grid-kpi">
+        <div class="kpi">
+          <div class="label">Last Global Sync</div>
+          <div id="kpiLastSync" class="value">-</div>
+          <div id="kpiLastSyncUser" class="sub">Last sync by user: -</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Total Users</div>
+          <div id="kpiUserCount" class="value">-</div>
+          <div class="sub">Registered users</div>
+        </div>
+        <div class="kpi">
+          <div class="label">VPSDB Sync</div>
+          <div id="kpiVpsdbStatus" class="value">-</div>
+          <div id="kpiVpsdbMeta" class="sub">-</div>
+        </div>
+      </section>
+    </div>
+
+    <script src="js/status.js"></script>
+  </body>
+</html>
