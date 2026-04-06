@@ -189,10 +189,14 @@ async function refreshDashboard() {
       "kpiLastSync",
       lastSyncRes.ok ? fmtDate(lastSyncRes.data.lastSyncAt) : "-",
     );
-    setKpi("kpiStarts", fmtNumber(totalStarts));
-    setKpi("kpiRuntime", fmtWeeklyRuntime(totalRuntime));
-    setKpi("kpiRuntimeWeek", fmtWeeklyRuntime(runtimeWeek));
-    setKpi("kpiStartsWeek", fmtNumber(startsWeek));
+    setKpi(
+      "kpiTotalActivity",
+      `${fmtWeeklyRuntime(totalRuntime)} / ${fmtNumber(totalStarts)}`,
+    );
+    setKpi(
+      "kpiWeeklyActivity",
+      `${fmtWeeklyRuntime(runtimeWeek)} / ${fmtNumber(startsWeek)}`,
+    );
 
     renderTable(
       "spotlightTable",
