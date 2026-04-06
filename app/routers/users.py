@@ -505,6 +505,8 @@ def _build_extracted_score_items(state: dict, normalized_user_id: str, initials:
 def _score_item_numeric_value(item: dict) -> float | None:
     score = ((item or {}).get("score") or {})
     value = _get_case_insensitive_value(score, "score")
+    if value is None:
+        value = _get_case_insensitive_value(score, "value")
     try:
         numeric = float(value)
     except (TypeError, ValueError):

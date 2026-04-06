@@ -41,6 +41,7 @@ This will start:
 - `GET /api/v1/tables/by-rom/{rom}` - Find table variation rows by ROM name (case-insensitive exact match, paginated, default 50)
 - `GET /api/v1/tables/by-filehash/{filehash}` - Resolve a matching `vpsId` from `vpxFile.filehash`; also returns `altvpsid` if set on any matching table row (returns `vpsId: null` when no match exists)
 - `GET /api/v1/tables/{vpsId}` - Get canonical table metadata
+- `GET /api/v1/tables-plus/search` - Search and sort the flattened global table catalog across metadata, ratings, player counts, activity totals, variants, and first-seen date (paginated via `limit` + `offset`, max 100 per request)
 - `GET /api/v1/tables/top-rated` - Get top tables by average rating across all users (paginated via `limit` + `offset`, max 100 per request, default limit 5)
 - `GET /api/v1/tables/top-play-time` - Get top tables by cumulative `runTime` across all users (highest first, paginated via `limit` + `offset`, max 100 per request, default limit 5)
 - `GET /api/v1/tables/top-variants` - Get top tables by total variant count (highest first, paginated via `limit` + `offset`, max 100 per request, default limit 5)
@@ -81,6 +82,8 @@ Weekly runtime/play analytics are derived from per-sync `runTime` and `startCoun
 
 Global `tables` variation rows now track submitting users via `submittedByUserIdsNormalized`. This enables per-user global cleanup without wiping all table metadata. Variations created before this provenance field existed cannot be attributed retroactively until they are seen again in a sync.
 
+`GET /api/v1/tables-plus/search` is backed by a precomputed MongoDB cache (`tables_plus_cache`) keyed by `vpsId`. The cache is rebuilt on service startup, refreshed after VPS DB syncs, and partially refreshed after user sync submissions touch relevant tables.
+
 ## Project Structure
 
 ```
@@ -96,6 +99,7 @@ Global `tables` variation rows now track submitting users via `submittedByUserId
     ├── models.py           # Pydantic request/response models
     ├── dependencies.py     # Database dependencies and utilities
     ├── response_enrichment.py # Shared response enrichment helpers
+    ├── tables_plus_cache.py # Flattened cache builder for /tables-plus/search
     ├── vpsdb.py            # VPS DB sync and cache helpers
     └── routers/
         ├── sync.py         # POST /api/v1/sync endpoint
@@ -163,6 +167,59 @@ Query a table:
 
 ```bash
 curl http://localhost:8888/api/v1/tables/lkSumsrF
+```
+
+Search the flattened global table catalog:
+
+```bash
+curl "http://localhost:8888/api/v1/tables-plus/search?limit=25&offset=0&sort_by=avgRating&sort_order=-1"
+```
+
+Filter by a specific field:
+
+```bash
+curl "http://localhost:8888/api/v1/tables-plus/search?search_key=name&search_term=Addams"
+```
+
+Supported `tables-plus/search` query params:
+
+- `limit` - Page size, default `50`, max `100`
+- `offset` - Pagination offset, default `0`
+- `sort_by` - One of `name`, `manufacturer`, `year`, `avgRating`, `ratingCount`, `playerCount`, `startCountTotal`, `runTimeTotal`, `variationCount`, `firstSeenAt`, `authors`, `vpsId`
+- `sort_order` - `1` for ascending or `-1` for descending
+- `search_key` - One of `name`, `manufacturer`, `year`, `avgRating`, `ratingCount`, `playerCount`, `startCountTotal`, `runTimeTotal`, `variationCount`, `vpsId`, `authors`
+- `search_term` - Search string applied to the selected field
+
+Example response shape:
+
+```json
+{
+  "items": [
+    {
+      "name": "Attack from Mars",
+      "manufacturer": "Bally",
+      "year": 1995,
+      "authors": "Example Author",
+      "avgRating": 4.75,
+      "ratingCount": 12,
+      "playerCount": 5,
+      "startCountTotal": 143,
+      "runTimeTotal": 932,
+      "variationCount": 4,
+      "vpsId": "abc123",
+      "firstSeenAt": "2026-04-05T12:00:00Z"
+    }
+  ],
+  "pagination": {
+    "limit": 25,
+    "offset": 0,
+    "total": 1,
+    "hasNext": false,
+    "hasPrev": false,
+    "sort_by": "avgRating",
+    "sort_order": -1
+  }
+}
 ```
 
 Query user table state:
