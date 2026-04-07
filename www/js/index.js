@@ -309,9 +309,11 @@ async function refreshDashboard() {
     const [
       weeklyActivityRes,
       tableCountRes,
+      submittedScoresSummaryRes,
     ] = await Promise.all([
       api("/api/v1/tables/activity-weekly?days=7"),
       api("/api/v1/tables/count"),
+      api("/api/v1/users/scores/summary?days=7"),
     ]);
 
     q("kpiTotalTables").textContent = tableCountRes.ok
@@ -324,6 +326,17 @@ async function refreshDashboard() {
       )} / ${fmtNumber(weeklyActivityRes.data.startCountPlayed)}`;
     } else {
       q("kpiWeeklyActivity").textContent = "-";
+    }
+
+    if (submittedScoresSummaryRes.ok) {
+      q("kpiSubmittedScores").textContent = `${fmtNumber(
+        submittedScoresSummaryRes.data.totalSubmittedScores,
+      )} / ${fmtNumber(submittedScoresSummaryRes.data.submittedScoresInWindow)}`;
+      q("kpiSubmittedScoresSub").textContent =
+        `Total / last ${fmtNumber(submittedScoresSummaryRes.data.windowDays)} days`;
+    } else {
+      q("kpiSubmittedScores").textContent = "-";
+      q("kpiSubmittedScoresSub").textContent = "Total / last 7 days";
     }
 
     await renderDashboardPanels(limit);

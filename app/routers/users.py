@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pymongo.database import Database
 from app.models import UserTableStateResponse
 from app.dependencies import get_db
@@ -619,6 +619,27 @@ def _collect_latest_score_submission_items(
     return items
 
 
+def _coerce_datetime_utc(value) -> datetime | None:
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+
+    return None
+
+
 def _score_item_numeric_value(item: dict) -> float | None:
     score = ((item or {}).get("score") or {})
     value = _get_case_insensitive_value(score, "score")
@@ -746,6 +767,35 @@ async def get_all_users_latest_matching_scores(
         "returned": len(paged_items),
         "total": len(extracted_items),
         "items": paged_items,
+    }
+
+
+@router.get("/users/scores/summary")
+async def get_all_users_latest_matching_scores_summary(
+    days: int = Query(7, ge=1, le=365),
+    db: Database = Depends(get_db)
+):
+    """
+    Get total current submitted score entries and the count updated in the
+    trailing N-day window using the same extraction rules as the latest scores feed.
+    """
+    initials_by_user_id = _get_registered_initials_by_user_id(db)
+    extracted_items = _collect_latest_score_submission_items(
+        db,
+        initials_by_user_id,
+    )
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    recent_count = sum(
+        1
+        for item in extracted_items
+        if (_coerce_datetime_utc(item.get("updatedAt")) or datetime.min.replace(tzinfo=timezone.utc)) >= cutoff
+    )
+
+    return {
+        "totalSubmittedScores": len(extracted_items),
+        "submittedScoresInWindow": recent_count,
+        "windowDays": days,
     }
 
 
