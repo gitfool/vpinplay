@@ -512,8 +512,8 @@ async def get_global_top_newly_added_tables(
     db: Database = Depends(get_db),
 ):
     """
-    Get the top newly added tables first seen in the trailing N days,
-    ranked by variation count.
+    Get the newest tables first seen in the trailing N days,
+    ranked by first-seen date descending, plus installed player counts.
     """
     end_exclusive = datetime.utcnow().replace(
         hour=0,
@@ -542,16 +542,43 @@ async def get_global_top_newly_added_tables(
                 "firstSeenAt": {"$gte": since, "$lt": end_exclusive},
             }
         },
-        {"$sort": {"variationCount": -1, "firstSeenAt": -1, "_id": 1}},
+        {"$sort": {"firstSeenAt": -1, "_id": 1}},
         {"$limit": limit},
     ]
 
     rows = list(db["tables"].aggregate(pipeline))
+    vps_ids = [row["_id"] for row in rows if row.get("_id")]
+
+    player_counts = {}
+    if vps_ids:
+      player_rows = list(
+          db["user_table_state"].aggregate([
+              {"$match": {"vpsId": {"$in": vps_ids}}},
+              {
+                  "$group": {
+                      "_id": "$vpsId",
+                      "distinctUsers": {"$addToSet": "$userId"},
+                  }
+              },
+              {
+                  "$project": {
+                      "_id": 1,
+                      "playerCount": {"$size": "$distinctUsers"},
+                  }
+              },
+          ])
+      )
+      player_counts = {
+          row.get("_id"): int(row.get("playerCount", 0))
+          for row in player_rows
+      }
+
     response = [
         {
             "vpsId": row["_id"],
             "firstSeenAt": row.get("firstSeenAt"),
             "variationCount": int(row.get("variationCount", 0)),
+            "playerCount": int(player_counts.get(row["_id"], 0)),
         }
         for row in rows
     ]

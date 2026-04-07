@@ -213,6 +213,98 @@ function renderRankedBarChart(canvasId, chartRef, items) {
   });
 }
 
+function renderNewTablesLineChart(canvasId, chartRef, items) {
+  const canvas = q(canvasId);
+  if (!canvas || typeof Chart === "undefined") return null;
+
+  destroyChart(chartRef);
+
+  const axisInk = getCssVar("--ink-muted", "#b89dd9");
+  const axisLine = getCssVar("--line", "#3d2461");
+  const accent = getCssVar("--neon-yellow", "#ffd93d");
+  const sortedItems = [...items].sort((a, b) => {
+    const aTime = new Date(a?.firstSeenAt || 0).getTime();
+    const bTime = new Date(b?.firstSeenAt || 0).getTime();
+    return aTime - bTime;
+  });
+  const labels = sortedItems.map((item) => fmtDate(item.firstSeenAt));
+  const values = sortedItems.map((item) => Number(item.playerCount || 0));
+
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Installed Players",
+          data: values,
+          borderColor: accent,
+          backgroundColor: "rgba(255, 217, 61, 0.28)",
+          borderWidth: 3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: accent,
+          pointBorderWidth: 0,
+          tension: 0.22,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          callbacks: {
+            title(itemsCtx) {
+              const index = itemsCtx?.[0]?.dataIndex ?? -1;
+              return index >= 0 ? fmtTableName(sortedItems[index]) : "";
+            },
+            afterTitle(itemsCtx) {
+              const index = itemsCtx?.[0]?.dataIndex ?? -1;
+              return index >= 0
+                ? `First seen: ${fmtDate(sortedItems[index].firstSeenAt)}`
+                : "";
+            },
+            label(context) {
+              return `${fmtNumber(context.parsed.y || 0)} installed players`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: axisInk,
+            autoSkip: true,
+            maxRotation: 0,
+            maxTicksLimit: 6,
+          },
+          grid: {
+            color: axisLine,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: axisInk,
+            precision: 0,
+            callback(value) {
+              return fmtNumber(value);
+            },
+          },
+          grid: {
+            color: axisLine,
+          },
+        },
+      },
+    },
+  });
+}
+
 async function refreshCharts() {
   const header = document.querySelector("vpinplay-header");
   const topRuntimeStatusEl = q("topRuntimeChartStatus");
@@ -332,7 +424,7 @@ async function refreshCharts() {
 
       if (newTablesMetaEl) {
         newTablesMetaEl.textContent =
-          `Tables first seen from ${fmtDate(newTablesResult.data?.from)} to ${fmtDate(newTablesResult.data?.to)}, ranked by variation count.`;
+          `Newest tables first from ${fmtDate(newTablesResult.data?.from)} to ${fmtDate(newTablesResult.data?.to)}, with installed player count on the y-axis.`;
       }
 
       if (items.length === 0) {
@@ -342,14 +434,14 @@ async function refreshCharts() {
           newTablesStatusEl.textContent = "No newly added tables found for this window.";
         }
       } else {
-        newTablesChart = renderRankedBarChart(
+        newTablesChart = renderNewTablesLineChart(
           "newTablesChart",
           newTablesChart,
           items,
         );
         if (newTablesStatusEl) {
           newTablesStatusEl.textContent = newTablesChart
-            ? "Top 10 newly added tables ranked by variation count."
+            ? "Newest 10 tables plotted by first-seen date and installed player count."
             : "Chart library unavailable.";
         }
       }
