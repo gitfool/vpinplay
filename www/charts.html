@@ -38,6 +38,11 @@
           <div id="kpiTrackedStartsTables" class="value">-</div>
           <div class="sub">Top start tables in chart</div>
         </div>
+        <div class="kpi">
+          <div class="label">Newly Added Tables</div>
+          <div id="kpiTrackedNewTables" class="value">-</div>
+          <div class="sub">Top new tables in last 30 days</div>
+        </div>
       </section>
 
       <section class="grid-panels">
@@ -77,6 +82,26 @@
             ></canvas>
           </div>
           <div id="topStartsChartStatus" class="muted chart-status">
+            Loading chart data...
+          </div>
+        </section>
+
+        <section class="panel chart-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Top 10 Newly Added Tables In The Last 30 Days</h3>
+              <p id="newTablesChartMeta" class="panel-meta">
+                Ranked by variation count among tables first seen in the window.
+              </p>
+            </div>
+          </div>
+          <div class="chart-stage chart-stage-new">
+            <canvas
+              id="newTablesChart"
+              aria-label="Top 10 newly added tables in the last 30 days by variation count"
+            ></canvas>
+          </div>
+          <div id="newTablesChartStatus" class="muted chart-status">
             Loading chart data...
           </div>
         </section>

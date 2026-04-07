@@ -505,6 +505,66 @@ async def get_global_new_tables(
     return enrich_with_vpsdb(response, db)
 
 
+@router.get("/tables/top-newly-added")
+async def get_global_top_newly_added_tables(
+    days: int = Query(30, ge=1, le=365),
+    limit: int = Query(10, ge=1, le=25),
+    db: Database = Depends(get_db),
+):
+    """
+    Get the top newly added tables first seen in the trailing N days,
+    ranked by variation count.
+    """
+    end_exclusive = datetime.utcnow().replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    ) + timedelta(days=1)
+    since = end_exclusive - timedelta(days=days)
+
+    pipeline = [
+        {
+            "$project": {
+                "vpsId": 1,
+                "createdAtOrUpdatedAt": {"$ifNull": ["$createdAt", "$updatedAt"]},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$vpsId",
+                "firstSeenAt": {"$min": "$createdAtOrUpdatedAt"},
+                "variationCount": {"$sum": 1}
+            }
+        },
+        {
+            "$match": {
+                "firstSeenAt": {"$gte": since, "$lt": end_exclusive},
+            }
+        },
+        {"$sort": {"variationCount": -1, "firstSeenAt": -1, "_id": 1}},
+        {"$limit": limit},
+    ]
+
+    rows = list(db["tables"].aggregate(pipeline))
+    response = [
+        {
+            "vpsId": row["_id"],
+            "firstSeenAt": row.get("firstSeenAt"),
+            "variationCount": int(row.get("variationCount", 0)),
+        }
+        for row in rows
+    ]
+    items = enrich_with_vpsdb(response, db)
+
+    return {
+        "days": days,
+        "from": since,
+        "to": end_exclusive,
+        "items": items,
+    }
+
+
 @router.get("/tables/top-play-time")
 async def get_global_top_play_time_tables(
     limit: int = Query(5, ge=1, le=100),

@@ -3,6 +3,7 @@ const CHART_TOP_LIMIT = 10;
 
 let topRuntimeChart = null;
 let topStartsChart = null;
+let newTablesChart = null;
 
 function formatBucketLabel(bucket) {
   const date = new Date(`${bucket}T00:00:00Z`);
@@ -33,6 +34,12 @@ function getCssVar(name, fallback) {
     .getPropertyValue(name)
     .trim();
   return value || fallback;
+}
+
+function truncateChartLabel(value, max = 36) {
+  const text = String(value || "").trim();
+  if (!text) return "Unknown Table";
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
 function destroyChart(chartRef) {
@@ -131,24 +138,105 @@ function renderMultiTableLineChart(canvasId, chartRef, payload, metricKey, toolt
   });
 }
 
+function renderRankedBarChart(canvasId, chartRef, items) {
+  const canvas = q(canvasId);
+  if (!canvas || typeof Chart === "undefined") return null;
+
+  destroyChart(chartRef);
+
+  const axisInk = getCssVar("--ink-muted", "#b89dd9");
+  const axisLine = getCssVar("--line", "#3d2461");
+  const accent = getCssVar("--neon-yellow", "#ffd93d");
+  const labels = items.map((item) => truncateChartLabel(fmtTableName(item)));
+  const values = items.map((item) => Number(item.variationCount || 0));
+
+  return new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Variations",
+          data: values,
+          backgroundColor: "rgba(255, 217, 61, 0.45)",
+          borderColor: accent,
+          borderWidth: 1.5,
+          borderRadius: 6,
+          borderSkipped: false,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          callbacks: {
+            title(itemsCtx) {
+              const index = itemsCtx?.[0]?.dataIndex ?? -1;
+              return index >= 0 ? fmtTableName(items[index]) : "";
+            },
+            label(context) {
+              return `${fmtNumber(context.parsed.x || 0)} variations`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: {
+            color: axisInk,
+            precision: 0,
+            callback(value) {
+              return fmtNumber(value);
+            },
+          },
+          grid: {
+            color: axisLine,
+          },
+        },
+        y: {
+          ticks: {
+            color: axisInk,
+          },
+          grid: {
+            display: false,
+          },
+        },
+      },
+    },
+  });
+}
+
 async function refreshCharts() {
   const header = document.querySelector("vpinplay-header");
   const topRuntimeStatusEl = q("topRuntimeChartStatus");
   const topRuntimeMetaEl = q("topRuntimeChartMeta");
   const topStartsStatusEl = q("topStartsChartStatus");
   const topStartsMetaEl = q("topStartsChartMeta");
+  const newTablesStatusEl = q("newTablesChartStatus");
+  const newTablesMetaEl = q("newTablesChartMeta");
 
   if (header) header.setRefreshing(true);
   if (topRuntimeStatusEl) topRuntimeStatusEl.textContent = "Loading chart data...";
   if (topStartsStatusEl) topStartsStatusEl.textContent = "Loading chart data...";
+  if (newTablesStatusEl) newTablesStatusEl.textContent = "Loading chart data...";
 
   try {
-    const [runtimeResult, startsResult] = await Promise.all([
+    const [runtimeResult, startsResult, newTablesResult] = await Promise.all([
       api(
         `/api/v1/tables/top-play-time-buckets?days=${encodeURIComponent(CHART_WINDOW_DAYS)}&limit=${encodeURIComponent(CHART_TOP_LIMIT)}`,
       ),
       api(
         `/api/v1/tables/top-starts-buckets?days=${encodeURIComponent(CHART_WINDOW_DAYS)}&limit=${encodeURIComponent(CHART_TOP_LIMIT)}`,
+      ),
+      api(
+        `/api/v1/tables/top-newly-added?days=${encodeURIComponent(CHART_WINDOW_DAYS)}&limit=${encodeURIComponent(CHART_TOP_LIMIT)}`,
       ),
     ]);
 
@@ -226,6 +314,42 @@ async function refreshCharts() {
         if (topStartsStatusEl) {
           topStartsStatusEl.textContent = topStartsChart
             ? "Top 10 tables ranked by total starts across the selected window."
+            : "Chart library unavailable.";
+        }
+      }
+    }
+
+    if (!newTablesResult.ok) {
+      destroyChart(newTablesChart);
+      newTablesChart = null;
+      q("kpiTrackedNewTables").textContent = "-";
+      if (newTablesStatusEl) newTablesStatusEl.textContent = "Unable to load chart data.";
+    } else {
+      const items = Array.isArray(newTablesResult.data?.items)
+        ? newTablesResult.data.items
+        : [];
+      q("kpiTrackedNewTables").textContent = fmtNumber(items.length);
+
+      if (newTablesMetaEl) {
+        newTablesMetaEl.textContent =
+          `Tables first seen from ${fmtDate(newTablesResult.data?.from)} to ${fmtDate(newTablesResult.data?.to)}, ranked by variation count.`;
+      }
+
+      if (items.length === 0) {
+        destroyChart(newTablesChart);
+        newTablesChart = null;
+        if (newTablesStatusEl) {
+          newTablesStatusEl.textContent = "No newly added tables found for this window.";
+        }
+      } else {
+        newTablesChart = renderRankedBarChart(
+          "newTablesChart",
+          newTablesChart,
+          items,
+        );
+        if (newTablesStatusEl) {
+          newTablesStatusEl.textContent = newTablesChart
+            ? "Top 10 newly added tables ranked by variation count."
             : "Chart library unavailable.";
         }
       }
