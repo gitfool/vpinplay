@@ -34,14 +34,14 @@
           <div class="sub">Top runtime tables in chart</div>
         </div>
         <div class="kpi">
-          <div class="label">Global Starts</div>
-          <div id="kpiGlobalStarts" class="value">-</div>
-          <div class="sub">Total starts across the chart window</div>
+          <div class="label">Tracked Start Tables</div>
+          <div id="kpiTrackedStartsTables" class="value">-</div>
+          <div class="sub">Top start tables in chart</div>
         </div>
       </section>
 
       <section class="grid-panels">
-        <section class="panel chart-panel panel-full">
+        <section class="panel chart-panel">
           <div class="panel-heading">
             <div>
               <h3>Top 10 Table Runtime Over The Last 30 Days</h3>
@@ -59,28 +59,26 @@
           <div id="topRuntimeChartStatus" class="muted chart-status">
             Loading chart data...
           </div>
-          <div id="topRuntimeSummary" class="chart-summary"></div>
         </section>
 
-        <section class="panel chart-panel panel-full">
+        <section class="panel chart-panel">
           <div class="panel-heading">
             <div>
-              <h3>Global Daily Starts Trend</h3>
-              <p id="globalStartsChartMeta" class="panel-meta">
-                Daily start counts across all tracked table activity.
+              <h3>Top 10 Table Starts Over The Last 30 Days</h3>
+              <p id="topStartsChartMeta" class="panel-meta">
+                Daily start-count buckets for the most-played tables.
               </p>
             </div>
           </div>
           <div class="chart-stage chart-stage-compact">
             <canvas
-              id="globalStartsChart"
-              aria-label="Global daily starts trend for the last 30 days"
+              id="topStartsChart"
+              aria-label="Top 10 table starts over the last 30 days"
             ></canvas>
           </div>
-          <div id="globalStartsChartStatus" class="muted chart-status">
+          <div id="topStartsChartStatus" class="muted chart-status">
             Loading chart data...
           </div>
-          <div id="globalStartsSummary" class="chart-callouts"></div>
         </section>
       </section>
     </div>

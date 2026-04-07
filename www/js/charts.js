@@ -2,7 +2,7 @@ const CHART_WINDOW_DAYS = 30;
 const CHART_TOP_LIMIT = 10;
 
 let topRuntimeChart = null;
-let globalStartsChart = null;
+let topStartsChart = null;
 
 function formatBucketLabel(bucket) {
   const date = new Date(`${bucket}T00:00:00Z`);
@@ -36,90 +36,15 @@ function getCssVar(name, fallback) {
 }
 
 function destroyChart(chartRef) {
-  if (chartRef) {
-    chartRef.destroy();
-  }
+  if (chartRef) chartRef.destroy();
 }
 
-function renderTopRuntimeSummary(items) {
-  const el = q("topRuntimeSummary");
-  if (!el) return;
-
-  if (!Array.isArray(items) || items.length === 0) {
-    el.innerHTML = "";
-    return;
-  }
-
-  el.innerHTML = items
-    .map(
-      (item, index) => `
-        <article class="chart-summary-card">
-          <div class="chart-summary-rank">Rank ${index + 1}</div>
-          <div class="chart-summary-title">${escapeHtml(fmtTableName(item))}</div>
-          <div class="chart-summary-stats">
-            ${escapeHtml(fmtWeeklyRuntime(item.runTimePlayed))} total runtime<br>
-            ${escapeHtml(`${fmtNumber(item.startCountPlayed)} starts`)}
-          </div>
-        </article>
-      `,
-    )
-    .join("");
-}
-
-function renderGlobalStartsSummary(payload) {
-  const el = q("globalStartsSummary");
-  if (!el) return;
-
-  const dailyBuckets = Array.isArray(payload?.dailyBuckets)
-    ? payload.dailyBuckets
-    : [];
-
-  if (dailyBuckets.length === 0) {
-    el.innerHTML = "";
-    return;
-  }
-
-  const peakDay = dailyBuckets.reduce((best, current) =>
-    Number(current.startCountPlayed || 0) > Number(best.startCountPlayed || 0)
-      ? current
-      : best,
-  );
-  const averageStarts =
-    dailyBuckets.reduce(
-      (sum, point) => sum + Number(point.startCountPlayed || 0),
-      0,
-    ) / dailyBuckets.length;
-
-  el.innerHTML = `
-    <article class="chart-callout">
-      <div class="chart-callout-label">Peak Day</div>
-      <div class="chart-callout-value">${escapeHtml(fmtNumber(peakDay.startCountPlayed || 0))}</div>
-      <div class="chart-callout-sub">${escapeHtml(formatBucketLabel(peakDay.bucket || ""))}</div>
-    </article>
-    <article class="chart-callout">
-      <div class="chart-callout-label">Daily Average</div>
-      <div class="chart-callout-value">${escapeHtml(fmtNumber(Math.round(averageStarts)))}</div>
-      <div class="chart-callout-sub">starts per day</div>
-    </article>
-    <article class="chart-callout">
-      <div class="chart-callout-label">Active Tables</div>
-      <div class="chart-callout-value">${escapeHtml(fmtNumber(payload?.tableCount || 0))}</div>
-      <div class="chart-callout-sub">tables changed in window</div>
-    </article>
-    <article class="chart-callout">
-      <div class="chart-callout-label">Active Users</div>
-      <div class="chart-callout-value">${escapeHtml(fmtNumber(payload?.userCount || 0))}</div>
-      <div class="chart-callout-sub">users changed in window</div>
-    </article>
-  `;
-}
-
-function buildTopRuntimeDatasets(items) {
+function buildDatasets(items, metricKey) {
   const palette = getChartPalette();
   return items.map((item, index) => ({
     label: fmtTableName(item),
     data: Array.isArray(item.dailyBuckets)
-      ? item.dailyBuckets.map((point) => Number(point.runTimePlayed || 0))
+      ? item.dailyBuckets.map((point) => Number(point[metricKey] || 0))
       : [],
     borderColor: palette[index % palette.length],
     backgroundColor: palette[index % palette.length],
@@ -133,12 +58,11 @@ function buildTopRuntimeDatasets(items) {
   }));
 }
 
-function renderTopRuntimeChart(payload) {
-  const canvas = q("topRuntimeChart");
-  if (!canvas || typeof Chart === "undefined") return false;
+function renderMultiTableLineChart(canvasId, chartRef, payload, metricKey, tooltipFormatter, yTickFormatter) {
+  const canvas = q(canvasId);
+  if (!canvas || typeof Chart === "undefined") return null;
 
-  destroyChart(topRuntimeChart);
-  topRuntimeChart = null;
+  destroyChart(chartRef);
 
   const items = Array.isArray(payload?.items) ? payload.items : [];
   const buckets = Array.isArray(payload?.buckets) ? payload.buckets : [];
@@ -146,11 +70,11 @@ function renderTopRuntimeChart(payload) {
   const axisInk = getCssVar("--ink-muted", "#b89dd9");
   const axisLine = getCssVar("--line", "#3d2461");
 
-  topRuntimeChart = new Chart(canvas, {
+  return new Chart(canvas, {
     type: "line",
     data: {
       labels,
-      datasets: buildTopRuntimeDatasets(items),
+      datasets: buildDatasets(items, metricKey),
     },
     options: {
       responsive: true,
@@ -173,7 +97,7 @@ function renderTopRuntimeChart(payload) {
           callbacks: {
             label(context) {
               const value = Number(context.parsed.y || 0);
-              return `${context.dataset.label}: ${fmtWeeklyRuntime(value)}`;
+              return `${context.dataset.label}: ${tooltipFormatter(value)}`;
             },
           },
         },
@@ -195,7 +119,7 @@ function renderTopRuntimeChart(payload) {
           ticks: {
             color: axisInk,
             callback(value) {
-              return fmtWeeklyRuntime(value);
+              return yTickFormatter(value);
             },
           },
           grid: {
@@ -205,99 +129,18 @@ function renderTopRuntimeChart(payload) {
       },
     },
   });
-
-  return true;
-}
-
-function renderGlobalStartsChart(payload) {
-  const canvas = q("globalStartsChart");
-  if (!canvas || typeof Chart === "undefined") return false;
-
-  destroyChart(globalStartsChart);
-  globalStartsChart = null;
-
-  const dailyBuckets = Array.isArray(payload?.dailyBuckets)
-    ? payload.dailyBuckets
-    : [];
-  const labels = dailyBuckets.map((point) => formatBucketLabel(point.bucket));
-  const values = dailyBuckets.map((point) => Number(point.startCountPlayed || 0));
-  const axisInk = getCssVar("--ink-muted", "#b89dd9");
-  const axisLine = getCssVar("--line", "#3d2461");
-  const accent = getCssVar("--neon-pink", "#ff0a78");
-
-  globalStartsChart = new Chart(canvas, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Starts",
-          data: values,
-          backgroundColor: "rgba(255, 10, 120, 0.45)",
-          borderColor: accent,
-          borderWidth: 1.5,
-          borderRadius: 6,
-          borderSkipped: false,
-          hoverBackgroundColor: "rgba(255, 10, 120, 0.65)",
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false,
-        },
-        tooltip: {
-          callbacks: {
-            label(context) {
-              return `${fmtNumber(context.parsed.y || 0)} starts`;
-            },
-          },
-        },
-      },
-      scales: {
-        x: {
-          ticks: {
-            color: axisInk,
-            maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 10,
-          },
-          grid: {
-            color: axisLine,
-          },
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            color: axisInk,
-            callback(value) {
-              return fmtNumber(value);
-            },
-          },
-          grid: {
-            color: axisLine,
-          },
-        },
-      },
-    },
-  });
-
-  return true;
 }
 
 async function refreshCharts() {
   const header = document.querySelector("vpinplay-header");
   const topRuntimeStatusEl = q("topRuntimeChartStatus");
   const topRuntimeMetaEl = q("topRuntimeChartMeta");
-  const globalStartsStatusEl = q("globalStartsChartStatus");
-  const globalStartsMetaEl = q("globalStartsChartMeta");
+  const topStartsStatusEl = q("topStartsChartStatus");
+  const topStartsMetaEl = q("topStartsChartMeta");
 
   if (header) header.setRefreshing(true);
   if (topRuntimeStatusEl) topRuntimeStatusEl.textContent = "Loading chart data...";
-  if (globalStartsStatusEl) globalStartsStatusEl.textContent = "Loading chart data...";
+  if (topStartsStatusEl) topStartsStatusEl.textContent = "Loading chart data...";
 
   try {
     const [runtimeResult, startsResult] = await Promise.all([
@@ -305,7 +148,7 @@ async function refreshCharts() {
         `/api/v1/tables/top-play-time-buckets?days=${encodeURIComponent(CHART_WINDOW_DAYS)}&limit=${encodeURIComponent(CHART_TOP_LIMIT)}`,
       ),
       api(
-        `/api/v1/tables/activity-buckets?days=${encodeURIComponent(CHART_WINDOW_DAYS)}`,
+        `/api/v1/tables/top-starts-buckets?days=${encodeURIComponent(CHART_WINDOW_DAYS)}&limit=${encodeURIComponent(CHART_TOP_LIMIT)}`,
       ),
     ]);
 
@@ -313,7 +156,6 @@ async function refreshCharts() {
       destroyChart(topRuntimeChart);
       topRuntimeChart = null;
       q("kpiTrackedTables").textContent = "-";
-      renderTopRuntimeSummary([]);
       if (topRuntimeStatusEl) topRuntimeStatusEl.textContent = "Unable to load chart data.";
     } else {
       const items = Array.isArray(runtimeResult.data?.items)
@@ -327,19 +169,23 @@ async function refreshCharts() {
           `Daily runtime buckets from ${fmtDate(runtimeResult.data?.from)} to ${fmtDate(runtimeResult.data?.to)}.`;
       }
 
-      renderTopRuntimeSummary(items);
-
       if (items.length === 0) {
         destroyChart(topRuntimeChart);
         topRuntimeChart = null;
         if (topRuntimeStatusEl) {
-          topRuntimeStatusEl.textContent =
-            "No runtime activity found for this window.";
+          topRuntimeStatusEl.textContent = "No runtime activity found for this window.";
         }
       } else {
-        const rendered = renderTopRuntimeChart(runtimeResult.data);
+        topRuntimeChart = renderMultiTableLineChart(
+          "topRuntimeChart",
+          topRuntimeChart,
+          runtimeResult.data,
+          "runTimePlayed",
+          fmtWeeklyRuntime,
+          fmtWeeklyRuntime,
+        );
         if (topRuntimeStatusEl) {
-          topRuntimeStatusEl.textContent = rendered
+          topRuntimeStatusEl.textContent = topRuntimeChart
             ? "Top 10 tables ranked by total runtime across the selected window."
             : "Chart library unavailable.";
         }
@@ -347,41 +193,39 @@ async function refreshCharts() {
     }
 
     if (!startsResult.ok) {
-      destroyChart(globalStartsChart);
-      globalStartsChart = null;
-      q("kpiGlobalStarts").textContent = "-";
-      renderGlobalStartsSummary([]);
-      if (globalStartsStatusEl) {
-        globalStartsStatusEl.textContent = "Unable to load global starts trend.";
-      }
+      destroyChart(topStartsChart);
+      topStartsChart = null;
+      q("kpiTrackedStartsTables").textContent = "-";
+      if (topStartsStatusEl) topStartsStatusEl.textContent = "Unable to load chart data.";
     } else {
-      q("kpiGlobalStarts").textContent = fmtNumber(
-        startsResult.data?.startCountPlayed || 0,
-      );
+      const items = Array.isArray(startsResult.data?.items)
+        ? startsResult.data.items
+        : [];
+      q("kpiTrackedStartsTables").textContent = fmtNumber(items.length);
 
-      if (globalStartsMetaEl) {
-        globalStartsMetaEl.textContent =
-          `Daily start counts from ${fmtDate(startsResult.data?.from)} to ${fmtDate(startsResult.data?.to)}.`;
+      if (topStartsMetaEl) {
+        topStartsMetaEl.textContent =
+          `Daily start-count buckets from ${fmtDate(startsResult.data?.from)} to ${fmtDate(startsResult.data?.to)}.`;
       }
 
-      renderGlobalStartsSummary(startsResult.data);
-
-      const dailyBuckets = Array.isArray(startsResult.data?.dailyBuckets)
-        ? startsResult.data.dailyBuckets
-        : [];
-
-      if (dailyBuckets.length === 0) {
-        destroyChart(globalStartsChart);
-        globalStartsChart = null;
-        if (globalStartsStatusEl) {
-          globalStartsStatusEl.textContent =
-            "No global starts activity found for this window.";
+      if (items.length === 0) {
+        destroyChart(topStartsChart);
+        topStartsChart = null;
+        if (topStartsStatusEl) {
+          topStartsStatusEl.textContent = "No start activity found for this window.";
         }
       } else {
-        const rendered = renderGlobalStartsChart(startsResult.data);
-        if (globalStartsStatusEl) {
-          globalStartsStatusEl.textContent = rendered
-            ? "Global daily starts over the selected window."
+        topStartsChart = renderMultiTableLineChart(
+          "topStartsChart",
+          topStartsChart,
+          startsResult.data,
+          "startCountPlayed",
+          (value) => `${fmtNumber(value)} starts`,
+          fmtNumber,
+        );
+        if (topStartsStatusEl) {
+          topStartsStatusEl.textContent = topStartsChart
+            ? "Top 10 tables ranked by total starts across the selected window."
             : "Chart library unavailable.";
         }
       }
