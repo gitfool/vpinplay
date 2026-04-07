@@ -502,6 +502,123 @@ def _build_extracted_score_items(state: dict, normalized_user_id: str, initials:
     return items
 
 
+def _get_registered_initials_by_user_id(db: Database) -> dict[str, str]:
+    client_rows = list(
+        db["client_registry"].find({}, {"_id": 0, "userId": 1, "userIdNormalized": 1, "initials": 1})
+    )
+    initials_by_user_id: dict[str, str] = {}
+    for client in client_rows:
+        normalized_user_id = normalize_user_id(client.get("userIdNormalized") or client.get("userId") or "")
+        initials = str(client.get("initials") or "").strip()
+        if normalized_user_id and initials:
+            initials_by_user_id[normalized_user_id] = initials
+    return initials_by_user_id
+
+
+def _score_payload_changed(prev_score: dict | None, new_score: dict | None) -> bool:
+    return prev_score != new_score
+
+
+def _collect_latest_score_submission_items(
+    db: Database,
+    initials_by_user_id: dict[str, str],
+    user_id: str | None = None,
+    vps_id: str | None = None,
+) -> list[dict]:
+    items: list[dict] = []
+
+    current_query: dict[str, object] = {"score": {"$type": "object"}}
+    if user_id and vps_id:
+        current_query = {"$and": [user_id_filter(user_id), current_query, {"vpsId": vps_id}]}
+    elif user_id:
+        current_query = {"$and": [user_id_filter(user_id), current_query]}
+    elif vps_id:
+        current_query = {"$and": [current_query, {"vpsId": vps_id}]}
+
+    current_states = list(
+        db["user_table_state"].find(
+            current_query,
+            {
+                "_id": 0,
+                "userId": 1,
+                "userIdNormalized": 1,
+                "vpsId": 1,
+                "score": 1,
+                "alttitle": 1,
+                "createdAt": 1,
+                "updatedAt": 1,
+            },
+        )
+    )
+    for state in current_states:
+        normalized_user_id = normalize_user_id(state.get("userIdNormalized") or state.get("userId") or "")
+        initials = initials_by_user_id.get(normalized_user_id)
+        if not normalized_user_id or not initials:
+            continue
+
+        items.extend(_build_extracted_score_items(
+            {
+                **state,
+                "updatedAt": state.get("createdAt") or state.get("updatedAt"),
+            },
+            normalized_user_id,
+            initials,
+        ))
+
+    delta_query: dict[str, object] = {"newScore": {"$type": "object"}}
+    if user_id and vps_id:
+        delta_query = {"$and": [user_id_filter(user_id), delta_query, {"vpsId": vps_id}]}
+    elif user_id:
+        delta_query = {"$and": [user_id_filter(user_id), delta_query]}
+    elif vps_id:
+        delta_query = {"$and": [delta_query, {"vpsId": vps_id}]}
+
+    delta_rows = list(
+        db["user_table_state_deltas"].find(
+            delta_query,
+            {
+                "_id": 0,
+                "userId": 1,
+                "userIdNormalized": 1,
+                "vpsId": 1,
+                "prevScore": 1,
+                "newScore": 1,
+                "changedAt": 1,
+            },
+        )
+    )
+    for delta in delta_rows:
+        if not _score_payload_changed(delta.get("prevScore"), delta.get("newScore")):
+            continue
+
+        normalized_user_id = normalize_user_id(delta.get("userIdNormalized") or delta.get("userId") or "")
+        initials = initials_by_user_id.get(normalized_user_id)
+        if not normalized_user_id or not initials:
+            continue
+
+        items.extend(_build_extracted_score_items(
+            {
+                "userId": normalized_user_id,
+                "vpsId": delta.get("vpsId"),
+                "score": delta.get("newScore"),
+                "updatedAt": delta.get("changedAt"),
+                "alttitle": None,
+            },
+            normalized_user_id,
+            initials,
+        ))
+
+    items.sort(
+        key=lambda item: (
+            str(item.get("updatedAt") or ""),
+            str(item.get("userId") or ""),
+            str(item.get("vpsId") or ""),
+        ),
+        reverse=True,
+    )
+    return items
+
+
 def _score_item_numeric_value(item: dict) -> float | None:
     score = ((item or {}).get("score") or {})
     value = _get_case_insensitive_value(score, "score")
@@ -614,33 +731,12 @@ async def get_all_users_latest_matching_scores(
     - limit: Maximum number of extracted score entries (default 100, max 100)
     - offset: Number of extracted score entries to skip (default 0)
     """
-    client_rows = list(
-        db["client_registry"].find({}, {"_id": 0, "userId": 1, "userIdNormalized": 1, "initials": 1})
+    initials_by_user_id = _get_registered_initials_by_user_id(db)
+    extracted_items = _collect_latest_score_submission_items(
+        db,
+        initials_by_user_id,
+        vps_id=vpsId,
     )
-    initials_by_user_id = {}
-    for client in client_rows:
-        normalized_user_id = normalize_user_id(client.get("userIdNormalized") or client.get("userId") or "")
-        initials = str(client.get("initials") or "").strip()
-        if normalized_user_id and initials:
-            initials_by_user_id[normalized_user_id] = initials
-
-    query = {"score": {"$type": "object"}}
-    if vpsId:
-        query = {"$and": [query, {"vpsId": vpsId}]}
-
-    user_states = list(
-        db["user_table_state"]
-        .find(query)
-        .sort([("updatedAt", -1), ("userId", 1), ("vpsId", 1)])
-    )
-
-    extracted_items = []
-    for state in user_states:
-        normalized_user_id = normalize_user_id(state.get("userIdNormalized") or state.get("userId") or "")
-        initials = initials_by_user_id.get(normalized_user_id)
-        if not normalized_user_id or not initials:
-            continue
-        extracted_items.extend(_build_extracted_score_items(state, normalized_user_id, initials))
 
     paged_items = enrich_with_vpsdb(extracted_items[offset:offset + limit], db)
     paged_items = _enrich_extracted_scores_with_table_titles(paged_items, db)
@@ -648,6 +744,7 @@ async def get_all_users_latest_matching_scores(
         "limit": limit,
         "offset": offset,
         "returned": len(paged_items),
+        "total": len(extracted_items),
         "items": paged_items,
     }
 
@@ -971,24 +1068,12 @@ async def get_user_latest_matching_scores(
             "items": [],
         }
 
-    query = {
-        "$and": [
-            user_id_filter(normalized_user_id),
-            {"score": {"$type": "object"}},
-        ]
-    }
-    if vpsId:
-        query["$and"].append({"vpsId": vpsId})
-
-    user_states = list(
-        db["user_table_state"]
-        .find(query)
-        .sort([("updatedAt", -1), ("vpsId", 1)])
+    extracted_items = _collect_latest_score_submission_items(
+        db,
+        {normalized_user_id: initials},
+        user_id=normalized_user_id,
+        vps_id=vpsId,
     )
-
-    extracted_items = []
-    for state in user_states:
-        extracted_items.extend(_build_extracted_score_items(state, normalized_user_id, initials))
 
     paged_items = enrich_with_vpsdb(extracted_items[offset:offset + limit], db)
     paged_items = _enrich_extracted_scores_with_table_titles(paged_items, db)
@@ -998,6 +1083,7 @@ async def get_user_latest_matching_scores(
         "limit": limit,
         "offset": offset,
         "returned": len(paged_items),
+        "total": len(extracted_items),
         "items": paged_items,
     }
 
