@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VPin Play Charts</title>
+    <link rel="icon" type="image/png" href="img/logo.png" />
+    <link rel="apple-touch-icon" href="img/logo.png" />
+    <link rel="shortcut icon" href="img/logo.png" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/charts.css" />
+    <script src="js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+    <script src="components/vpinplay-header.js"></script>
+  </head>
+  <body>
+    <vpinplay-header refresh-btn-id="refreshChartsBtn"></vpinplay-header>
+    <div class="main">
+      <section class="grid-kpi">
+        <div class="kpi">
+          <div class="label">Chart Window</div>
+          <div id="kpiChartWindow" class="value">30d</div>
+          <div class="sub">Daily runtime buckets</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Tracked Tables</div>
+          <div id="kpiTrackedTables" class="value">-</div>
+          <div class="sub">Top runtime tables in chart</div>
+        </div>
+      </section>
+
+      <section class="grid-panels">
+        <section class="panel chart-panel panel-full">
+          <div class="panel-heading">
+            <div>
+              <h3>Top 10 Table Runtime Over The Last 30 Days</h3>
+              <p id="topRuntimeChartMeta" class="panel-meta">
+                Daily runtime buckets for the most-played tables.
+              </p>
+            </div>
+          </div>
+          <div class="chart-stage">
+            <canvas
+              id="topRuntimeChart"
+              aria-label="Top 10 table runtime over the last 30 days"
+            ></canvas>
+          </div>
+          <div id="topRuntimeChartStatus" class="muted chart-status">
+            Loading chart data...
+          </div>
+          <div id="topRuntimeSummary" class="chart-summary"></div>
+        </section>
+      </section>
+    </div>
+    <script src="js/charts.js"></script>
+  </body>
+</html>

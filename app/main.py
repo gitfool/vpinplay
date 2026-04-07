@@ -93,6 +93,7 @@ async def create_indexes():
     )
     # Indexes for user state deltas (analytics)
     db["user_table_state_deltas"].create_index("changedAt")
+    db["user_table_state_deltas"].create_index([("vpsId", 1), ("changedAt", -1)])
     db["user_table_state_deltas"].create_index([("userIdNormalized", 1), ("changedAt", -1)])
     db["user_table_state_deltas"].create_index([("userIdNormalized", 1), ("vpsId", 1), ("changedAt", -1)])
     db["user_table_state_deltas"].create_index([("userId", 1), ("changedAt", -1)])

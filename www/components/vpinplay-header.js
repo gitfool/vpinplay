@@ -15,6 +15,7 @@ class VPinPlayHeader extends HTMLElement {
 
     const navItems = [
       { name: "Global", href: "/" },
+      { name: "Charts", href: "/charts.html" },
       { name: "Tables", href: "/tables" },
       { name: "Players", href: "/players" },
       { name: "Scores", href: "/scores" },
@@ -27,6 +28,8 @@ class VPinPlayHeader extends HTMLElement {
 
         if (item.href === "/") {
           isActive = path === "/" || path === "" || path === "/index.html";
+        } else if (item.href === "/charts.html") {
+          isActive = path === item.href || path === "/charts";
         } else if (item.href === "/status.html") {
           isActive = path === item.href || path === "/status";
         } else {

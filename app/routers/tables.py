@@ -18,6 +18,40 @@ router = APIRouter(
 )
 
 
+def _build_daily_bucket_labels(days: int, end_exclusive: datetime) -> list[str]:
+    start_day = (end_exclusive - timedelta(days=days)).date()
+    return [
+        (start_day + timedelta(days=offset)).isoformat()
+        for offset in range(days)
+    ]
+
+
+def _normalize_daily_bucket_points(
+    bucket_labels: list[str],
+    raw_points: list[dict],
+) -> list[dict]:
+    point_map = {
+        str(point.get("bucket")): {
+            "bucket": str(point.get("bucket")),
+            "runTimePlayed": int(point.get("runTimePlayed", 0)),
+            "startCountPlayed": int(point.get("startCountPlayed", 0)),
+        }
+        for point in raw_points
+        if point.get("bucket")
+    }
+    return [
+        point_map.get(
+            bucket,
+            {
+                "bucket": bucket,
+                "runTimePlayed": 0,
+                "startCountPlayed": 0,
+            },
+        )
+        for bucket in bucket_labels
+    ]
+
+
 @router.get("/tables/top-rated")
 async def get_global_top_rated_tables(
     limit: int = Query(5, ge=1, le=100),
@@ -347,6 +381,90 @@ async def get_table_activity_weekly(
     return enrich_with_vpsdb(response, db)[0]
 
 
+@router.get("/tables/{vpsId}/activity-buckets")
+async def get_table_activity_buckets(
+    vpsId: str,
+    days: int = Query(30, ge=1, le=365),
+    db: Database = Depends(get_db),
+):
+    """
+    Get daily runtime/start-count buckets for one table over the trailing N days.
+    Counts only positive runtime/start-count deltas.
+    """
+    end_exclusive = datetime.utcnow().replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    ) + timedelta(days=1)
+    since = end_exclusive - timedelta(days=days)
+    bucket_labels = _build_daily_bucket_labels(days, end_exclusive)
+
+    pipeline = [
+        {
+            "$match": {
+                "vpsId": vpsId,
+                "changedAt": {"$gte": since, "$lt": end_exclusive},
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "bucket": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d",
+                            "date": "$changedAt",
+                        }
+                    }
+                },
+                "runTimePlayed": {
+                    "$sum": {
+                        "$cond": [
+                            {"$gt": ["$deltaRunTime", 0]},
+                            "$deltaRunTime",
+                            0,
+                        ]
+                    }
+                },
+                "startCountPlayed": {
+                    "$sum": {
+                        "$cond": [
+                            {"$gt": ["$deltaStartCount", 0]},
+                            "$deltaStartCount",
+                            0,
+                        ]
+                    }
+                },
+            }
+        },
+        {"$sort": {"_id.bucket": 1}},
+    ]
+
+    rows = list(db["user_table_state_deltas"].aggregate(pipeline))
+    daily_buckets = _normalize_daily_bucket_points(
+        bucket_labels,
+        [
+            {
+                "bucket": row.get("_id", {}).get("bucket"),
+                "runTimePlayed": row.get("runTimePlayed", 0),
+                "startCountPlayed": row.get("startCountPlayed", 0),
+            }
+            for row in rows
+        ],
+    )
+    response = [{
+        "vpsId": vpsId,
+        "days": days,
+        "bucketUnit": "day",
+        "from": since,
+        "to": end_exclusive,
+        "runTimePlayed": sum(point["runTimePlayed"] for point in daily_buckets),
+        "startCountPlayed": sum(point["startCountPlayed"] for point in daily_buckets),
+        "dailyBuckets": daily_buckets,
+    }]
+    return enrich_with_vpsdb(response, db)[0]
+
+
 @router.get("/tables/newly-added")
 async def get_global_new_tables(
     limit: int = Query(100, ge=1, le=100),
@@ -524,6 +642,102 @@ async def get_global_top_play_time_tables_weekly(
             "hasNext": (offset + len(items)) < total,
             "hasPrev": offset > 0,
         },
+    }
+
+
+@router.get("/tables/top-play-time-buckets")
+async def get_global_top_play_time_table_buckets(
+    days: int = Query(30, ge=1, le=365),
+    limit: int = Query(10, ge=1, le=25),
+    db: Database = Depends(get_db),
+):
+    """
+    Get the top tables by trailing N-day runtime with one daily bucket per table.
+    Counts only positive runtime/start-count deltas.
+    """
+    end_exclusive = datetime.utcnow().replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    ) + timedelta(days=1)
+    since = end_exclusive - timedelta(days=days)
+    bucket_labels = _build_daily_bucket_labels(days, end_exclusive)
+
+    pipeline = [
+        {"$match": {"changedAt": {"$gte": since, "$lt": end_exclusive}}},
+        {
+            "$group": {
+                "_id": {
+                    "vpsId": "$vpsId",
+                    "bucket": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d",
+                            "date": "$changedAt",
+                        }
+                    },
+                },
+                "runTimePlayed": {
+                    "$sum": {
+                        "$cond": [
+                            {"$gt": ["$deltaRunTime", 0]},
+                            "$deltaRunTime",
+                            0,
+                        ]
+                    }
+                },
+                "startCountPlayed": {
+                    "$sum": {
+                        "$cond": [
+                            {"$gt": ["$deltaStartCount", 0]},
+                            "$deltaStartCount",
+                            0,
+                        ]
+                    }
+                },
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id.vpsId",
+                "runTimePlayed": {"$sum": "$runTimePlayed"},
+                "startCountPlayed": {"$sum": "$startCountPlayed"},
+                "dailyBuckets": {
+                    "$push": {
+                        "bucket": "$_id.bucket",
+                        "runTimePlayed": "$runTimePlayed",
+                        "startCountPlayed": "$startCountPlayed",
+                    }
+                },
+            }
+        },
+        {"$match": {"runTimePlayed": {"$gt": 0}}},
+        {"$sort": {"runTimePlayed": -1, "startCountPlayed": -1, "_id": 1}},
+        {"$limit": limit},
+    ]
+
+    rows = list(db["user_table_state_deltas"].aggregate(pipeline))
+    response = [
+        {
+            "vpsId": row.get("_id"),
+            "runTimePlayed": int(row.get("runTimePlayed", 0)),
+            "startCountPlayed": int(row.get("startCountPlayed", 0)),
+            "dailyBuckets": _normalize_daily_bucket_points(
+                bucket_labels,
+                row.get("dailyBuckets", []),
+            ),
+        }
+        for row in rows
+    ]
+    items = enrich_with_vpsdb(response, db)
+
+    return {
+        "days": days,
+        "bucketUnit": "day",
+        "from": since,
+        "to": end_exclusive,
+        "buckets": bucket_labels,
+        "items": items,
     }
 
 
