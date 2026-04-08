@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,312 +14,86 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/base.css" />
-    <link rel="stylesheet" href="css/index.css" />
     <script src="js/main.js"></script>
     <script src="components/vpinplay-header.js"></script>
+    <script src="components/tables-data-table.js"></script>
+    <script src="components/tables-carousel.js"></script>
   </head>
   <body>
-    <vpinplay-header refresh-btn-id="refreshDashboardBtn"></vpinplay-header>
+    <vpinplay-header></vpinplay-header>
     <div class="main">
-      <section class="grid-kpi">
-        <div class="kpi">
-          <div class="label">Submitted Scores</div>
-          <div id="kpiSubmittedScores" class="value">-</div>
-          <div id="kpiSubmittedScoresSub" class="sub">Total / last 7 days</div>
-        </div>
-        <div class="kpi">
-          <div class="label">This Week Activity</div>
-          <div id="kpiWeeklyActivity" class="value">-</div>
-          <div class="sub">Global runtime / startCount delta (7d)</div>
-        </div>
-      </section>
+      <tables-carousel
+        title="Top Rated"
+        sortBy="avgRating"
+        sortOrder="-1"
+        shelfStat="avgRating"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
 
-      <section id="dashboardPanels" class="grid-panels">
-        <section id="topRatedPanel" class="panel dashboard-panel">
-          <div class="panel-heading">
-            <h3>Top Rated Tables</h3>
-            <button
-              class="panel-expand-btn"
-              type="button"
-              aria-expanded="false"
-              aria-controls="topRatedTable"
-              aria-label="Expand Top Rated Tables panel"
-              onclick="toggleDashboardPanel('topRatedPanel')"
-            >
-              <span class="panel-expand-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <table id="topRatedTable"></table>
-          <div id="topRatedPager" class="panel-pager" hidden></div>
-        </section>
+      <tables-carousel
+        title="Most Player Time Played"
+        sortBy="runTimeTotal"
+        sortOrder="-1"
+        shelfStat="runTimeTotal"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
 
-        <section id="topPlayTimePanel" class="panel dashboard-panel">
-          <div class="panel-heading">
-            <h3>Top Table Play Time</h3>
-            <button
-              class="panel-expand-btn"
-              type="button"
-              aria-expanded="false"
-              aria-controls="topPlayTimeGlobalTable"
-              aria-label="Expand Top Table Play Time panel"
-              onclick="toggleDashboardPanel('topPlayTimePanel')"
-            >
-              <span class="panel-expand-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <table id="topPlayTimeGlobalTable"></table>
-          <div id="topPlayTimePager" class="panel-pager" hidden></div>
-        </section>
+      <tables-carousel
+        title="Most Player Installs"
+        sortBy="playerCount"
+        sortOrder="-1"
+        shelfStat="playerCount"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
 
-        <section id="topWeeklyPlayTimePanel" class="panel dashboard-panel">
-          <div class="panel-heading">
-            <h3>Top played tables for the last 7 days</h3>
-            <button
-              class="panel-expand-btn"
-              type="button"
-              aria-expanded="false"
-              aria-controls="topWeeklyPlayTimeTable"
-              aria-label="Expand Top Tables Played By Runtime (7d) panel"
-              onclick="toggleDashboardPanel('topWeeklyPlayTimePanel')"
-            >
-              <span class="panel-expand-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <table id="topWeeklyPlayTimeTable"></table>
-          <div id="topWeeklyPlayTimePager" class="panel-pager" hidden></div>
-        </section>
+      <tables-carousel
+        title="Most Plays"
+        sortBy="startCountTotal"
+        sortOrder="-1"
+        shelfStat="startCountTotal"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
 
-        <section id="latestSubmittedRatingsPanel" class="panel dashboard-panel">
-          <div class="panel-heading">
-            <h3>Latest Submitted Ratings</h3>
-            <button
-              class="panel-expand-btn"
-              type="button"
-              aria-expanded="false"
-              aria-controls="latestSubmittedRatingsTable"
-              aria-label="Expand Latest Submitted Ratings panel"
-              onclick="toggleDashboardPanel('latestSubmittedRatingsPanel')"
-            >
-              <span class="panel-expand-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <table id="latestSubmittedRatingsTable"></table>
-          <div id="latestSubmittedRatingsPager" class="panel-pager" hidden></div>
-        </section>
+      <tables-carousel
+        title="Newest Tables"
+        sortBy="firstSeenAt"
+        sortOrder="-1"
+        shelfStat="firstSeenAt"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
 
-        <section id="newlyAddedPanel" class="panel dashboard-panel">
-          <div class="panel-heading">
-            <h3>Newly Added Tables</h3>
-            <button
-              class="panel-expand-btn"
-              type="button"
-              aria-expanded="false"
-              aria-controls="newlyAddedTable"
-              aria-label="Expand Newly Added Tables panel"
-              onclick="toggleDashboardPanel('newlyAddedPanel')"
-            >
-              <span class="panel-expand-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <table id="newlyAddedTable"></table>
-          <div id="newlyAddedPager" class="panel-pager" hidden></div>
-        </section>
+      <tables-carousel
+        title="Most Rated"
+        sortBy="ratingCount"
+        sortOrder="-1"
+        shelfStat="ratingCount"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
 
-        <section id="topVariantsPanel" class="panel dashboard-panel">
-          <div class="panel-heading">
-            <h3>Top Tables by Variants</h3>
-            <button
-              class="panel-expand-btn"
-              type="button"
-              aria-expanded="false"
-              aria-controls="topVariantsTable"
-              aria-label="Expand Top Tables by Variants panel"
-              onclick="toggleDashboardPanel('topVariantsPanel')"
-            >
-              <span class="panel-expand-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <table id="topVariantsTable"></table>
-          <div id="topVariantsPager" class="panel-pager" hidden></div>
-        </section>
+      <tables-carousel
+        title="A to Z"
+        sortBy="name"
+        sortOrder="1"
+        shelfStat="name"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
 
-        <section id="topPlayerPlaysPanel" class="panel dashboard-panel">
-          <div class="panel-heading">
-            <h3 id="topPlayerPlaysTitle">Top Player Plays (7d)</h3>
-            <button
-              class="panel-expand-btn"
-              type="button"
-              aria-expanded="false"
-              aria-controls="topPlayerPlaysTable"
-              aria-label="Expand Top Player Plays panel"
-              onclick="toggleDashboardPanel('topPlayerPlaysPanel')"
-            >
-              <span class="panel-expand-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <table id="topPlayerPlaysTable"></table>
-          <div id="topPlayerPlaysPager" class="panel-pager" hidden></div>
-        </section>
+      <tables-carousel
+        title="By Year"
+        sortBy="year"
+        sortOrder="-1"
+        shelfStat="year"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
 
-        <section id="topPlayerPlaytimePanel" class="panel dashboard-panel">
-          <div class="panel-heading">
-            <h3 id="topPlayerPlaytimeTitle">Top Player Playtime (7d)</h3>
-            <button
-              class="panel-expand-btn"
-              type="button"
-              aria-expanded="false"
-              aria-controls="topPlayerPlaytimeTable"
-              aria-label="Expand Top Player Playtime panel"
-              onclick="toggleDashboardPanel('topPlayerPlaytimePanel')"
-            >
-              <span class="panel-expand-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <table id="topPlayerPlaytimeTable"></table>
-          <div id="topPlayerPlaytimePager" class="panel-pager" hidden></div>
-        </section>
-
-        <section id="latestSubmittedScoresPanel" class="panel dashboard-panel">
-          <div class="panel-heading">
-            <h3>Latest Submitted Scores</h3>
-            <button
-              class="panel-expand-btn"
-              type="button"
-              aria-expanded="false"
-              aria-controls="latestSubmittedScoresTable"
-              aria-label="Expand Latest Submitted Scores panel"
-              onclick="toggleDashboardPanel('latestSubmittedScoresPanel')"
-            >
-              <span class="panel-expand-icon" aria-hidden="true">
-                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <table id="latestSubmittedScoresTable"></table>
-          <div id="latestSubmittedScoresPager" class="panel-pager" hidden></div>
-        </section>
-      </section>
-
-      <section id="allTablesPanel" class="panel bottom">
-        <h3>All Tables (Paginated)</h3>
-        <div class="pager">
-          <button
-            id="allTablesPrevBtn"
-            class="btn"
-            onclick="prevAllTablesPage()"
-          >
-            Prev
-          </button>
-          <button
-            id="allTablesNextBtn"
-            class="btn"
-            onclick="nextAllTablesPage()"
-          >
-            Next
-          </button>
-          <span id="allTablesPageInfo" class="muted">Page 1</span>
-          <span class="muted">50 per page</span>
-        </div>
-        <table id="allTablesTable"></table>
-      </section>
+      <tables-data-table
+        api-url="/api/v1/tables-plus/search"
+        searchKey="name"
+        sortBy="avgRating"
+        sortOrder="-1"
+        columns-order="avgRating, name, manufacturer, year, authors, ratingCount, playerCount, startCountTotal, runTimeTotal, variationCount, vpsId, firstSeenAt"
+        class="panel panel-full"
+      ></tables-data-table>
     </div>
-    <script src="js/index.js"></script>
   </body>
 </html>
