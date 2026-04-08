@@ -2,6 +2,28 @@ let currentUserId = null;
 let currentViewMode = "table";
 const USER_PAGE_LIMIT = 100;
 
+function setPlayersSetupExpanded(expanded) {
+  const details = q("playersSetupDetails");
+  const toggle = q("playersSetupToggle");
+  if (!details || !toggle) return;
+
+  details.classList.toggle("hidden", !expanded);
+  toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+
+  const indicator = toggle.querySelector(".panel-toggle-indicator");
+  if (indicator) {
+    indicator.textContent = expanded ? "-" : "+";
+  }
+}
+
+function togglePlayersSetup() {
+  const toggle = q("playersSetupToggle");
+  if (!toggle) return;
+
+  const nextExpanded = toggle.getAttribute("aria-expanded") !== "true";
+  setPlayersSetupExpanded(nextExpanded);
+}
+
 function handlePlayersSetupSubmit(event) {
   event.preventDefault();
   applyUserId();
@@ -420,6 +442,7 @@ function applyUserId() {
 
 async function init() {
   await customElements.whenDefined("vpinplay-header");
+  setPlayersSetupExpanded(false);
 
   initViewMode();
 

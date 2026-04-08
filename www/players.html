@@ -23,20 +23,32 @@
     <vpinplay-header refresh-btn-id="refreshPlayersBtn"></vpinplay-header>
     <div class="main">
       <section id="setup" class="setup">
-        <h2>Set User ID</h2>
-        <form class="setup-row" onsubmit="handlePlayersSetupSubmit(event)">
-          <select id="setupUserId" aria-label="Select registered user">
-            <option value="">Select a user</option>
-          </select>
-          <button
-            id="viewToggleBtn"
-            type="button"
-            class="btn btn-theme"
-            onclick="toggleViewMode()"
-          >
-            Carousel
-          </button>
-        </form>
+        <button
+          id="playersSetupToggle"
+          class="panel-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="playersSetupDetails"
+          onclick="togglePlayersSetup()"
+        >
+          <span>Set User ID</span>
+          <span class="panel-toggle-indicator" aria-hidden="true">+</span>
+        </button>
+        <div id="playersSetupDetails" class="setup-details hidden">
+          <form class="setup-row" onsubmit="handlePlayersSetupSubmit(event)">
+            <select id="setupUserId" aria-label="Select registered user">
+              <option value="">Select a user</option>
+            </select>
+            <button
+              id="viewToggleBtn"
+              type="button"
+              class="btn btn-theme"
+              onclick="toggleViewMode()"
+            >
+              Carousel
+            </button>
+          </form>
+        </div>
       </section>
 
       <section id="dashboard" class="grid-dashboard">
