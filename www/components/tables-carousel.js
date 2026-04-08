@@ -736,7 +736,7 @@ class TablesCarousel extends HTMLElement {
       case "runTimeTotal":
         return `<span class="stat-label">Play Time</span> <span class="stat-value">${this.formatRunTime(val)}</span>`;
       case "playerCount":
-        return `<span class="stat-label">Players</span> <span class="stat-value">${val || 0}</span>`;
+        return `<span class="stat-label">Installed</span> <span class="stat-value">${val || 0}</span>`;
       case "startCountTotal":
         return `<span class="stat-label">Total Plays</span> <span class="stat-value">${val || 0}</span>`;
       case "firstSeenAt":

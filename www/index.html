@@ -31,7 +31,7 @@
       ></tables-carousel>
 
       <tables-carousel
-        title="Most Player Time Played"
+        title="Most Time Played"
         sortBy="runTimeTotal"
         sortOrder="-1"
         shelfStat="runTimeTotal"
@@ -39,7 +39,7 @@
       ></tables-carousel>
 
       <tables-carousel
-        title="Most Player Installs"
+        title="Most Installed"
         sortBy="playerCount"
         sortOrder="-1"
         shelfStat="playerCount"
@@ -69,31 +69,6 @@
         shelfStat="ratingCount"
         api-url="/api/v1/tables-plus/search"
       ></tables-carousel>
-
-      <tables-carousel
-        title="A to Z"
-        sortBy="name"
-        sortOrder="1"
-        shelfStat="name"
-        api-url="/api/v1/tables-plus/search"
-      ></tables-carousel>
-
-      <tables-carousel
-        title="By Year"
-        sortBy="year"
-        sortOrder="-1"
-        shelfStat="year"
-        api-url="/api/v1/tables-plus/search"
-      ></tables-carousel>
-
-      <tables-data-table
-        api-url="/api/v1/tables-plus/search"
-        searchKey="name"
-        sortBy="avgRating"
-        sortOrder="-1"
-        columns-order="avgRating, name, manufacturer, year, authors, ratingCount, playerCount, startCountTotal, runTimeTotal, variationCount, vpsId, firstSeenAt"
-        class="panel panel-full"
-      ></tables-data-table>
     </div>
   </body>
 </html>
