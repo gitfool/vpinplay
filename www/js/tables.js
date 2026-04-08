@@ -6,6 +6,28 @@ let activeVpsIdValue = "";
 let activeFilehashValue = "";
 let currentFocusIndex = -1;
 
+function setTablesSetupExpanded(expanded) {
+  const details = q("tablesSetupDetails");
+  const toggle = q("tablesSetupToggle");
+  if (!details || !toggle) return;
+
+  details.classList.toggle("hidden", !expanded);
+  toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+
+  const indicator = toggle.querySelector(".panel-toggle-indicator");
+  if (indicator) {
+    indicator.textContent = expanded ? "-" : "+";
+  }
+}
+
+function toggleTablesSetup() {
+  const toggle = q("tablesSetupToggle");
+  if (!toggle) return;
+
+  const nextExpanded = toggle.getAttribute("aria-expanded") !== "true";
+  setTablesSetupExpanded(nextExpanded);
+}
+
 function formatVpsNameOption(item) {
   if (!item?.name || !item?.vpsId) return "";
   const meta = [item.manufacturer, item.year].filter(
@@ -741,6 +763,7 @@ async function refreshDashboard() {
 }
 document.addEventListener("DOMContentLoaded", async () => {
   await customElements.whenDefined("vpinplay-header");
+  setTablesSetupExpanded(false);
 
   syncAllClearIcons();
 

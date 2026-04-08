@@ -20,6 +20,10 @@
   box-sizing: border-box;
 }
 
+.setup-details {
+  margin-top: 14px;
+}
+
 .setup-row {
   display: flex;
   flex-direction: row;
@@ -252,6 +256,10 @@
   border-color: var(--neon-pink);
   color: var(--neon-pink);
   box-shadow: var(--glow-pink);
+}
+
+.setup .panel-toggle {
+  font-size: 1.05rem;
 }
 
 /* Responsive overrides for table */
