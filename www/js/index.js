@@ -312,7 +312,7 @@ async function refreshDashboard() {
     ]);
 
     q("kpiTotalTables").textContent = tableCountRes.ok
-      ? fmtNumber(tableCountRes.data.totalTableRows)
+      ? `${fmtNumber(tableCountRes.data.uniqueVpsIdCount)} / ${fmtNumber(tableCountRes.data.totalTableRows)}`
       : "-";
 
     if (weeklyActivityRes.ok) {
