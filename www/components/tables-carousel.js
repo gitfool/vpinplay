@@ -592,6 +592,7 @@ class TablesCarousel extends HTMLElement {
               sortOrder="${this.escapeHtml(String(this.sortOrder))}"
               columns-order="${this.escapeHtml(this.expandedColumnsOrder)}"
               limit="20"
+              fit-dialog="true"
               class="panel panel-full"
             ></tables-data-table>
           </div>

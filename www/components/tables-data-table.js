@@ -684,6 +684,42 @@ class TablesDataTable extends HTMLElement {
           min-width: 100%;
         }
 
+        :host([fit-dialog="true"]) .container {
+          max-height: none;
+        }
+
+        :host([fit-dialog="true"]) .table-wrapper {
+          overflow-x: hidden;
+          white-space: normal;
+          max-height: none;
+        }
+
+        :host([fit-dialog="true"]) table {
+          table-layout: fixed;
+        }
+
+        :host([fit-dialog="true"]) th,
+        :host([fit-dialog="true"]) td {
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+
+        :host([fit-dialog="true"]) .column-name {
+          min-width: 0;
+          max-width: none;
+          width: 22%;
+          white-space: normal;
+        }
+
+        :host([fit-dialog="true"]) .row-name-content {
+          white-space: normal;
+        }
+
+        :host([fit-dialog="true"]) .filters {
+          flex-wrap: wrap;
+        }
+
         @media (max-width: 900px) {
           .container {
             max-height: calc(90vh - 140px);;
@@ -745,6 +781,10 @@ class TablesDataTable extends HTMLElement {
             padding: 6px 8px;
             font-size: 0.8rem;
           }
+
+          :host([fit-dialog="true"]) .column-name {
+            width: 28%;
+          }
         }
         @media (max-width: 600px) {
           .table-wrapper {
@@ -779,6 +819,17 @@ class TablesDataTable extends HTMLElement {
 
           .rating-value {
             font-size: 0.6rem;
+          }
+
+          :host([fit-dialog="true"]) th,
+          :host([fit-dialog="true"]) td {
+            padding: 6px;
+            font-size: 0.72rem;
+          }
+
+          :host([fit-dialog="true"]) .column-name {
+            width: 34%;
+            max-width: none;
           }
         }
       </style>
