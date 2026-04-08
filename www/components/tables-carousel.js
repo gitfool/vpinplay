@@ -126,16 +126,42 @@ class TablesCarousel extends HTMLElement {
     });
   }
 
-  resetAndLoad() {
+  async resetAndLoad() {
+    const track = this.shadowRoot.getElementById("track");
+    const sentinel = this.shadowRoot.getElementById("sentinel");
+    const scrollPos = track.scrollLeft;
+
+    const cards = track.querySelectorAll(".card");
+    cards.forEach((card) => {
+      card.style.opacity = "0";
+      card.style.transition = "opacity 0.15s ease";
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    cards.forEach((card) => card.remove());
+
     this.items = [];
     this.offset = 0;
     this.hasMore = true;
-    const track = this.shadowRoot.getElementById("track");
-    const sentinel = this.shadowRoot.getElementById("sentinel");
-    track.innerHTML = "";
-    track.appendChild(sentinel);
-    this.loadData();
+
+    await this.loadData();
+
+    track.scrollLeft = 0;
+
+    const newCards = track.querySelectorAll(".card");
+    newCards.forEach((card) => {
+      card.style.opacity = "0";
+    });
+
+    requestAnimationFrame(() => {
+      newCards.forEach((card) => {
+        card.style.transition = "opacity 0.15s ease";
+        card.style.opacity = "1";
+      });
+    });
   }
+
   disconnectedCallback() {
     if (this.observer) {
       this.observer.disconnect();
@@ -260,6 +286,7 @@ class TablesCarousel extends HTMLElement {
         .carousel-container {
           position: relative;
           width: 100%;
+          min-height: 322px;
           overflow: hidden;
         }
 
@@ -586,6 +613,10 @@ class TablesCarousel extends HTMLElement {
 
           .shelf-header-actions {
             margin-left: auto;
+          }
+
+          .carousel-container {
+            min-height: 282px;
           }
 
           .card {
