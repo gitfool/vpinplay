@@ -17,10 +17,75 @@
     <script src="js/main.js"></script>
     <script src="components/vpinplay-header.js"></script>
     <script src="components/tables-data-table.js"></script>
+    <script src="components/tables-carousel.js"></script>
   </head>
   <body>
     <vpinplay-header></vpinplay-header>
     <div class="main">
+      <tables-carousel
+        title="Top Rated"
+        sortBy="avgRating"
+        sortOrder="-1"
+        shelfStat="avgRating"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
+
+      <tables-carousel
+        title="Top Played"
+        sortBy="runTimeTotal"
+        sortOrder="-1"
+        shelfStat="runTimeTotal"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
+
+      <tables-carousel
+        title="Most Popular"
+        sortBy="playerCount"
+        sortOrder="-1"
+        shelfStat="playerCount"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
+
+      <tables-carousel
+        title="Most Plays"
+        sortBy="startCountTotal"
+        sortOrder="-1"
+        shelfStat="startCountTotal"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
+
+      <tables-carousel
+        title="Most Recent"
+        sortBy="firstSeenAt"
+        sortOrder="-1"
+        shelfStat="firstSeenAt"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
+
+      <tables-carousel
+        title="Most Rated"
+        sortBy="ratingCount"
+        sortOrder="-1"
+        shelfStat="ratingCount"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
+
+      <tables-carousel
+        title="A to Z"
+        sortBy="name"
+        sortOrder="1"
+        shelfStat="name"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
+
+      <tables-carousel
+        title="By Year"
+        sortBy="year"
+        sortOrder="-1"
+        shelfStat="year"
+        api-url="/api/v1/tables-plus/search"
+      ></tables-carousel>
+
       <tables-data-table
         api-url="/api/v1/tables-plus/search"
         searchKey="name"
