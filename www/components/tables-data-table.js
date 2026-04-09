@@ -27,10 +27,36 @@ class TablesDataTable extends HTMLElement {
   }
 
   connectedCallback() {
-    this.sortBy = this.getAttribute("sortBy") || this.sortBy;
-    this.sortOrder = parseInt(this.getAttribute("sortOrder")) || this.sortOrder;
+    const params = new URLSearchParams(window.location.search);
+    const vpsid = (params.get("vpsid") || "").trim();
+
     this.render();
     this.attachEventListeners();
+    if (vpsid) {
+      const filters = this.shadowRoot.getElementById("filters");
+      const tableWrapper = this.shadowRoot.getElementById("table-wrapper");
+      const stats = this.shadowRoot.querySelector(".stats");
+
+      if (filters) filters.style.display = "none";
+      if (tableWrapper) tableWrapper.style.display = "none";
+      if (stats) stats.style.display = "none";
+
+      const expandIcon = this.shadowRoot.querySelector(".expand-icon");
+      if (expandIcon) {
+        expandIcon.style.transform = "rotate(45deg)";
+      }
+
+      return;
+    }
+
+    const urlSortBy = params.get("sort-by");
+    const urlSortOrder = params.get("sort-order");
+
+    this.sortBy = urlSortBy || this.getAttribute("sort-by") || "";
+    this.sortOrder = urlSortOrder
+      ? parseInt(urlSortOrder)
+      : parseInt(this.getAttribute("sort-order")) || 1;
+
     this.setupIntersectionObserver();
     this.loadData();
   }
@@ -79,7 +105,7 @@ class TablesDataTable extends HTMLElement {
         columns.push({
           key: fullKey,
           label: this.formatLabel(key),
-          sortable: key !== "vpsId",
+          sortable: true,
         });
       }
     }
@@ -91,11 +117,9 @@ class TablesDataTable extends HTMLElement {
     const labels = {
       avgRating: "Avg Rating",
       ratingCount: "Ratings",
-      playerCount: "Players",
+      playerCount: "Installs",
       startCountTotal: "Starts",
-      runTimeTotal: "Run Time",
-      variationCount: "Vars",
-      vpsId: "VPS Game ID",
+      runTimeTotal: "Play Time",
       firstSeenAt: "First Seen",
       manufacturer: "Make",
       authors: "Author",
@@ -134,7 +158,7 @@ class TablesDataTable extends HTMLElement {
       }
     });
 
-    return [...ordered, ...remaining];
+    return ordered;
   }
 
   renderStars(rating) {
@@ -211,7 +235,6 @@ class TablesDataTable extends HTMLElement {
           border-radius: var(--radius);
           overflow: hidden;
           width: 100%;
-          max-width: 100%;
           box-sizing: border-box;
           margin: 0;
         }
@@ -229,6 +252,55 @@ class TablesDataTable extends HTMLElement {
         .table-title-panel h3 {
           margin: 0;
           font-size: 1rem;
+        }
+
+        .expand-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 1.5rem;
+          height: 1.5rem;
+          padding: 0;
+          border: 1px solid var(--line);
+          border-radius: var(--radius);
+          background: var(--surface-2);
+          color: var(--neon-purple);
+          cursor: pointer;
+          flex: 0 0 auto;
+          transition:
+            background-color 120ms ease,
+            border-color 120ms ease,
+            color 120ms ease,
+            transform 120ms ease;
+        }
+
+        .expand-button:hover {
+          background: var(--neon-purple);
+          border-color: var(--neon-purple);
+          color: var(--surface);
+        }
+
+        .expand-button:focus-visible {
+          outline: 2px solid var(--neon-purple);
+          outline-offset: 2px;
+        }
+
+        .expand-button .expand-icon {
+          transform: rotate(0deg);
+        }
+
+        .expand-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 1rem;
+          height: 1rem;
+          transition: transform 120ms ease;
+        }
+
+        .expand-icon svg {
+          width: 100%;
+          height: 100%;
         }
 
         .filters {
@@ -310,7 +382,7 @@ class TablesDataTable extends HTMLElement {
         }
 
         .picker-trigger {
-          min-width: 160px;
+          min-width: 100px;
           border: 1px solid var(--line);
           border-radius: 10px;
           background: var(--surface-2);
@@ -390,7 +462,7 @@ class TablesDataTable extends HTMLElement {
           overflow-x: auto;
           overflow-y: auto;
           width: 100%;
-          max-height: 530px;
+          max-height: 490px;
           box-sizing: border-box;
           white-space: nowrap;
         }
@@ -551,50 +623,6 @@ class TablesDataTable extends HTMLElement {
           min-width: 0;
         }
 
-        .row-expand-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 30px;
-          height: 30px;
-          padding: 0;
-          border: 1px solid var(--line);
-          border-radius: 8px;
-          background: var(--surface-2);
-          color: var(--ink);
-          cursor: pointer;
-          flex: 0 0 auto;
-          transition:
-            background-color 120ms ease,
-            border-color 120ms ease,
-            color 120ms ease,
-            transform 120ms ease;
-        }
-
-        .row-expand-btn:hover {
-          background: var(--neon-purple);
-          border-color: var(--neon-purple);
-          color: #fff;
-        }
-
-        .row-expand-btn:focus-visible {
-          outline: 2px solid var(--neon-purple);
-          outline-offset: 2px;
-        }
-
-        .row-expand-icon {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 16px;
-          height: 16px;
-        }
-
-        .row-expand-icon svg {
-          width: 100%;
-          height: 100%;
-        }
-
         .row-name-content {
           min-width: 0;
           overflow: hidden;
@@ -613,115 +641,6 @@ class TablesDataTable extends HTMLElement {
 
         .external-link-icon {
           color: var(--neon-cyan);
-        }
-
-        .row-dialog[hidden] {
-          display: none;
-        }
-
-        .row-dialog {
-          position: fixed;
-          inset: 0;
-          z-index: 2000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 24px;
-          background: rgba(4, 7, 16, 0.82);
-          backdrop-filter: blur(8px);
-        }
-
-        .row-dialog-panel {
-          width: min(1120px, 100%);
-          max-height: min(80vh, 100%);
-          background: var(--surface);
-          border: 1px solid var(--line);
-          border-radius: var(--radius);
-          box-shadow: var(--shadow-intense);
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .row-dialog-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          padding: 16px 18px;
-          border-bottom: 1px solid var(--line);
-          background: var(--surface-2);
-        }
-
-        .row-dialog-title {
-          margin: 0;
-          font-size: 1rem;
-          color: var(--ink);
-        }
-
-        .row-dialog-close {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 34px;
-          height: 34px;
-          padding: 0;
-          border: 1px solid var(--line);
-          border-radius: 8px;
-          background: var(--surface);
-          color: var(--ink);
-          cursor: pointer;
-        }
-
-        .row-dialog-close:hover {
-          background: var(--neon-pink);
-          border-color: var(--neon-pink);
-          color: #fff;
-        }
-
-        .row-dialog-body {
-          overflow: auto;
-          padding: 0;
-        }
-
-        .row-dialog-body table {
-          min-width: 100%;
-        }
-
-        :host([fit-dialog="true"]) .container {
-          max-height: none;
-        }
-
-        :host([fit-dialog="true"]) .table-wrapper {
-          overflow-x: hidden;
-          white-space: normal;
-          max-height: none;
-        }
-
-        :host([fit-dialog="true"]) table {
-          table-layout: fixed;
-        }
-
-        :host([fit-dialog="true"]) th,
-        :host([fit-dialog="true"]) td {
-          white-space: normal;
-          overflow-wrap: anywhere;
-          word-break: break-word;
-        }
-
-        :host([fit-dialog="true"]) .column-name {
-          min-width: 0;
-          max-width: none;
-          width: 22%;
-          white-space: normal;
-        }
-
-        :host([fit-dialog="true"]) .row-name-content {
-          white-space: normal;
-        }
-
-        :host([fit-dialog="true"]) .filters {
-          flex-wrap: wrap;
         }
 
         @media (max-width: 900px) {
@@ -795,6 +714,10 @@ class TablesDataTable extends HTMLElement {
             max-height: calc(90vh - 300px);
           }
 
+          .filters {
+            max-width: 180px;
+          }
+
           .column-name {
             max-width: 140px;
             overflow: hidden;
@@ -806,15 +729,11 @@ class TablesDataTable extends HTMLElement {
             gap: 8px;
           }
 
-          .row-expand-btn {
-            width: 26px;
-            height: 26px;
-          }
-
           .table-title-panel {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
           }
 
           .rating-star {
@@ -841,6 +760,20 @@ class TablesDataTable extends HTMLElement {
       <div class="container">
         <div class="table-title-panel">
           <h3>Tables</h3>
+          <button id="expandButton" class="expand-button" type="button">
+            <span class="expand-icon"> 
+            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+            </svg>
+            </span>
+          </button>
           <div class="filters" id="filters">
             <!-- Will be populated dynamically -->
           </div>
@@ -1091,8 +1024,19 @@ class TablesDataTable extends HTMLElement {
       variationCount: "center",
     };
 
+    const columnsOrderAttr = this.getAttribute("columns-order");
+
+    const visibleColumnKeys = columnsOrderAttr
+      ? columnsOrderAttr.split(",").map((k) => k.trim())
+      : null;
+
     const columns = this.getOrderedColumns();
-    columns.forEach((col) => {
+
+    const filteredColumns = visibleColumnKeys
+      ? columns.filter((col) => visibleColumnKeys.includes(col.key))
+      : columns;
+
+    filteredColumns.forEach((col) => {
       const th = document.createElement("th");
       th.className = col.sortable ? "sortable" : "";
       th.dataset.key = col.key;
@@ -1106,6 +1050,36 @@ class TablesDataTable extends HTMLElement {
   }
 
   attachEventListeners() {
+    const expandButton = this.shadowRoot.getElementById("expandButton");
+    if (expandButton) {
+      expandButton.addEventListener("click", () => {
+        const filters = this.shadowRoot.getElementById("filters");
+        const tableWrapper = this.shadowRoot.getElementById("table-wrapper");
+        const stats = this.shadowRoot.querySelector(".stats");
+        const expandIcon = this.shadowRoot.querySelector(".expand-icon");
+
+        const isCollapsed =
+          tableWrapper && tableWrapper.style.display === "none";
+
+        if (isCollapsed) {
+          if (filters) filters.style.display = "";
+          if (tableWrapper) tableWrapper.style.display = "";
+          if (stats) stats.style.display = "";
+          if (expandIcon) expandIcon.style.transform = "rotate(0deg)";
+
+          if (this.items.length === 0 && !this.loading) {
+            this.setupIntersectionObserver();
+            this.loadData();
+          }
+        } else {
+          if (filters) filters.style.display = "none";
+          if (tableWrapper) tableWrapper.style.display = "none";
+          if (stats) stats.style.display = "none";
+          if (expandIcon) expandIcon.style.transform = "rotate(45deg)";
+        }
+      });
+    }
+
     const thead = this.shadowRoot.getElementById("table-head");
     thead.addEventListener("click", (e) => {
       const th = e.target.closest("th.sortable");
@@ -1122,41 +1096,15 @@ class TablesDataTable extends HTMLElement {
           sortKey === "name" || sortKey === "manufacturer" ? 1 : -1;
       }
 
+      const params = new URLSearchParams(window.location.search);
+      params.set("sort-by", this.sortBy);
+      params.set("sort-order", this.sortOrder);
+
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({}, "", newUrl);
+
       this.resetAndLoad();
     });
-
-    const tbody = this.shadowRoot.getElementById("table-body");
-    tbody.addEventListener("click", (e) => {
-      const expandBtn = e.target.closest(".row-expand-btn");
-      if (!expandBtn) return;
-
-      const index = Number(expandBtn.dataset.index);
-      if (!Number.isFinite(index)) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      this.openRowDialog(index);
-    });
-
-    const dialog = this.shadowRoot.getElementById("rowDialog");
-    const closeBtn = this.shadowRoot.getElementById("rowDialogClose");
-
-    closeBtn.addEventListener("click", () => {
-      this.closeRowDialog();
-    });
-
-    dialog.addEventListener("click", (e) => {
-      if (e.target === dialog) {
-        this.closeRowDialog();
-      }
-    });
-
-    this._dialogKeyHandler = (e) => {
-      if (e.key === "Escape" && this.expandedItem) {
-        this.closeRowDialog();
-      }
-    };
-    document.addEventListener("keydown", this._dialogKeyHandler);
   }
 
   setupIntersectionObserver() {
@@ -1288,11 +1236,6 @@ class TablesDataTable extends HTMLElement {
         } else if (col.key === "name") {
           td.classList.add("column-name");
           td.innerHTML = this.renderNameCell(item, value, i);
-        } else if (col.key === "vpsId") {
-          td.innerHTML = `<a href="https://virtualpinballspreadsheet.github.io/games?game=${value}" target="_blank" class="vps-link">
-            ${this.escapeHtml(this.formatValue(value, col.key))}
-            <svg class="external-link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6m4-3h6v6m-11 5L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>`;
         } else if (col.key === "firstSeenAt") {
           td.innerHTML = this.formatValue(value, col.key);
         } else {
