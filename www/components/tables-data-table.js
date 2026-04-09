@@ -1235,12 +1235,20 @@ class TablesDataTable extends HTMLElement {
 
         const vpsid = item.vpsid || this.getNestedValue(item, "vpsId");
         if (vpsid) {
-          document.body.style.transition = "opacity 0.2s";
-          document.body.style.opacity = "0";
+          if (document.startViewTransition) {
+            document.startViewTransition(() => {
+              window.location.href = `/tables?vpsid=${vpsid}`;
+            });
+          } else {
+            const mainSection = document.querySelector(".main");
+            if (mainSection) {
+              mainSection.style.transition = "opacity 0.2s";
+              mainSection.style.opacity = "0";
 
-          await new Promise((resolve) => setTimeout(resolve, 200));
-
-          window.location.href = `/tables?vpsid=${vpsid}`;
+              await new Promise((resolve) => setTimeout(resolve, 200));
+            }
+            window.location.href = `/tables?vpsid=${vpsid}`;
+          }
         }
       });
 
