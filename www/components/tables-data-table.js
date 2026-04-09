@@ -32,6 +32,20 @@ class TablesDataTable extends HTMLElement {
 
     this.render();
     this.attachEventListeners();
+
+    const urlSortBy = params.get("sort-by");
+    const urlSortOrder = params.get("sort-order");
+
+    this.sortBy =
+      urlSortBy ||
+      this.getAttribute("sort-by") ||
+      (this.getAttribute("columns-order") || "").split(",")[0]?.trim() ||
+      "";
+
+    this.sortOrder = urlSortOrder
+      ? parseInt(urlSortOrder)
+      : parseInt(this.getAttribute("sort-order") || "1");
+
     if (vpsid) {
       const filters = this.shadowRoot.getElementById("filters");
       const tableWrapper = this.shadowRoot.getElementById("table-wrapper");
@@ -48,19 +62,6 @@ class TablesDataTable extends HTMLElement {
 
       return;
     }
-
-    const urlSortBy = params.get("sort-by");
-    const urlSortOrder = params.get("sort-order");
-
-    this.sortBy =
-      urlSortBy ||
-      this.getAttribute("sort-by") ||
-      (this.getAttribute("columns-order") || "").split(",")[0]?.trim() ||
-      "";
-
-    this.sortOrder = urlSortOrder
-      ? parseInt(urlSortOrder)
-      : parseInt(this.getAttribute("sort-order") || "1");
 
     this.setupIntersectionObserver();
     this.loadData();
