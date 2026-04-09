@@ -268,8 +268,8 @@ async def get_table_top_runtime_players(
     db: Database = Depends(get_db),
 ):
     """
-    Get players for a table ranked by each player's cumulative runTime
-    across all tables (highest first).
+    Get top players for a table by cumulative runTime on that table
+    (highest first).
     Collapses duplicate state rows to one record per normalized user.
     """
     pipeline = [
@@ -296,53 +296,9 @@ async def get_table_top_runtime_players(
             "$group": {
                 "_id": "$userIdGroup",
                 "userId": {"$first": "$userId"},
+                "runTime": {"$first": "$runTime"},
                 "lastRun": {"$first": "$lastRun"},
                 "updatedAt": {"$first": "$updatedAt"},
-            }
-        },
-        {
-            "$lookup": {
-                "from": "user_table_state",
-                "let": {"userIdGroup": "$_id"},
-                "pipeline": [
-                    {
-                        "$addFields": {
-                            "userIdGroup": {
-                                "$toLower": {
-                                    "$ifNull": [
-                                        "$userIdNormalized",
-                                        {"$ifNull": ["$userId", ""]},
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    {"$match": {"$expr": {"$eq": ["$userIdGroup", "$$userIdGroup"]}}},
-                    {"$sort": {"runTime": -1, "updatedAt": -1, "vpsId": 1}},
-                    {
-                        "$group": {
-                            "_id": "$vpsId",
-                            "runTime": {"$first": {"$ifNull": ["$runTime", 0]}},
-                        }
-                    },
-                    {
-                        "$group": {
-                            "_id": None,
-                            "runTimeTotal": {"$sum": "$runTime"},
-                        }
-                    },
-                ],
-                "as": "runtimeTotals",
-            }
-        },
-        {
-            "$addFields": {
-                "runTime": {
-                    "$ifNull": [
-                        {"$arrayElemAt": ["$runtimeTotals.runTimeTotal", 0]},
-                        0,
-                    ]
-                }
             }
         },
         {"$sort": {"runTime": -1, "userId": 1}},
