@@ -1230,11 +1230,16 @@ class TablesDataTable extends HTMLElement {
       const item = this.items[i];
       const row = document.createElement("tr");
       row.style.cursor = "pointer";
-      row.addEventListener("click", (e) => {
+      row.addEventListener("click", async (e) => {
         if (e.target.tagName === "A" || e.target.closest("a")) return;
 
         const vpsid = item.vpsid || this.getNestedValue(item, "vpsId");
         if (vpsid) {
+          document.body.style.transition = "opacity 0.2s";
+          document.body.style.opacity = "0";
+
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
           window.location.href = `/tables?vpsid=${vpsid}`;
         }
       });
