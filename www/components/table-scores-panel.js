@@ -191,6 +191,33 @@ class TableScoresPanel extends HTMLElement {
         white-space: nowrap;
       }
 
+        /* Special entries */
+        .special-entry {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 12px;
+        }
+
+        .special-pill {
+          background: var(--surface-2);
+          color: var(--neon-cyan);
+          padding: 8px 16px;
+          border-radius: 24px;
+          font-weight: 700;
+          width: fit-content;
+        }
+
+        .special-detail {
+          font-size: 1.1rem;
+          color: var(--ink);
+        }
+
+        .special-subtle {
+          font-size: 0.9rem;
+          color: var(--ink-muted);
+        }
+
       @media (max-width: 900px) {
         .grid-score-panels {
           flex-wrap: nowrap;
