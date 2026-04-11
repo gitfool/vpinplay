@@ -15,10 +15,8 @@ class PlayerScoresPanel extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
 
-    // Update the internal state variables
     this.syncState();
 
-    // Only trigger a load if the component is actually attached and rendered
     if (this.shadowRoot && this.shadowRoot.innerHTML !== "") {
       if (this.vpsId && this.userId) {
         this.loadPanel();
@@ -29,9 +27,8 @@ class PlayerScoresPanel extends HTMLElement {
   }
 
   connectedCallback() {
-    this.render(); // Build the DOM structure ONCE
-    this.syncState(); // Get the initial data
-
+    this.render();
+    this.syncState();
     if (this.userId) {
       this.loadAvailableTables();
     }
@@ -45,8 +42,6 @@ class PlayerScoresPanel extends HTMLElement {
 
   syncState() {
     const urlParams = new URLSearchParams(window.location.search);
-
-    // Priority: Attribute > URL Param > Internal State
     this.vpsId =
       this.getAttribute("vps-id") ||
       urlParams.get("score_vpsid") ||
@@ -71,7 +66,6 @@ class PlayerScoresPanel extends HTMLElement {
           z-index: 1;
           display: block;
           width: 100%;
-          contain: layout;
         }
 
         :host,
@@ -96,7 +90,7 @@ class PlayerScoresPanel extends HTMLElement {
         }
 
         .panel-picker {
-          position: relative; /* Anchor for the dropdown list */
+          position: relative;
           width: 100%;
           max-width: 320px;
         }
@@ -135,10 +129,10 @@ class PlayerScoresPanel extends HTMLElement {
           z-index: 100;
           background: var(--surface-2);
           border: 1px solid var(--line);
-          border-radius: 10px;
-          max-height: 250px; /* Adjust as needed */
+          border-radius: var(--radius);
+          max-height: 250px;
           overflow-y: auto;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+          box-shadow: 0 4px 12px var(--shadow);
         }
 
         /* Default: Opens Down */
@@ -186,7 +180,7 @@ class PlayerScoresPanel extends HTMLElement {
 
         .panel-body {
           width: 100%;
-          border-radius: 12px;
+          border-radius: var(--radius);
           background: transparent;
           display: none;
         }
@@ -211,7 +205,7 @@ class PlayerScoresPanel extends HTMLElement {
         .table-art {
           width: 290px;
           height: 164px;
-          border-radius: 12px;
+          border-radius: var(--radius);
           object-fit: cover;
         }
 
@@ -225,11 +219,11 @@ class PlayerScoresPanel extends HTMLElement {
         .table-title {
           margin: 0;
           color: var(--ink);
-          font-size: clamp(2.4rem, 5vw, 4.3rem);
+          font-size: clamp(2rem, 3vw, 4rem);
           line-height: 0.92;
           font-weight: 500;
           letter-spacing: 0.02em;
-          text-shadow: 0 0 28px rgba(198, 134, 255, 0.2);
+          text-shadow: 0 0 28px var(--purple);
         }
 
         .meta-stack {
@@ -271,7 +265,8 @@ class PlayerScoresPanel extends HTMLElement {
         }
 
         .rating-star {
-          color: rgba(255, 239, 188, 0.28);
+          color: var(--glow-yellow);
+          drop-shadow: var(--glow-yellow);
           font-size: 1.12rem;
           line-height: 1;
         }
@@ -290,10 +285,9 @@ class PlayerScoresPanel extends HTMLElement {
           background: var(--surface-2);
           color: var(--neon-cyan);
           padding: 10px 20px;
-          border-radius: 8px;
+          border-radius: var(--radius);
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
           border: 1px solid var(--line);
         }
 
@@ -328,8 +322,8 @@ class PlayerScoresPanel extends HTMLElement {
         margin-bottom: 14px;
         border-radius: 10px;
         padding: 10px 12px;
-        background: rgba(0, 217, 255, 0.08);
-        border: 1px solid rgba(0, 217, 255, 0.18);
+        background: var(--glow-cyan);
+        border: 1px solid var(--glow-cyan);
         color: var(--neon-cyan);
         font-size: 0.9rem;
         font-weight: 700;
@@ -338,20 +332,25 @@ class PlayerScoresPanel extends HTMLElement {
 
       .status.error {
         color: var(--bad);
-        border-color: rgba(255, 10, 120, 0.24);
-        background: rgba(255, 10, 120, 0.12);
+        border-color: var(--glow-pink);
+        background: var(--glow-pink);
+      }
+
+      #hero-container {
+        margin-bottom: 12px;
       }
 
       .grid-score-panels {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         flex-wrap: wrap;
         gap: 12px;
-        align-items: start;
+        align-content: center;
         width: 100%;
       }
 
       .score-card {
+        width: calc(50% - 6px);
         background: var(--surface);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
@@ -360,34 +359,26 @@ class PlayerScoresPanel extends HTMLElement {
         min-width: 0;
         display: grid;
         gap: 12px;
-        flex: 1 1 calc(50% - 6px);
-        max-width: calc(50% - 6px);
-      }
-
-      .score-card:last-child:nth-child(odd) {
-        margin: 0 auto;
       }
 
       .score-card.hero {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
         background:
-          linear-gradient(135deg, rgba(180, 41, 249, 0.12), rgba(0, 217, 255, 0.08)),
+          var(--header-gradient),
           var(--surface-soft);
         border-radius: var(--radius);
         display: flex;
         flex-direction: column;
         align-items: center;
-        width: fit-content;
-        flex-basis: 100%;
-        max-width: none;
-        margin: 0 auto;
         padding: 12px;
       }
 
       .score-card-title {
         color: var(--ink-muted);
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-size: 0.78rem;
+        font-size: 1rem;
         font-weight: 800;
       }
 
@@ -400,9 +391,9 @@ class PlayerScoresPanel extends HTMLElement {
         font-size: 2.4rem;
         font-weight: 900;
         letter-spacing: 0.08em;
+        text-align: center;
         color: var(--neon-cyan);
         text-shadow: var(--glow-cyan);
-        text-align: center;
       }
 
       .grand-score {
@@ -418,11 +409,11 @@ class PlayerScoresPanel extends HTMLElement {
 
       .score-row {
         display: grid;
-        grid-template-columns: max-content 1fr max-content;
+        grid-template-columns: max-content 1fr minmax(0, max-content);
         gap: 12px;
         align-items: center;
         padding: 10px 12px;
-        border-radius: 10px;
+        border-radius: var(--radius);
         border: 1px solid var(--line);
         background: var(--surface-2);
       }
@@ -444,14 +435,23 @@ class PlayerScoresPanel extends HTMLElement {
       }
 
       .score-value {
-        text-align: right;
+        margin-left: auto;
         font-weight: 700;
         font-size: 1rem;
         min-width: 0;
+        max-width: 100%;
         color: var(--ink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       @media (max-width: 900px) {
+        .grid-score-panels {
+          flex-wrap: nowrap;
+          max-height: none !important;
+        }
+          
         .panel-picker {
           min-width: 100%;
         }
@@ -509,7 +509,7 @@ class PlayerScoresPanel extends HTMLElement {
           font-size: 1.3rem;
         }
       }
-    </style>    
+    </style>
       <div class="panel-header">
         <div>
           <h3>Scoreboard Viewer</h3>
@@ -542,6 +542,7 @@ class PlayerScoresPanel extends HTMLElement {
         </div>
 
         <div class="status" id="status" hidden>Ready.</div>
+        <div id="hero-container"></div>
         <div class="grid-score-panels" id="grid-score-panels"></div>
       </div>
     `;
@@ -648,7 +649,6 @@ class PlayerScoresPanel extends HTMLElement {
 
     this.vpsId = vpsId;
 
-    // Update URL without reload
     const url = new URL(window.location);
     url.searchParams.set("score_vpsid", vpsId);
     window.history.pushState({}, "", url);
@@ -674,9 +674,21 @@ class PlayerScoresPanel extends HTMLElement {
       const result = await this.api(
         `/api/v1/users/${encodeURIComponent(this.userId)}/tables/with-score?limit=100&offset=0`,
       );
-      if (!result.ok) return;
+      if (!result.ok) {
+        menu.innerHTML =
+          '<div class="picker-option" style="cursor: default; color: var(--ink-muted);">Error loading tables</div>';
+        trigger.textContent = "Error loading tables";
+        return;
+      }
 
       this.availableTables = result.data;
+
+      if (!this.availableTables.length) {
+        menu.innerHTML =
+          '<div class="picker-option" style="cursor: default; color: var(--ink-muted);">No tables with scores found</div>';
+        trigger.textContent = "No tables available";
+        return;
+      }
 
       menu.innerHTML = this.availableTables
         .map((table) => {
@@ -707,6 +719,8 @@ class PlayerScoresPanel extends HTMLElement {
         });
       });
     } catch (e) {
+      menu.innerHTML =
+        '<div class="picker-option" style="cursor: default; color: var(--ink-muted);">Error loading tables</div>';
       trigger.textContent = "Error loading tables";
     }
   }
@@ -758,8 +772,8 @@ class PlayerScoresPanel extends HTMLElement {
 
   scoreText(entry) {
     if (entry.score !== null && entry.score !== undefined) {
-      const base = window.fmtNumber
-        ? window.fmtNumber(entry.score)
+      const base = fmtNumber
+        ? fmtNumber(entry.score)
         : entry.score.toLocaleString();
       return entry.value_suffix ? `${base} ${entry.value_suffix}` : base;
     }
@@ -813,29 +827,45 @@ class PlayerScoresPanel extends HTMLElement {
 
   renderDynamicSections(groups, orderedSections, replacement) {
     const gridPanels = this.q("grid-score-panels");
+    const heroContainer = this.shadowRoot.getElementById("hero-container");
     if (!gridPanels) return;
 
     gridPanels.innerHTML = "";
+    heroContainer.innerHTML = "";
+
+    const grandChampionEntries = groups.get("GRAND CHAMPION");
+    if (grandChampionEntries && grandChampionEntries.length) {
+      const heroCard = document.createElement("section");
+      heroCard.className = "score-card hero";
+      heroCard.innerHTML = `
+      <div class="score-card-title">GRAND CHAMPION</div>
+      <div class="score-card-body"></div>
+    `;
+      const body = heroCard.querySelector(".score-card-body");
+      this.renderGrandChampionInline(
+        body,
+        grandChampionEntries[0],
+        replacement,
+      );
+      heroContainer.appendChild(heroCard);
+    }
 
     orderedSections.forEach((sectionName) => {
+      if (sectionName === "GRAND CHAMPION") return;
+
       const entries = groups.get(sectionName) || [];
       if (!entries.length) return;
 
-      const isGrandChampion = sectionName === "GRAND CHAMPION";
-      const cardClass = isGrandChampion ? "score-card hero" : "score-card";
-
       const card = document.createElement("section");
-      card.className = cardClass;
+      card.className = "score-card";
       card.innerHTML = `
-        <div class="score-card-title">${sectionName}</div>
-        <div class="score-card-body"></div>
-      `;
+      <div class="score-card-title">${sectionName}</div>
+      <div class="score-card-body"></div>
+    `;
 
       const body = card.querySelector(".score-card-body");
 
-      if (isGrandChampion) {
-        this.renderGrandChampionInline(body, entries[0], replacement);
-      } else if (
+      if (
         sectionName === "MARTIAN CHAMPION" ||
         sectionName === "RULER OF THE UNIVERSE"
       ) {
@@ -844,7 +874,25 @@ class PlayerScoresPanel extends HTMLElement {
         this.renderRankedListInline(body, entries, replacement);
       }
 
-      gridPanels.appendChild(card);
+      if (sectionName === "HIGHEST SCORES") {
+        gridPanels.prepend(card);
+      } else {
+        gridPanels.appendChild(card);
+      }
+    });
+
+    requestAnimationFrame(() => {
+      const cards = Array.from(gridPanels.querySelectorAll(".score-card"));
+      if (cards.length === 0) return;
+
+      const totalHeight = cards.reduce(
+        (sum, card) => sum + card.offsetHeight,
+        0,
+      );
+      const gapHeight = (cards.length - 1) * 12;
+      const columnHeight = (totalHeight + gapHeight) / 2;
+
+      gridPanels.style.maxHeight = `${columnHeight + 140}px`;
     });
   }
 
@@ -867,7 +915,7 @@ class PlayerScoresPanel extends HTMLElement {
     }
     host.innerHTML = `
       <div class="score-list">
-        ${entries
+        ${entries.slice(0, 10)
           .map(
             (entry) => `
           <div class="score-row">
