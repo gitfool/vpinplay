@@ -35,6 +35,75 @@ class LatestSubmittedScoresPanel extends HTMLElement {
     window.removeEventListener("keydown", this.handleKeydown);
   }
 
+  linkUserId(userId, vpsId) {
+    return `<a href="/players?userid=${encodeURIComponent(userId)}&vpsid=${encodeURIComponent(vpsId)}" class="user-link">${userId}</a>`;
+  }
+
+  escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  fmtNumber(value) {
+    return Number(value || 0).toLocaleString();
+  }
+
+  fmtLatestScoreValue(score) {
+    if (!score || typeof score !== "object") return "-";
+    const numericValue = score.value ?? score.score;
+    if (
+      numericValue !== null &&
+      numericValue !== undefined &&
+      numericValue !== ""
+    ) {
+      const base = this.fmtNumber(numericValue);
+      return score.value_suffix ? `${base} ${score.value_suffix}` : base;
+    }
+    if (Array.isArray(score.extra_lines) && score.extra_lines.length) {
+      return score.extra_lines.join(" | ");
+    }
+    return "-";
+  }
+
+  fmtDate(value) {
+    if (!value) return "-";
+    const raw = String(value).trim();
+    const hasTimeZone = /([zZ]|[+-]\d{2}:\d{2})$/.test(raw);
+    const normalized = !hasTimeZone && raw.includes("T") ? `${raw}Z` : raw;
+    const d = new Date(normalized);
+    if (Number.isNaN(d.getTime())) return "-";
+    return d.toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "medium",
+    });
+  }
+
+  linkTableName(name, vpsId) {
+    const text =
+      name === null || name === undefined || name === "" ? "-" : String(name);
+    const id = String(vpsId || "").trim();
+    if (!id || text === "-") return this.escapeHtml(text);
+    return `<a href="tables?vpsid=${encodeURIComponent(id)}">${this.escapeHtml(text)}</a>`;
+  }
+
+  linkVpsId(vpsId) {
+    const id = String(vpsId || "").trim();
+    if (!id) return "-";
+    const safeId = this.escapeHtml(id);
+    return `<a href="https://virtualpinballspreadsheet.github.io/games?game=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer" aria-label="Open VPS entry for ${safeId}" title="${safeId}"><img src="img/vpsLogo.png" alt="VPS" style="height: 1.15rem; width: auto; vertical-align: middle;"></a>`;
+  }
+
+  linkTableNameWithVps(name, vpsId) {
+    const tableLink = this.linkTableName(name, vpsId);
+    const vpsLink = this.linkVpsId(vpsId);
+    if (vpsLink === "-") return tableLink;
+    return `<span class="table-name-with-vps"><span class="table-name-link">${tableLink}</span><span class="table-vps-link">${vpsLink}</span></span>`;
+  }
+
   parseLimit(value) {
     const parsed = Number(value || 10);
     if (!Number.isFinite(parsed)) return 10;
@@ -79,7 +148,7 @@ class LatestSubmittedScoresPanel extends HTMLElement {
   render() {
     this.innerHTML = `
       <div class="panel-heading">
-        <h3>${escapeHtml(this.getTitle())}</h3>
+        <h3>${this.escapeHtml(this.getTitle())}</h3>
         <button
           class="panel-expand-btn"
           type="button"
@@ -110,6 +179,16 @@ class LatestSubmittedScoresPanel extends HTMLElement {
     }
   }
 
+  async api(path) {
+    try {
+      const response = await fetch(`${API_BASE}${path}`);
+      const data = await response.json().catch(() => ({}));
+      return { ok: response.ok, status: response.status, data };
+    } catch (error) {
+      return { ok: false, status: 0, data: { error: error.message } };
+    }
+  }
+
   async load() {
     const table = this.querySelector("table");
     const expandedNote = this.querySelector(".panel-expanded-note");
@@ -122,7 +201,7 @@ class LatestSubmittedScoresPanel extends HTMLElement {
         : "";
     }
 
-    const res = await api(
+    const res = await this.api(
       `/api/v1/users/scores/latest?limit=${encodeURIComponent(this.getCurrentLimit())}&offset=0`,
     );
 
@@ -149,14 +228,14 @@ class LatestSubmittedScoresPanel extends HTMLElement {
     rows.forEach((row) => {
       html += `
         <tr>
-          <td data-label="Table">${linkTableNameWithVps(
+          <td data-label="Table">${this.linkTableNameWithVps(
             row.tableTitle || row.vpsdb?.name || "Unknown Table",
             row.vpsId,
           )}</td>
-          <td data-label="User">${linkUserId(row.userId)}</td>
-          <td data-label="Label">${escapeHtml(row.label || "-")}</td>
-          <td data-label="Score">${escapeHtml(fmtLatestScoreValue(row.score))}</td>
-          <td data-label="Updated">${escapeHtml(fmtDate(row.updatedAt))}</td>
+          <td data-label="User">${this.linkUserId(row.userId, row.vpsId)}</td>
+          <td data-label="Label">${this.escapeHtml(row.label || "-")}</td>
+          <td data-label="Score">${this.escapeHtml(this.fmtLatestScoreValue(row.score))}</td>
+          <td data-label="Updated">${this.escapeHtml(this.fmtDate(row.updatedAt))}</td>
         </tr>
       `;
     });
