@@ -40,52 +40,52 @@
         <div class="grid-kpi panel panel-full">
           <div id="userBadge" class="user-badge"></div>
           <div class="kpi">
-            <div class="kpi-label">Table Count</div>
+            <div class="kpi-label">Total Tables</div>
             <div id="kpiTableCount" class="kpi-value">-</div>
-            <div class="kpi-sub">Total submitted tables</div>
           </div>
           <div class="kpi">
-            <div class="kpi-label">Total Activity</div>
+            <div class="kpi-label">Total Play Time / Plays</div>
             <div id="kpiTotalActivity" class="kpi-value">-</div>
-            <div class="kpi-sub">Total runtime / startCount</div>
           </div>
           <div class="kpi">
-            <div class="kpi-label">This Week Activity</div>
+            <div class="kpi-label">Last 7 Days Play Time / Plays</div>
             <div id="kpiWeeklyActivity" class="kpi-value">-</div>
-            <div class="kpi-sub">Last 7 days runtime / startCount delta</div>
           </div>
           <div class="kpi">
             <div class="kpi-label">Last Sync</div>
             <div id="kpiLastSync" class="kpi-value">-</div>
-            <div class="kpi-sub">Latest successful sync</div>
           </div>
         </div>
         <player-scores-panel class="panel panel-full"></player-scores-panel>
       </section>
 
       <div id="carouselsContainer" class="carousels-container">
-        <players-tables-carousel 
-          title="Most Play Time" 
+        <players-tables-carousel
+          title="Most Play Time"
           shelf-stat="runTime"
-          api-url="/tables/top-play-time">
+          api-url="/tables/top-play-time"
+        >
         </players-tables-carousel>
 
-        <players-tables-carousel 
-          title="Recently Played" 
+        <players-tables-carousel
+          title="Recently Played"
           shelf-stat="lastRun"
-          api-url="/tables/recently-played">
+          api-url="/tables/recently-played"
+        >
         </players-tables-carousel>
 
-        <players-tables-carousel 
-          title="Most Played" 
+        <players-tables-carousel
+          title="Most Played"
           shelf-stat="startCount"
-          api-url="/tables/most-played">
+          api-url="/tables/most-played"
+        >
         </players-tables-carousel>
 
-        <players-tables-carousel 
-          title="Newest Added" 
+        <players-tables-carousel
+          title="Newest Added"
           shelf-stat="createdAt"
-          api-url="/tables/newly-added">
+          api-url="/tables/newly-added"
+        >
         </players-tables-carousel>
       </div>
     </div>

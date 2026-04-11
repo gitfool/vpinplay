@@ -232,7 +232,7 @@ function renderTable(elId, columns, rows) {
 function setKpi(id, value, className = "") {
   const el = q(id);
   el.textContent = value;
-  el.className = `value ${className}`.trim();
+  el.className += ` ${className}`;
 }
 
 async function loadAllTablesPage() {

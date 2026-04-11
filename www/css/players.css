@@ -120,6 +120,30 @@ body.latest-scores-overlay-open {
   grid-column: 1 / -1;
 }
 
+/* KPI Overrides */
+.kpi {
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.kpi-label {
+  color: var(--ink-muted);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  text-align: center;
+}
+
+.kpi-value {
+  font-size: 1.4rem;
+  font-weight: 900;
+  background-clip: text;
+  text-align: center;
+}
+
 .user-badge {
   background: var(--surface-soft);
   color: var(--neon-cyan);
@@ -132,9 +156,9 @@ body.latest-scores-overlay-open {
 }
 
 .carousels-container {
-  display: none; 
+  display: none;
   width: 100%;
-  flex-direction: column; 
+  flex-direction: column;
   padding-top: 36px;
   gap: 36px;
 }
@@ -242,6 +266,21 @@ body.latest-scores-overlay-open {
 
   .grid-kpi {
     grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  /* KPI Overrides */
+  .kpi {
+    padding: 4px 10px;
+    gap: 4px;
+  }
+
+  .kpi-label {
+    font-size: 0.6rem;
+  }
+
+  .kpi-value {
+    font-size: 1rem;
   }
 
   .user-badge {
