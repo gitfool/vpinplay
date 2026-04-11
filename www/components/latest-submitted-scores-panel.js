@@ -42,10 +42,7 @@ class LatestSubmittedScoresPanel extends HTMLElement {
       <div class="panel-heading">
         <h3>${escapeHtml(this.getTitle())}</h3>
       </div>
-      <p class="panel-scroll-hint">Swipe to see more columns</p>
-      <div class="panel-table-scroll">
-        <table></table>
-      </div>
+      <table></table>
     `;
   }
 
@@ -82,14 +79,14 @@ class LatestSubmittedScoresPanel extends HTMLElement {
     rows.forEach((row) => {
       html += `
         <tr>
-          <td>${linkTableNameWithVps(
+          <td data-label="Table">${linkTableNameWithVps(
             row.tableTitle || row.vpsdb?.name || "Unknown Table",
             row.vpsId,
           )}</td>
-          <td>${linkUserId(row.userId)}</td>
-          <td>${escapeHtml(row.label || "-")}</td>
-          <td>${escapeHtml(fmtLatestScoreValue(row.score))}</td>
-          <td>${escapeHtml(fmtDate(row.updatedAt))}</td>
+          <td data-label="User">${linkUserId(row.userId)}</td>
+          <td data-label="Label">${escapeHtml(row.label || "-")}</td>
+          <td data-label="Score">${escapeHtml(fmtLatestScoreValue(row.score))}</td>
+          <td data-label="Updated">${escapeHtml(fmtDate(row.updatedAt))}</td>
         </tr>
       `;
     });

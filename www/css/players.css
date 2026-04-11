@@ -21,10 +21,6 @@
   align-self: stretch;
 }
 
-#latestSubmittedScoresPanel .panel-scroll-hint {
-  display: none;
-}
-
 .panel-heading {
   display: flex;
   align-items: center;
@@ -82,70 +78,79 @@
     padding: 18px;
   }
 
-  #latestSubmittedScoresPanel .panel-scroll-hint {
-    display: block;
-    margin: -4px 0 6px;
-    color: var(--ink-muted);
-    font-size: 0.78rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  #latestSubmittedScoresPanel .panel-table-scroll {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--surface);
-  }
-
-  #latestSubmittedScoresPanel .panel-table-scroll table {
-    min-width: 760px;
-  }
-
-  #latestSubmittedScoresPanel .panel-table-scroll::-webkit-scrollbar {
-    height: 10px;
-  }
-
-  #latestSubmittedScoresPanel .panel-table-scroll::-webkit-scrollbar-track {
-    background: var(--surface-2);
-    border-radius: 999px;
-  }
-
-  #latestSubmittedScoresPanel .panel-table-scroll::-webkit-scrollbar-thumb {
-    background: var(--neon-purple);
-    border-radius: 999px;
-  }
-
+  #latestSubmittedScoresPanel table,
+  #latestSubmittedScoresPanel thead,
+  #latestSubmittedScoresPanel tbody,
+  #latestSubmittedScoresPanel tr,
   #latestSubmittedScoresPanel th,
   #latestSubmittedScoresPanel td {
-    white-space: nowrap;
+    display: block;
+    width: 100%;
   }
 
-  #latestSubmittedScoresPanel th:first-child {
-    position: sticky;
-    left: 0;
-    z-index: 3;
+  #latestSubmittedScoresPanel thead {
+    display: none;
+  }
+
+  #latestSubmittedScoresPanel tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  #latestSubmittedScoresPanel tbody tr {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
     background: var(--surface-2);
-    box-shadow: 8px 0 14px rgba(10, 5, 24, 0.35);
+    box-shadow: var(--shadow);
   }
 
-  #latestSubmittedScoresPanel td:first-child {
-    position: sticky;
-    left: 0;
-    z-index: 2;
-    background: var(--table-row);
-    box-shadow: 8px 0 14px rgba(10, 5, 24, 0.2);
-  }
-
-  #latestSubmittedScoresPanel tbody tr:nth-child(even) td:first-child {
-    background: var(--table-row-alt);
-  }
-
+  #latestSubmittedScoresPanel tbody tr:nth-child(even) td,
+  #latestSubmittedScoresPanel tbody tr td,
+  #latestSubmittedScoresPanel tbody tr:hover td,
   #latestSubmittedScoresPanel tbody tr:hover td:first-child {
-    background: var(--table-hover);
+    background: transparent;
+    border-left: 0;
+  }
+
+  #latestSubmittedScoresPanel td {
+    display: grid;
+    grid-template-columns: minmax(88px, 108px) minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(61, 36, 97, 0.7);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  #latestSubmittedScoresPanel td:last-child {
+    border-bottom: 0;
+  }
+
+  #latestSubmittedScoresPanel td::before {
+    content: attr(data-label);
+    color: var(--neon-cyan);
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  #latestSubmittedScoresPanel td[data-label="Table"] {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding-top: 12px;
+  }
+
+  #latestSubmittedScoresPanel td[data-label="Table"]::before {
+    color: var(--neon-purple);
+  }
+
+  #latestSubmittedScoresPanel .table-name-with-vps {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    width: 100%;
   }
 
   .grid-kpi {
