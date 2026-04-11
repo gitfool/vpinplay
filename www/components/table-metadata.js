@@ -35,9 +35,20 @@ class TablesMetadata extends HTMLElement {
   }
 
   attachEventListeners() {
+    const headerRow = this.shadowRoot.querySelector(".header-row");
+    if (headerRow) {
+      headerRow.addEventListener("click", (e) => {
+        if (e.target.closest(".expand-button")) {
+          return;
+        }
+        this.setExpanded(!this.expanded);
+      });
+    }
+
     const expandButton = this.shadowRoot.getElementById("expandButton");
     if (expandButton) {
-      expandButton.addEventListener("click", () => {
+      expandButton.addEventListener("click", (e) => {
+        e.stopPropagation();
         this.setExpanded(!this.expanded);
       });
     }
@@ -311,7 +322,12 @@ class TablesMetadata extends HTMLElement {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-bottom: 12px;
+          cursor: pointer;
+          padding: 4px 12px;
+        }
+        .header-row:hover {
+          background: var(--surface-2);
+          border-radius: var(--radius);
         }
         .header-row h3 {
           margin: 0;
@@ -329,12 +345,20 @@ class TablesMetadata extends HTMLElement {
           color: var(--neon-purple);
           cursor: pointer;
           flex: 0 0 auto;
-          transition: transform 120ms ease;
+          transition:
+            background-color 120ms ease,
+            border-color 120ms ease,
+            color 120ms ease,
+            transform 360ms ease;
         }
         .expand-button:hover {
           background: var(--neon-purple);
           border-color: var(--neon-purple);
           color: var(--surface);
+        }
+        .expand-button:focus-visible {
+          outline: 2px solid var(--neon-purple);
+          outline-offset: 2px;
         }
         .expand-icon {
           display: inline-flex;
@@ -443,6 +467,12 @@ class TablesMetadata extends HTMLElement {
 
         /* Media queries */
         @media (max-width: 600px) {
+          .header-row {
+            justify-content: space-between;
+          }
+          .header-row h3 {
+            flex: 0 1 auto;
+          }
           .variation-grid {
             grid-template-columns: 1fr;
           } 
