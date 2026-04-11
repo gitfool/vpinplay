@@ -84,6 +84,8 @@
   left: 24px;
   right: 24px;
   bottom: 24px;
+  width: auto;
+  max-width: calc(100vw - 48px);
   z-index: 2500;
   display: grid;
   align-content: start;
@@ -158,6 +160,8 @@ body.latest-scores-overlay-open {
     left: 12px;
     right: 12px;
     bottom: 12px;
+    width: auto;
+    max-width: calc(100vw - 24px);
     padding: 12px;
   }
 
