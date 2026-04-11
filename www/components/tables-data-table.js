@@ -31,6 +31,21 @@ class TablesDataTable extends HTMLElement {
     const vpsid = (params.get("vpsid") || "").trim();
 
     this.render();
+
+    if (vpsid) {
+      const filters = this.shadowRoot.getElementById("filters");
+      const tableWrapper = this.shadowRoot.getElementById("table-wrapper");
+      const stats = this.shadowRoot.querySelector(".stats");
+      const expandIcon = this.shadowRoot.querySelector(".expand-icon");
+
+      if (filters) filters.style.display = "none";
+      if (tableWrapper) tableWrapper.style.display = "none";
+      if (stats) stats.style.display = "none";
+      if (expandIcon) {
+        expandIcon.style.transform = "rotate(180deg)";
+      }
+    }
+
     this.attachEventListeners();
 
     const urlSortBy = params.get("sort-by");
@@ -45,24 +60,7 @@ class TablesDataTable extends HTMLElement {
     this.sortOrder = urlSortOrder
       ? parseInt(urlSortOrder)
       : parseInt(this.getAttribute("sort-order") || "1");
-
-    if (vpsid) {
-      const filters = this.shadowRoot.getElementById("filters");
-      const tableWrapper = this.shadowRoot.getElementById("table-wrapper");
-      const stats = this.shadowRoot.querySelector(".stats");
-
-      if (filters) filters.style.display = "none";
-      if (tableWrapper) tableWrapper.style.display = "none";
-      if (stats) stats.style.display = "none";
-
-      const expandIcon = this.shadowRoot.querySelector(".expand-icon");
-      if (expandIcon) {
-        expandIcon.style.transform = "rotate(180deg)";
-      }
-
-      return;
-    }
-
+      
     this.setupIntersectionObserver();
     this.loadData();
   }
@@ -76,9 +74,6 @@ class TablesDataTable extends HTMLElement {
     }
     if (this._pickerCloseHandler) {
       document.removeEventListener("click", this._pickerCloseHandler);
-    }
-    if (this._dialogKeyHandler) {
-      document.removeEventListener("keydown", this._dialogKeyHandler);
     }
   }
 
@@ -251,8 +246,14 @@ class TablesDataTable extends HTMLElement {
           gap: 12px;
           align-items: center;
           padding: 16px;
-          background: var(--bg-secondary);
+          background: var(--surface-soft);
           overflow: visible;
+          position: relative;
+          cursor: pointer;
+        }
+
+        .table-title-panel:hover {
+          background: var(--surface-soft);
         }
 
         .table-title-panel h3 {
@@ -313,11 +314,12 @@ class TablesDataTable extends HTMLElement {
           display: flex;
           justify-content: flex-end;
           gap: 12px;
-          background: var(--bg-secondary);
+          background: var(--surface-soft);
           overflow: visible;
           box-sizing: border-box;
           max-width: 100%;
           margin-left: auto;
+          cursor: default;
         }
 
         .filter-group {
@@ -337,7 +339,7 @@ class TablesDataTable extends HTMLElement {
           background: var(--bg);
           border-radius: 4px;
           color: var(--ink);
-          font-size: 0.88rem;
+          font-size: 0.9rem;
         }
         
         input:focus {
@@ -366,7 +368,7 @@ class TablesDataTable extends HTMLElement {
           color: var(--ink-muted);
           font-size: 1.4rem;
           line-height: 1;
-          display: none; /* Hidden by default */
+          display: none;
           user-select: none;
         }
 
@@ -382,7 +384,7 @@ class TablesDataTable extends HTMLElement {
         }
 
         .picker span {
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           color: var(--ink-muted);
           margin: 0;
         }
@@ -476,7 +478,7 @@ class TablesDataTable extends HTMLElement {
         table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
         }
 
         thead {
@@ -494,7 +496,7 @@ class TablesDataTable extends HTMLElement {
 
         th {
           color: var(--neon-cyan);
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           font-family: 'Rajdhani', sans-serif;
           text-transform: uppercase;
           vertical-align: middle;
@@ -509,7 +511,7 @@ class TablesDataTable extends HTMLElement {
         tr td {
           background: var(--table-row);
           font-family: 'Rajdhani', sans-serif;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           vertical-align: middle;
         }
 
@@ -710,10 +712,6 @@ class TablesDataTable extends HTMLElement {
             padding: 6px 8px;
             font-size: 0.8rem;
           }
-
-          :host([fit-dialog="true"]) .column-name {
-            width: 28%;
-          }
         }
         @media (max-width: 600px) {
           .table-wrapper {
@@ -721,7 +719,8 @@ class TablesDataTable extends HTMLElement {
           }
 
           .filters {
-            max-width: 180px;
+            max-width: 170px;
+            background: var(--surface-soft);
           }
 
           .column-name {
@@ -740,6 +739,8 @@ class TablesDataTable extends HTMLElement {
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
+            padding: 6px;
+            gap: 4px;
           }
 
           .rating-star {
@@ -749,22 +750,11 @@ class TablesDataTable extends HTMLElement {
           .rating-value {
             font-size: 0.6rem;
           }
-
-          :host([fit-dialog="true"]) th,
-          :host([fit-dialog="true"]) td {
-            padding: 6px;
-            font-size: 0.72rem;
-          }
-
-          :host([fit-dialog="true"]) .column-name {
-            width: 34%;
-            max-width: none;
-          }
         }
       </style>
       
       <div class="container">
-        <div class="table-title-panel">
+        <div id="table-title-panel" class="table-title-panel">
           <h3>Tables</h3>
           <button id="expandButton" class="expand-button" type="button">
             <span class="expand-icon"> 
@@ -1056,9 +1046,12 @@ class TablesDataTable extends HTMLElement {
   }
 
   attachEventListeners() {
-    const expandButton = this.shadowRoot.getElementById("expandButton");
-    if (expandButton) {
-      expandButton.addEventListener("click", () => {
+    const tableTitlePanel = this.shadowRoot.getElementById("table-title-panel");
+    if (tableTitlePanel) {
+      tableTitlePanel.addEventListener("click", (e) => {
+        if (e.target.closest("#filters")) {
+          return;
+        }
         const filters = this.shadowRoot.getElementById("filters");
         const tableWrapper = this.shadowRoot.getElementById("table-wrapper");
         const stats = this.shadowRoot.querySelector(".stats");

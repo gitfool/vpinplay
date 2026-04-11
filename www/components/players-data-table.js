@@ -110,7 +110,6 @@ class PlayersDataTable extends HTMLElement {
       ) {
         columns.push(...this.extractColumns(value, fullKey));
       } else if (key !== "_id" && key !== "tables") {
-        // Exclude 'tables' array from columns
         columns.push({
           key: fullKey,
           label: this.formatLabel(key),
@@ -237,7 +236,7 @@ class PlayersDataTable extends HTMLElement {
           gap: 12px;
           align-items: center;
           padding: 16px;
-          background: var(--bg-secondary);
+          background: var(--surface-soft);
           overflow: visible;
           position: relative;
           cursor: pointer;
@@ -305,14 +304,12 @@ class PlayersDataTable extends HTMLElement {
           display: flex;
           justify-content: flex-end;
           gap: 12px;
-          background: var(--bg-secondary);
+          background: var(--surface-soft);
           overflow: visible;
           box-sizing: border-box;
           max-width: 100%;
           margin-left: auto;
           cursor: default;
-          border-radius: var(--radius);
-          padding-left: 12px;
         }
 
         .filter-group {
@@ -332,7 +329,7 @@ class PlayersDataTable extends HTMLElement {
           background: var(--bg);
           border-radius: 4px;
           color: var(--ink);
-          font-size: 0.88rem;
+          font-size: 0.9rem;
         }
         
         input:focus {
@@ -361,7 +358,7 @@ class PlayersDataTable extends HTMLElement {
           color: var(--ink-muted);
           font-size: 1.4rem;
           line-height: 1;
-          display: none; /* Hidden by default */
+          display: none;
           user-select: none;
         }
 
@@ -377,7 +374,7 @@ class PlayersDataTable extends HTMLElement {
         }
 
         .picker span {
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           color: var(--ink-muted);
           margin: 0;
         }
@@ -471,7 +468,7 @@ class PlayersDataTable extends HTMLElement {
         table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
         }
 
         thead {
@@ -489,7 +486,7 @@ class PlayersDataTable extends HTMLElement {
 
         th {
           color: var(--neon-cyan);
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           font-family: 'Rajdhani', sans-serif;
           text-transform: uppercase;
           vertical-align: middle;
@@ -504,7 +501,7 @@ class PlayersDataTable extends HTMLElement {
         tr td {
           background: var(--table-row);
           font-family: 'Rajdhani', sans-serif;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           vertical-align: middle;
         }
 
@@ -696,7 +693,8 @@ class PlayersDataTable extends HTMLElement {
           }
 
           .filters {
-            max-width: 180px;
+            max-width: 170px;
+            background: var(--surface-soft);
           }
 
           .row-name-cell {
@@ -708,6 +706,8 @@ class PlayersDataTable extends HTMLElement {
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
+            padding: 6px;
+            gap: 4px;
           }
 
           .rating-star {
