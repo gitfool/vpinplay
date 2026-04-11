@@ -53,8 +53,8 @@ class TableScoresPanel extends HTMLElement {
         margin-bottom: 14px;
         border-radius: 10px;
         padding: 10px 12px;
-        background: rgba(0, 217, 255, 0.08);
-        border: 1px solid rgba(0, 217, 255, 0.18);
+        background: var(--glow-cyan);
+        border: 1px solid var(--glow-cyan);
         color: var(--neon-cyan);
         font-size: 0.9rem;
         font-weight: 700;
@@ -63,8 +63,12 @@ class TableScoresPanel extends HTMLElement {
 
       .status.error {
         color: var(--bad);
-        border-color: rgba(255, 10, 120, 0.24);
-        background: rgba(255, 10, 120, 0.12);
+        border-color: var(--glow-pink);
+        background: var(--glow-pink);
+      }
+
+      #hero-container {
+        margin-bottom: 12px;
       }
 
       .scoreboard-title {
@@ -79,14 +83,15 @@ class TableScoresPanel extends HTMLElement {
 
       .grid-score-panels {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         flex-wrap: wrap;
         gap: 12px;
-        align-items: start;
+        align-content: center;
         width: 100%;
       }
 
       .score-card {
+        width: calc(50% - 6px);
         background: var(--surface);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
@@ -95,34 +100,26 @@ class TableScoresPanel extends HTMLElement {
         min-width: 0;
         display: grid;
         gap: 12px;
-        flex: 1 1 calc(50% - 6px);
-        max-width: calc(50% - 6px);
-      }
-
-      .score-card:last-child:nth-child(odd) {
-        margin: 0 auto;
       }
 
       .score-card.hero {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
         background:
-          linear-gradient(135deg, rgba(180, 41, 249, 0.12), rgba(0, 217, 255, 0.08)),
+          var(--header-gradient),,
           var(--surface-soft);
         border-radius: var(--radius);
         display: flex;
         flex-direction: column;
         align-items: center;
-        width: fit-content;
-        flex-basis: 100%;
-        max-width: none;
-        margin: 0 auto;
         padding: 12px;
       }
 
       .score-card-title {
         color: var(--ink-muted);
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-size: 0.78rem;
+        font-size: 1rem;
         font-weight: 800;
       }
 
@@ -141,7 +138,7 @@ class TableScoresPanel extends HTMLElement {
       .grand-initials {
         font-size: 2.4rem;
         font-weight: 900;
-        letter-spacing: 0.08em;
+        text-align: center;
         color: var(--neon-cyan);
         text-shadow: var(--glow-cyan);
       }
@@ -149,6 +146,7 @@ class TableScoresPanel extends HTMLElement {
       .grand-score {
         font-size: 1.6rem;
         font-weight: 800;
+        text-align: center;
       }
 
       .score-list {
@@ -158,11 +156,11 @@ class TableScoresPanel extends HTMLElement {
 
       .score-row {
         display: grid;
-        grid-template-columns: max-content 1fr max-content;
+        grid-template-columns: max-content 1fr minmax(0, max-content);
         gap: 12px;
         align-items: center;
         padding: 10px 12px;
-        border-radius: 10px;
+        border-radius: var(--radius);
         border: 1px solid var(--line);
         background: var(--surface-2);
       }
@@ -177,20 +175,28 @@ class TableScoresPanel extends HTMLElement {
 
       .score-initials {
         font-weight: 800;
-        letter-spacing: 0.04em;
         font-size: 1rem;
         min-height: 1.2em;
         color: var(--ink);
       }
 
       .score-value {
-        text-align: right;
+        margin-left: auto;
         font-weight: 700;
         min-width: 0;
+        max-width: 100%;
         color: var(--ink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       @media (max-width: 900px) {
+        .grid-score-panels {
+          flex-wrap: nowrap;
+          max-height: none !important;
+        }
+
         .score-card {
           min-width: 100%;
         }
@@ -223,6 +229,7 @@ class TableScoresPanel extends HTMLElement {
     </style>
     <div class="scoreboard-title">Scoreboard</div>
     <div class="status" id="status" hidden>Ready.</div>
+    <div id="hero-container"></div>
     <div class="grid-score-panels" id="grid-score-panels"></div>
   `;
   }
@@ -250,8 +257,7 @@ class TableScoresPanel extends HTMLElement {
 
   scoreText(entry) {
     if (entry.score !== null && entry.score !== undefined) {
-      // Use the global fmtNumber
-      const base = window.fmtNumber(entry.score);
+      const base = fmtNumber ? fmtNumber(entry.score) : entry.score.toLocaleString();
       return entry.value_suffix ? `${base} ${entry.value_suffix}` : base;
     }
     if (Array.isArray(entry.extra_lines) && entry.extra_lines.length) {
@@ -391,21 +397,39 @@ class TableScoresPanel extends HTMLElement {
       });
   }
 
-  renderDynamicSections(groups, orderedSections) {
+  renderDynamicSections(groups, orderedSections, replacement) {
     const gridPanels = this.q("grid-score-panels");
+    const heroContainer = this.shadowRoot.getElementById("hero-container");
     if (!gridPanels) return;
 
     gridPanels.innerHTML = "";
+    heroContainer.innerHTML = "";
+
+    const grandChampionEntries = groups.get("GRAND CHAMPION");
+    if (grandChampionEntries && grandChampionEntries.length) {
+      const heroCard = document.createElement("section");
+      heroCard.className = "score-card hero";
+      heroCard.innerHTML = `
+      <div class="score-card-title">GRAND CHAMPION</div>
+      <div class="score-card-body"></div>
+    `;
+      const body = heroCard.querySelector(".score-card-body");
+      this.renderGrandChampionInline(
+        body,
+        grandChampionEntries[0],
+        replacement,
+      );
+      heroContainer.appendChild(heroCard);
+    }
 
     orderedSections.forEach((sectionName) => {
+      if (sectionName === "GRAND CHAMPION") return;
+
       const entries = groups.get(sectionName) || [];
       if (!entries.length) return;
 
-      const isGrandChampion = sectionName === "GRAND CHAMPION";
-      const cardClass = isGrandChampion ? "score-card hero" : "score-card";
-
       const card = document.createElement("section");
-      card.className = cardClass;
+      card.className = "score-card";
       card.innerHTML = `
       <div class="score-card-title">${sectionName}</div>
       <div class="score-card-body"></div>
@@ -413,13 +437,33 @@ class TableScoresPanel extends HTMLElement {
 
       const body = card.querySelector(".score-card-body");
 
-      if (isGrandChampion) {
-        this.renderGrandChampionInline(body, entries[0]);
+      if (
+        sectionName === "MARTIAN CHAMPION" ||
+        sectionName === "RULER OF THE UNIVERSE"
+      ) {
+        this.renderSpecialInline(body, entries[0], replacement);
       } else {
-        this.renderRankedListInline(body, entries);
+        this.renderRankedListInline(body, entries, replacement);
       }
+      if (sectionName === "HIGHEST SCORES") {
+        gridPanels.prepend(card);
+      } else {
+        gridPanels.appendChild(card);
+      }
+    });
 
-      gridPanels.appendChild(card);
+    requestAnimationFrame(() => {
+      const cards = Array.from(gridPanels.querySelectorAll(".score-card"));
+      if (cards.length === 0) return;
+
+      const totalHeight = cards.reduce(
+        (sum, card) => sum + card.offsetHeight,
+        0,
+      );
+      const gapHeight = (cards.length - 1) * 12;
+      const columnHeight = cards.length === 1 ? totalHeight + gapHeight : (totalHeight + gapHeight) / 2;
+
+      gridPanels.style.maxHeight = `${columnHeight + 140}px`;
     });
   }
 
@@ -442,7 +486,7 @@ class TableScoresPanel extends HTMLElement {
     }
     host.innerHTML = `
     <div class="score-list">
-      ${entries
+      ${entries.slice(0, 10)
         .map(
           (entry, index) => `
         <div class="score-row">
@@ -455,6 +499,31 @@ class TableScoresPanel extends HTMLElement {
         .join("")}
     </div>
   `;
+  }
+
+  renderSpecialInline(host, entry, replacement) {
+    if (!entry) {
+      host.innerHTML = `<div class="empty-state">No entry available.</div>`;
+      return;
+    }
+
+    const extraLines = Array.isArray(entry.extra_lines)
+      ? entry.extra_lines
+      : [];
+    const detail = this.scoreText(entry);
+    host.innerHTML = `
+      <div class="special-entry">
+        <div class="special-pill">${this.scoreOwnerLabel(entry, replacement)}</div>
+        ${detail ? `<div class="special-detail">${detail}</div>` : ""}
+        ${
+          extraLines.length && entry.score != null
+            ? extraLines
+                .map((line) => `<div class="special-subtle">${line}</div>`)
+                .join("")
+            : ""
+        }
+      </div>
+    `;
   }
 
   async loadPanel() {

@@ -36,7 +36,6 @@ class PlayerRatings extends HTMLElement {
       ]);
 
       this.data = Array.isArray(playerRatings.data) ? playerRatings.data : [];
-      console.log("Player ratings loaded:", this.data.length, "ratings");
     } catch (error) {
       console.error("Error loading player ratings:", error);
       this.data = [];
@@ -72,7 +71,7 @@ class PlayerRatings extends HTMLElement {
   }
 
   linkUserId(userId) {
-    return `<a href="/players?userid=${encodeURIComponent(userId)}" class="user-link">${userId}</a>`;
+    return `<a href="/players?userid=${encodeURIComponent(userId)}&score_vpsid=${encodeURIComponent(this.getAttribute("vps-id"))}" class="user-link">${userId}</a>`;
   }
 
   fmtRatingStars(rating) {

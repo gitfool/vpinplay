@@ -44,7 +44,6 @@ class PlayerRuntimes extends HTMLElement {
       ]);
 
       this.data = Array.isArray(playerRuntimes.data) ? playerRuntimes.data : [];
-      console.log("Player runtimes loaded:", this.data.length, "players");
     } catch (error) {
       console.error("Error loading player runtimes:", error);
       this.data = [];
@@ -80,7 +79,7 @@ class PlayerRuntimes extends HTMLElement {
   }
 
   linkUserId(userId) {
-    return `<a href="/players?userid=${encodeURIComponent(userId)}" class="user-link">${userId}</a>`;
+    return `<a href="/players?userid=${encodeURIComponent(userId)}&score_vpsid=${encodeURIComponent(this.getAttribute("vps-id"))}" class="user-link">${userId}</a>`;
   }
 
   fmtWeeklyRuntime(minutes) {
