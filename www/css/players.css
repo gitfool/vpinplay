@@ -21,6 +21,10 @@
   align-self: stretch;
 }
 
+#latestSubmittedScoresPanel .panel-scroll-hint {
+  display: none;
+}
+
 .panel-heading {
   display: flex;
   align-items: center;
@@ -76,6 +80,72 @@
 @media (max-width: 640px) {
   .main {
     padding: 18px;
+  }
+
+  #latestSubmittedScoresPanel .panel-scroll-hint {
+    display: block;
+    margin: -4px 0 6px;
+    color: var(--ink-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  #latestSubmittedScoresPanel .panel-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+  }
+
+  #latestSubmittedScoresPanel .panel-table-scroll table {
+    min-width: 760px;
+  }
+
+  #latestSubmittedScoresPanel .panel-table-scroll::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  #latestSubmittedScoresPanel .panel-table-scroll::-webkit-scrollbar-track {
+    background: var(--surface-2);
+    border-radius: 999px;
+  }
+
+  #latestSubmittedScoresPanel .panel-table-scroll::-webkit-scrollbar-thumb {
+    background: var(--neon-purple);
+    border-radius: 999px;
+  }
+
+  #latestSubmittedScoresPanel th,
+  #latestSubmittedScoresPanel td {
+    white-space: nowrap;
+  }
+
+  #latestSubmittedScoresPanel th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: var(--surface-2);
+    box-shadow: 8px 0 14px rgba(10, 5, 24, 0.35);
+  }
+
+  #latestSubmittedScoresPanel td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--table-row);
+    box-shadow: 8px 0 14px rgba(10, 5, 24, 0.2);
+  }
+
+  #latestSubmittedScoresPanel tbody tr:nth-child(even) td:first-child {
+    background: var(--table-row-alt);
+  }
+
+  #latestSubmittedScoresPanel tbody tr:hover td:first-child {
+    background: var(--table-hover);
   }
 
   .grid-kpi {

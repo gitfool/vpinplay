@@ -42,7 +42,10 @@ class LatestSubmittedScoresPanel extends HTMLElement {
       <div class="panel-heading">
         <h3>${escapeHtml(this.getTitle())}</h3>
       </div>
-      <table></table>
+      <p class="panel-scroll-hint">Swipe to see more columns</p>
+      <div class="panel-table-scroll">
+        <table></table>
+      </div>
     `;
   }
 
