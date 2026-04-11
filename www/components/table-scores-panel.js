@@ -107,7 +107,7 @@ class TableScoresPanel extends HTMLElement {
         max-width: 600px;
         margin: 0 auto;
         background:
-          var(--header-gradient),,
+          var(--header-gradient),
           var(--surface-soft);
         border-radius: var(--radius);
         display: flex;
