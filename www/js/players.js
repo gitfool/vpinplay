@@ -71,27 +71,39 @@ async function init() {
   await customElements.whenDefined("vpinplay-header");
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("userid");
+  const dashboard = document.getElementById("dashboard");
+  const latestSubmittedScoresPanel = document.getElementById(
+    "latestSubmittedScoresPanel",
+  );
+  const carouselsContainer = document.getElementById("carouselsContainer");
+  const userBadge = document.getElementById("userBadge");
 
   currentUserId = userId;
 
   if (currentUserId) {
-    dashboard.style.display = "";
-    const carouselsContainer = document.getElementById("carouselsContainer");
+    if (dashboard) {
+      dashboard.style.display = "";
+    }
+    if (latestSubmittedScoresPanel) {
+      latestSubmittedScoresPanel.style.display = "none";
+    }
     if (carouselsContainer) {
       carouselsContainer.style.display = "flex";
     }
-    const userBadge = document.getElementById("userBadge");
     if (userBadge) {
       userBadge.textContent = currentUserId;
     }
     refreshDashboard();
   } else {
-    dashboard.style.display = "none";
-    const carouselsContainer = document.getElementById("carouselsContainer");
+    if (dashboard) {
+      dashboard.style.display = "none";
+    }
+    if (latestSubmittedScoresPanel) {
+      latestSubmittedScoresPanel.style.display = "";
+    }
     if (carouselsContainer) {
       carouselsContainer.style.display = "none";
     }
-    const userBadge = document.getElementById("userBadge");
     if (userBadge) {
       userBadge.textContent = "";
     }
