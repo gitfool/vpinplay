@@ -17,9 +17,12 @@ class TablesCarousel extends HTMLElement {
     this.sortOrder = -1;
     this.shelfStat = "";
     this.apiUrl = "/api/v1/tables-plus/search";
+    this.currentUserId = "";
   }
 
   connectedCallback() {
+    const params = new URLSearchParams(window.location.search);
+    this.currentUserId = (params.get("userid") || "").trim();
     this.shelfTitle = this.getAttribute("title") || "";
     this.sortBy = this.getAttribute("sortBy") || "avgRating";
     this.sortOrder = parseInt(this.getAttribute("sortOrder")) || -1;
@@ -136,6 +139,14 @@ class TablesCarousel extends HTMLElement {
   }
 
   render() {
+    const seeAllParams = new URLSearchParams({
+      "sort-order": String(this.sortOrder),
+      "sort-by": this.sortBy,
+    });
+    if (this.currentUserId) {
+      seeAllParams.set("userid", this.currentUserId);
+    }
+
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -531,7 +542,7 @@ class TablesCarousel extends HTMLElement {
         <h3 class="shelf-title">${this.shelfTitle}</h3>
         <div id="sort-toggle" class="sort-toggle ${this.sortOrder === 1 ? "asc" : "desc"}">Sort</div>
         <div class="see-all-link">
-          <a href="/tables?sort-order=${this.sortOrder}&sort-by=${this.sortBy}">See All</a>
+          <a href="/tables?${seeAllParams.toString()}">See All</a>
         </div>
       </div>
       <div class="carousel-container">
@@ -576,6 +587,9 @@ class TablesCarousel extends HTMLElement {
         sort_by: this.sortBy,
         sort_order: this.sortOrder,
       });
+      if (this.currentUserId) {
+        params.append("userid", this.currentUserId);
+      }
 
       const fullUrl = this.apiUrl.startsWith("http")
         ? this.apiUrl
@@ -609,7 +623,13 @@ class TablesCarousel extends HTMLElement {
 
       const vpsId = item.vpsId;
       const bgUrl = `https://raw.githubusercontent.com/superhac/vpinmediadb/refs/heads/main/bg_thumbs/${encodeURIComponent(vpsId)}.png`;
-      const tableUrl = `/tables?vpsid=${encodeURIComponent(vpsId)}`;
+      const tableParams = new URLSearchParams({
+        vpsid: vpsId,
+      });
+      if (this.currentUserId) {
+        tableParams.set("userid", this.currentUserId);
+      }
+      const tableUrl = `/tables?${tableParams.toString()}`;
       const vpsUrl = `https://virtualpinballspreadsheet.github.io/games?game=${encodeURIComponent(vpsId)}`;
 
       const statDisplay = this.formatStat(item);
