@@ -113,6 +113,14 @@ class PlayersTablesCarousel extends HTMLElement {
   }
 
   render() {
+    const seeAllParams = new URLSearchParams({
+      "sort-order": String(this.sortOrder),
+      "sort-by": this.sortBy,
+    });
+    if (this.userId) {
+      seeAllParams.set("userid", this.userId);
+    }
+
     this.shadowRoot.innerHTML = `
       <style>
         :host { 
@@ -472,7 +480,7 @@ class PlayersTablesCarousel extends HTMLElement {
       <div class="shelf-header">
         <h3 class="shelf-title">${this.shelfTitle}</h3>
         <div class="see-all-link">
-          <a href="/tables?sort-order=${this.sortOrder}&sort-by=${this.sortBy}">See All</a>
+          <a href="/tables?${seeAllParams.toString()}">See All</a>
         </div>
       </div>
       <div class="carousel-container">

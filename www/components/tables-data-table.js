@@ -24,11 +24,13 @@ class TablesDataTable extends HTMLElement {
     this.currentFocusIndex = -1;
     this.listenersAttached = false;
     this.expandedItem = null;
+    this.currentUserId = "";
   }
 
   connectedCallback() {
     const params = new URLSearchParams(window.location.search);
     const vpsid = (params.get("vpsid") || "").trim();
+    this.currentUserId = (params.get("userid") || "").trim();
 
     this.render();
 
@@ -1146,6 +1148,10 @@ class TablesDataTable extends HTMLElement {
       if (this.searchTerm) {
         params.append("search_key", this.searchKey);
         params.append("search_term", this.searchTerm);
+      }
+
+      if (this.currentUserId) {
+        params.append("userid", this.currentUserId);
       }
 
       const apiUrl = this.getAttribute("api-url") || "/api/tables-plus";

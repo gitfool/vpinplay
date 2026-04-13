@@ -10,6 +10,7 @@ from app.dependencies import get_db
 from app.models import GlobalTableResponse
 from app.response_enrichment import enrich_with_vpsdb
 from app.tables_plus_cache import TABLES_PLUS_CACHE_COLLECTION
+from app.userid import user_id_filter
 from app.vpsdb import get_vpsdb_sync_status
 
 router = APIRouter(
@@ -1585,6 +1586,7 @@ async def get_tables_plus_search(
     offset: int = Query(0, ge=0),
     sort_by: Optional[str] = Query("name"),
     sort_order: Optional[int] = Query(-1, ge=-1, le=1),
+    userid: Optional[str] = Query(None),
     search_key: Optional[str] = Query(None),
     search_term: Optional[str] = Query(None),
     db: Database = Depends(get_db),
@@ -1613,6 +1615,35 @@ async def get_tables_plus_search(
     actual_sort_by = sort_key_map.get(sort_by, "sortName")
 
     match_stage: dict[str, object] = {}
+
+    if userid:
+        user_vps_ids = sorted(
+            {
+                str(row.get("vpsId"))
+                for row in db["user_table_state"].find(
+                    user_id_filter(userid),
+                    {"_id": 0, "vpsId": 1},
+                )
+                if row.get("vpsId")
+            }
+        )
+
+        if not user_vps_ids:
+            return {
+                "items": [],
+                "pagination": {
+                    "limit": limit,
+                    "offset": offset,
+                    "total": 0,
+                    "hasNext": False,
+                    "hasPrev": offset > 0,
+                    "sort_by": sort_by,
+                    "sort_order": sort_order,
+                },
+            }
+
+        match_stage["vpsId"] = {"$in": user_vps_ids}
+
     if search_key and search_term:
         field_map = {
             "name": ("name", "string"),
