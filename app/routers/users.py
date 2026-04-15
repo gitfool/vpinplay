@@ -1245,12 +1245,49 @@ async def get_user_newly_added_tables(
     """
     Get the newest tables added for a user by first-seen timestamp.
     """
+    pipeline = [
+        {"$match": user_id_filter(userId)},
+        {
+            "$project": {
+                "userId": 1,
+                "vpsId": 1,
+                "rating": 1,
+                "lastRun": 1,
+                "startCount": 1,
+                "runTime": 1,
+                "score": 1,
+                "alttitle": 1,
+                "altvpsid": 1,
+                "lastSeenAt": 1,
+                "updatedAt": 1,
+                "createdAtOrUpdatedAt": {"$ifNull": ["$createdAt", "$updatedAt"]},
+            }
+        },
+        {"$sort": {"vpsId": 1, "updatedAt": -1, "_id": -1}},
+        {
+            "$group": {
+                "_id": "$vpsId",
+                "userId": {"$first": "$userId"},
+                "vpsId": {"$first": "$vpsId"},
+                "rating": {"$first": "$rating"},
+                "lastRun": {"$first": "$lastRun"},
+                "startCount": {"$first": "$startCount"},
+                "runTime": {"$first": "$runTime"},
+                "score": {"$first": "$score"},
+                "alttitle": {"$first": "$alttitle"},
+                "altvpsid": {"$first": "$altvpsid"},
+                "lastSeenAt": {"$first": "$lastSeenAt"},
+                "updatedAt": {"$first": "$updatedAt"},
+                "createdAt": {"$min": "$createdAtOrUpdatedAt"},
+            }
+        },
+        {"$sort": {"createdAt": -1, "_id": 1}},
+        {"$skip": offset},
+        {"$limit": limit},
+    ]
+
     user_states = list(
-        db["user_table_state"]
-        .find(user_id_filter(userId))
-        .sort("createdAt", -1)
-        .skip(offset)
-        .limit(limit)
+        db["user_table_state"].aggregate(pipeline)
     )
 
     return _map_user_states(user_states, db)

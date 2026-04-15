@@ -15,6 +15,7 @@ class PlayersTablesCarousel extends HTMLElement {
     this.startCountTotal = 0;
     this.submittedScores = 0;
     this.tableCount = 0;
+    this.seenVpsIds = new Set();
 
     // Attributes
     this.shelfTitle = "";
@@ -530,18 +531,26 @@ class PlayersTablesCarousel extends HTMLElement {
 
       const response = await fetch(`${fullUrl}?${params}`);
       const data = await response.json();
+      const uniqueNewItems = data.filter((item) => {
+        const vpsId = item?.vpsId;
+        if (!vpsId || this.seenVpsIds.has(vpsId)) {
+          return false;
+        }
+        this.seenVpsIds.add(vpsId);
+        return true;
+      });
 
       if (data.length === 0) {
         this.hasMore = false;
       } else if (data.length < this.limit) {
-        this.items.push(...data);
+        this.items.push(...uniqueNewItems);
         this.offset += data.length;
-        this.renderItems(data);
+        this.renderItems(uniqueNewItems);
         this.hasMore = false;
       } else {
-        this.items.push(...data);
+        this.items.push(...uniqueNewItems);
         this.offset += data.length;
-        this.renderItems(data);
+        this.renderItems(uniqueNewItems);
         this.hasMore = true;
       }
     } catch (error) {
