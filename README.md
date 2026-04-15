@@ -1,6 +1,6 @@
 # VPinPlay Table Metadata Sync Service
-
 A Python REST API service for syncing VPinPlay table metadata using MongoDB as the backend.
+<img width="820" height="820" alt="VPinPlay_Logo_1 0" src="https://github.com/user-attachments/assets/18619870-e00f-4ab1-a87b-632d9b0822c0" />
 
 ## Prerequisites
 
