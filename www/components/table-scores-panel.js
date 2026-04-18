@@ -26,7 +26,10 @@ class TableScoresPanel extends HTMLElement {
     const urlParams = new URLSearchParams(window.location.search);
     this.vpsId = this.getAttribute("vps-id") || urlParams.get("vpsid");
     this.apiBase = (
-      this.getAttribute("api-base") || "https://api.vpinplay.com:8888"
+      this.getAttribute("api-base") ||
+      (typeof window.getVPinPlayApiBase === "function"
+        ? window.getVPinPlayApiBase()
+        : "")
     ).replace(/\/$/, "");
     if (this.vpsId) this.loadPanel();
   }

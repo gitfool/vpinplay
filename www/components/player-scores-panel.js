@@ -52,7 +52,10 @@ class PlayerScoresPanel extends HTMLElement {
       this.getAttribute("user-id") || urlParams.get("userid") || this.userId;
 
     const rawApi =
-      this.getAttribute("api-base") || "https://api.vpinplay.com:8888";
+      this.getAttribute("api-base") ||
+      (typeof window.getVPinPlayApiBase === "function"
+        ? window.getVPinPlayApiBase()
+        : "");
     this.apiBase = rawApi.replace(/\/$/, "");
   }
 
@@ -510,7 +513,7 @@ class PlayerScoresPanel extends HTMLElement {
           flex-wrap: nowrap;
           max-height: none !important;
         }
-          
+
         .panel-picker {
           min-width: 100%;
         }

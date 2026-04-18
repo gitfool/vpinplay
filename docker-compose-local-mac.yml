@@ -24,6 +24,8 @@ services:
     image: mongo:7.0
     container_name: vpinplay_mongo
     command: ["mongod", "--bind_ip", "0.0.0.0", "--port", "27017"]
+    ports:
+      - "27017:27017"
     restart: unless-stopped
     environment:
       - MONGO_INITDB_DATABASE=vpinplay_db
