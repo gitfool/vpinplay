@@ -1,10 +1,43 @@
 const API_BASE_STORAGE_KEY = "vpinplay.apiBase";
+const DEFAULT_API_PORT = "8888";
 
 function normalizeApiBase(value) {
   if (value === null || value === undefined) return "";
   const trimmed = String(value).trim();
   if (!trimmed || trimmed.toLowerCase() === "local") return "";
   return trimmed.replace(/\/$/, "");
+}
+
+function isLocalHostname(hostname) {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname === "[::1]"
+  );
+}
+
+function deriveDefaultApiBase() {
+  const { protocol, hostname, port } = window.location;
+
+  if (
+    protocol === "file:" ||
+    isLocalHostname(hostname) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)
+  ) {
+    return "";
+  }
+
+  const apiHostname = hostname.startsWith("api.")
+    ? hostname
+    : hostname.startsWith("www.")
+      ? `api.${hostname.slice(4)}`
+      : `api.${hostname}`;
+
+  const apiPort = port === DEFAULT_API_PORT ? port : DEFAULT_API_PORT;
+  return `${protocol}//${apiHostname}:${apiPort}`;
 }
 
 function readStoredApiBase() {
@@ -39,7 +72,8 @@ function resolveApiBase() {
     return queryValue;
   }
 
-  return readStoredApiBase();
+  const storedValue = readStoredApiBase();
+  return storedValue || deriveDefaultApiBase();
 }
 
 const API_BASE = resolveApiBase();
