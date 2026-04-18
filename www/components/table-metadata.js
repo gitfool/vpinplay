@@ -220,19 +220,32 @@ class TablesMetadata extends HTMLElement {
       return { row, map };
     });
 
+    const toCreatedMs = (entry) => {
+      const t = Date.parse(entry?.row?.createdAt || "");
+      return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+    };
+
+    // Deterministic ordering: earliest created variation first.
+    // This guarantees left column is always earliest in each pair.
+    const sortedRowMaps = [...rowMaps].sort((a, b) => {
+      const createdDiff = toCreatedMs(a) - toCreatedMs(b);
+      if (createdDiff !== 0) return createdDiff;
+
+      const aName = String(a?.row?.vpxFile?.filename || "").toLowerCase();
+      const bName = String(b?.row?.vpxFile?.filename || "").toLowerCase();
+      if (aName !== bName) return aName.localeCompare(bName);
+
+      const aHash = String(a?.row?.vpxFile?.filehash || "").toLowerCase();
+      const bHash = String(b?.row?.vpxFile?.filehash || "").toLowerCase();
+      return aHash.localeCompare(bHash);
+    });
+
     const varyingKeys = [...allKeys]
       .filter((key) => {
         const vals = new Set(rowMaps.map((entry) => entry.map[key] ?? ""));
         return vals.size > 1;
       })
       .sort((a, b) => a.localeCompare(b));
-
-    const field = (label, value, isHtml = false) => `
-      <div class="variation-field">
-          <div class="variation-label">${escapeHtml(label)}</div>
-          <div class="variation-value">${isHtml ? (value ?? "-") : escapeHtml(value ?? "-")}</div>
-      </div>
-    `;
 
     const chips = varyingKeys.length
       ? `<div class="chips">${varyingKeys.map((key) => `<span class="chip">${escapeHtml(key)}</span>`).join("")}</div>`
@@ -246,39 +259,59 @@ class TablesMetadata extends HTMLElement {
       </div>
     `;
 
-    for (let i = 0; i < rowMaps.length; i += 1) {
-      for (let j = i + 1; j < rowMaps.length; j += 1) {
-        const left = rowMaps[i];
-        const right = rowMaps[j];
+    const diffRow = (label, leftVal, rightVal, isHtml = false) => {
+      const fmt = (v, html) => {
+        const isEmpty = v === null || v === undefined || String(v).trim() === "";
+        if (isEmpty) {
+          return '<span class="muted">&mdash;</span>';
+        }
+        return html ? String(v) : escapeHtml(String(v));
+      };
+      return `
+        <div class="diff-row-label">${escapeHtml(label)}</div>
+        <div class="diff-cell">${fmt(leftVal, isHtml)}</div>
+        <div class="diff-cell">${fmt(rightVal, isHtml)}</div>
+      `;
+    };
+
+    for (let i = 0; i < sortedRowMaps.length; i += 1) {
+      for (let j = i + 1; j < sortedRowMaps.length; j += 1) {
+        const left = sortedRowMaps[i];
+        const right = sortedRowMaps[j];
         const leftName = left.row?.vpxFile?.filename || `Variation ${i + 1}`;
         const rightName = right.row?.vpxFile?.filename || `Variation ${j + 1}`;
         const changedKeys = varyingKeys.filter(
           (key) => (left.map[key] ?? "") !== (right.map[key] ?? ""),
         );
-        const changedFields = changedKeys.length
-          ? changedKeys
-              .map((key) => {
-                const leftValue = left.map[key] ?? "";
-                const rightValue = right.map[key] ?? "";
-                return field(
-                  key,
-                  `${escapeHtml(leftValue || "(empty)")} <span class="muted">vs</span> ${escapeHtml(rightValue || "(empty)")}`,
-                  true,
-                );
-              })
-              .join("")
-          : `<div class="muted">No differences between these two variations in compared fields.</div>`;
+
+        const fieldRows = changedKeys.length
+          ? changedKeys.map((key) =>
+              diffRow(
+                key,
+                left.map[key],
+                right.map[key],
+              )
+            ).join("")
+          : `<div class="diff-no-diff" style="grid-column:1/-1">No differences detected in compared fields.</div>`;
+
+        const colHeader = (row) => `
+          <div class="diff-col-header">
+            <span class="diff-col-header-name">${escapeHtml(row.row?.vpxFile?.filename || "")}</span>
+            <span class="diff-col-header-meta">
+              <span class="diff-col-header-submitters">${this.fmtSubmitters(row.row?.submittedByUserIdsNormalized)}</span>
+              <span class="diff-col-header-sep">|</span>
+              <span class="diff-col-header-created">${fmtDate(row.row?.createdAt)}</span>
+            </span>
+          </div>
+        `;
 
         html += `
           <div class="variation-card">
-              <div class="variation-title">${escapeHtml(leftName)} vs ${escapeHtml(rightName)}</div>
-              <div class="variation-subtitle">${changedKeys.length} differing field${changedKeys.length === 1 ? "" : "s"}</div>
-              <div class="variation-grid">
-                  ${field("leftSubmittedBy", this.fmtSubmitters(left.row?.submittedByUserIdsNormalized), true)}
-                  ${field("rightSubmittedBy", this.fmtSubmitters(right.row?.submittedByUserIdsNormalized), true)}
-                  ${field("leftCreatedAt", fmtDate(left.row?.createdAt))}
-                  ${field("rightCreatedAt", fmtDate(right.row?.createdAt))}
-                  ${changedFields}
+              <div class="diff-table">
+                <div class="diff-col-header-label"></div>
+                ${colHeader(left)}
+                ${colHeader(right)}
+                ${fieldRows}
               </div>
           </div>
         `;
@@ -465,6 +498,81 @@ class TablesMetadata extends HTMLElement {
           word-break: break-word;
         }
 
+        /* Comparison diff table */
+        .diff-table {
+          display: grid;
+          grid-template-columns: clamp(8rem, 12vw, 10.5rem) minmax(0, 1fr) minmax(0, 1fr);
+          gap: 1px;
+          background: var(--line);
+          border-radius: 8px;
+          overflow: hidden;
+          margin-top: 8px;
+        }
+
+        .diff-col-header-label {
+          background: var(--surface-2, var(--surface));
+          padding: 7px 8px;
+        }
+
+        .diff-col-header {
+          background: var(--surface-2, var(--surface));
+          padding: 7px 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          word-break: break-word;
+        }
+
+        .diff-col-header-name {
+          color: var(--neon-cyan);
+          font-size: 0.72rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .diff-col-header-meta {
+          color: var(--ink-muted);
+          font-size: 0.75rem;
+          font-weight: 400;
+          text-transform: none;
+          letter-spacing: 0;
+          display: flex;
+          align-items: baseline;
+          gap: 0.35rem;
+          flex-wrap: wrap;
+        }
+
+        .diff-col-header-sep {
+          color: var(--line-strong, var(--line));
+        }
+
+        .diff-row-label {
+          background: var(--surface);
+          color: var(--neon-cyan);
+          font-size: 0.72rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          padding: 8px;
+          display: flex;
+          align-items: center;
+        }
+
+        .diff-cell {
+          background: var(--surface);
+          padding: 8px;
+          font-size: 0.88rem;
+          word-break: break-word;
+        }
+
+        .diff-no-diff {
+          background: var(--surface);
+          padding: 8px;
+          color: var(--ink-muted);
+          font-size: 0.88rem;
+        }
+
         /* Media queries */
         @media (max-width: 600px) {
           .header-row {
@@ -475,14 +583,17 @@ class TablesMetadata extends HTMLElement {
           }
           .variation-grid {
             grid-template-columns: 1fr;
-          } 
+          }
+          .diff-table {
+            grid-template-columns: minmax(70px, 30%) 1fr 1fr;
+          }
         }
 
       </style>
       <div class="header-row">
         <h3 id="associatedRomsTitle">Metadata</h3>
         <button id="expandButton" class="expand-button" type="button">
-          <span class="expand-icon"> 
+          <span class="expand-icon">
             <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M5 7l5 5 5-5M5 11l5 5 5-5"

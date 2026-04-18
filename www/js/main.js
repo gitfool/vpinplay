@@ -1,4 +1,55 @@
-const API_BASE = "https://api.vpinplay.com:8888";
+const API_BASE_STORAGE_KEY = "vpinplay.apiBase";
+
+function normalizeApiBase(value) {
+  if (value === null || value === undefined) return "";
+  const trimmed = String(value).trim();
+  if (!trimmed || trimmed.toLowerCase() === "local") return "";
+  return trimmed.replace(/\/$/, "");
+}
+
+function readStoredApiBase() {
+  try {
+    return normalizeApiBase(window.localStorage.getItem(API_BASE_STORAGE_KEY));
+  } catch {
+    return "";
+  }
+}
+
+function persistApiBase(value) {
+  try {
+    if (value) {
+      window.localStorage.setItem(API_BASE_STORAGE_KEY, value);
+    } else {
+      window.localStorage.removeItem(API_BASE_STORAGE_KEY);
+    }
+  } catch {
+    // Ignore storage errors in locked-down browser modes.
+  }
+}
+
+function resolveApiBase() {
+  const params = new URLSearchParams(window.location.search);
+  const hasQueryOverride = params.has("apiBase") || params.has("api_base");
+
+  if (hasQueryOverride) {
+    const queryValue = normalizeApiBase(
+      params.get("apiBase") ?? params.get("api_base") ?? "",
+    );
+    persistApiBase(queryValue);
+    return queryValue;
+  }
+
+  return readStoredApiBase();
+}
+
+const API_BASE = resolveApiBase();
+window.VPINPLAY_API_BASE = API_BASE;
+window.getVPinPlayApiBase = () => API_BASE;
+window.setVPinPlayApiBase = (nextValue) => {
+  const normalized = normalizeApiBase(nextValue);
+  persistApiBase(normalized);
+  return normalized;
+};
 const ALL_TABLES_PAGE_SIZE = 50;
 const API_PAGE_LIMIT = 100;
 const PAGE_SIZE = 100;
